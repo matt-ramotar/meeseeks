@@ -1,0 +1,108 @@
+import dev.mattramotar.meeseeks.runtime.TaskParameters;
+import dev.mattramotar.meeseeks.runtime.TaskPreconditions;
+import dev.mattramotar.meeseeks.runtime.TaskPriority;
+import dev.mattramotar.meeseeks.runtime.TaskRetryPolicy;
+import dev.mattramotar.meeseeks.runtime.TaskSchedule;
+import dev.mattramotar.meeseeks.runtime.TaskStatus;
+
+
+CREATE TABLE taskEntity (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT ,
+
+    -- Meeseeks Type
+    meeseeksType TEXT NOT NULL,
+
+    -- Preconditions
+    preconditions TEXT AS TaskPreconditions NOT NULL,
+
+    -- Priority
+    priority TEXT AS TaskPriority NOT NULL,
+
+    -- Schedule
+    schedule TEXT AS TaskSchedule NOT NULL,
+
+    -- Retry Policy
+    retryPolicy TEXT AS TaskRetryPolicy NOT NULL,
+
+    -- Status
+    status TEXT AS TaskStatus NOT NULL,
+
+    -- Context
+    parameters TEXT AS TaskParameters NOT NULL,
+    workRequestId TEXT,
+
+    -- Metadata
+    runAttemptCount INTEGER NOT NULL,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+insertTask:
+INSERT INTO taskEntity(
+    meeseeksType,
+    preconditions,
+    priority,
+    schedule,
+    retryPolicy,
+    status,
+    parameters,
+    workRequestId,
+    createdAt,
+    updatedAt,
+    runAttemptCount
+)
+VALUES (
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    0
+);
+
+
+
+lastInsertedTaskId:
+SELECT last_insert_rowid();
+
+updateWorkRequestId:
+UPDATE taskEntity
+SET workRequestId = ?, updatedAt = ?
+WHERE id = ?;
+
+
+cancelTask:
+UPDATE taskEntity
+SET status = 'CANCELLED', updatedAt = ?
+WHERE id = ?;
+
+updateStatus:
+UPDATE taskEntity
+SET status = ?, updatedAt = ?
+WHERE id = ?;
+
+selectTaskByMrMeeseeksId:
+SELECT * FROM taskEntity
+WHERE id = ?;
+
+selectAllActive:
+SELECT * FROM taskEntity
+WHERE status = 'PENDING' OR status = 'RUNNING';
+
+selectAllPending:
+SELECT * FROM taskEntity
+WHERE status = 'PENDING';
+
+selectAllRunning:
+SELECT * FROM taskEntity
+WHERE status = 'RUNNING';
+
+incrementRunAttemptCount:
+UPDATE taskEntity
+SET runAttemptCount = runAttemptCount + 1
+WHERE id = ?;
