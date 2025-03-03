@@ -2,6 +2,7 @@ package dev.mattramotar.meeseeks.core
 
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Defines whether a [Task] runs once or periodically.
@@ -21,7 +22,7 @@ sealed class TaskSchedule {
      */
     @Serializable
     data class Periodic(
-        val interval: Duration,
+        val interval: Duration = 60.seconds,
         val flexWindow: Duration = Duration.ZERO
     ) : TaskSchedule()
 

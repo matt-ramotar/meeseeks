@@ -1,13 +1,11 @@
 package dev.mattramotar.meeseeks.core.impl
 
 import dev.mattramotar.meeseeks.core.Task
-import dev.mattramotar.meeseeks.core.TaskParameters
 
 internal actual class WorkRequestFactory {
     actual fun createWorkRequest(
         taskId: Long,
-        task: Task,
-        taskParameters: TaskParameters
+        task: Task
     ): WorkRequest {
         TODO("Not yet implemented")
     }

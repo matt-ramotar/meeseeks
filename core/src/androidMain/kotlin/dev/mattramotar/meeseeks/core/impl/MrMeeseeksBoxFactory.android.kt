@@ -5,15 +5,15 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import dev.mattramotar.meeseeks.core.MeeseeksContext
 import dev.mattramotar.meeseeks.core.MeeseeksRegistry
-import dev.mattramotar.meeseeks.core.MrMeeseeksBox
-import dev.mattramotar.meeseeks.core.MrMeeseeksBoxConfig
+import dev.mattramotar.meeseeks.core.MeeseeksBox
+import dev.mattramotar.meeseeks.core.MeeseeksBoxConfig
 
-internal actual class MrMeeseeksBoxFactory {
+internal actual class MeeseeksBoxFactory {
     actual fun create(
         context: MeeseeksContext,
         registry: MeeseeksRegistry,
-        config: MrMeeseeksBoxConfig
-    ): MrMeeseeksBox {
+        config: MeeseeksBoxConfig
+    ): MeeseeksBox {
         val database = MeeseeksAppDatabase.require(context)
         val workerFactory = MeeseeksWorkerFactory(database, registry)
         val workRequestFactory = WorkRequestFactory(config.backoffMinimumMillis)
@@ -29,7 +29,7 @@ internal actual class MrMeeseeksBoxFactory {
         val taskScheduler = TaskScheduler(workManager)
         val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory)
 
-        return RealMrMeeseeksBox(
+        return RealMeeseeksBox(
             database,
             workRequestFactory,
             taskScheduler,

@@ -1,9 +1,9 @@
 package dev.mattramotar.meeseeks.core
 
 /**
- * Configuration for [MrMeeseeksBox].
+ * Configuration for [MeeseeksBox].
  */
-data class MrMeeseeksBoxConfig(
+data class MeeseeksBoxConfig(
     val maxParallelTasks: Int = 2,
     val allowExpedited: Boolean = false,
     val maxRetryCount: Int = 3,

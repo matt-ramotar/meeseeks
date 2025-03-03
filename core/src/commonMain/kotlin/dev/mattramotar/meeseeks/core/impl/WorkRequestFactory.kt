@@ -1,13 +1,11 @@
 package dev.mattramotar.meeseeks.core.impl
 
 import dev.mattramotar.meeseeks.core.Task
-import dev.mattramotar.meeseeks.core.TaskParameters
 
 internal expect class WorkRequestFactory {
     fun createWorkRequest(
         taskId: Long,
-        task: Task,
-        taskParameters: TaskParameters
+        task: Task
     ): WorkRequest
 
     companion object {

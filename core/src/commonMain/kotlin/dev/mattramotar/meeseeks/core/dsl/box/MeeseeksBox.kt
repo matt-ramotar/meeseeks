@@ -3,20 +3,20 @@ package dev.mattramotar.meeseeks.core.dsl.box
 
 import dev.mattramotar.meeseeks.core.MeeseeksContext
 import dev.mattramotar.meeseeks.core.MeeseeksRegistry
-import dev.mattramotar.meeseeks.core.MrMeeseeksBox
-import dev.mattramotar.meeseeks.core.MrMeeseeksBoxConfig
-import dev.mattramotar.meeseeks.core.impl.MrMeeseeksBoxFactory
+import dev.mattramotar.meeseeks.core.MeeseeksBox
+import dev.mattramotar.meeseeks.core.MeeseeksBoxConfig
+import dev.mattramotar.meeseeks.core.impl.MeeseeksBoxFactory
 
 
-fun MrMeeseeksBox(
+fun MeeseeksBox(
     context: MeeseeksContext,
-    config: MrMeeseeksBoxConfig = MrMeeseeksBoxConfig(),
+    config: MeeseeksBoxConfig = MeeseeksBoxConfig(),
     registryBuilder: MeeseeksRegistry.Builder.() -> Unit
-): MrMeeseeksBox {
+): MeeseeksBox {
 
     val registry = MeeseeksRegistry.Builder().apply(registryBuilder).build()
 
-    val factory = MrMeeseeksBoxFactory()
+    val factory = MeeseeksBoxFactory()
 
     return factory.create(
         context,

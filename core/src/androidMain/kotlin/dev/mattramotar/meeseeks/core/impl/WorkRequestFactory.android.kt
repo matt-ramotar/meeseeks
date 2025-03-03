@@ -7,7 +7,6 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.workDataOf
 import dev.mattramotar.meeseeks.core.Task
-import dev.mattramotar.meeseeks.core.TaskParameters
 import dev.mattramotar.meeseeks.core.TaskRetryPolicy
 import dev.mattramotar.meeseeks.core.TaskSchedule
 import java.util.concurrent.TimeUnit
@@ -17,8 +16,7 @@ internal actual class WorkRequestFactory(
 ) {
     actual fun createWorkRequest(
         taskId: Long,
-        task: Task,
-        taskParameters: TaskParameters
+        task: Task
     ): WorkRequest {
 
         val constraints = buildConstraints(task)
@@ -28,7 +26,7 @@ internal actual class WorkRequestFactory(
         val inputData = workDataOf(
             KEY_TASK_ID to taskId,
             KEY_MEESEEKS_TYPE to task.meeseeksType,
-            KEY_TASK_PARAMETERS to taskParameters
+            KEY_TASK_PARAMETERS to task.parameters
         )
 
         val delegateWorkRequest = when (val schedule = task.schedule) {
