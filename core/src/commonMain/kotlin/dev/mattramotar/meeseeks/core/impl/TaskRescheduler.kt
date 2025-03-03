@@ -40,7 +40,7 @@ private class RealTaskRescheduler(
     override fun rescheduleTask(taskEntity: TaskEntity) {
         val task = taskEntity.toTask()
         val workRequest =
-            workRequestFactory.createWorkRequest(taskEntity.id, task, taskEntity.parameters)
+            workRequestFactory.createWorkRequest(taskEntity.id, task)
 
         taskScheduler.scheduleTask(taskEntity.id, task, workRequest, ExistingWorkPolicy.REPLACE)
 

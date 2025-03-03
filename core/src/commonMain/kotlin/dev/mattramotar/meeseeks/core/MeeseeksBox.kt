@@ -1,5 +1,7 @@
 package dev.mattramotar.meeseeks.core
 
+import dev.mattramotar.meeseeks.core.impl.MeeseeksBoxSingleton
+
 
 /**
  * Central task manager.
@@ -31,4 +33,11 @@ interface MeeseeksBox {
      * Triggers an immediate scheduling check.
      */
     fun triggerCheckForDueTasks()
+
+    companion object {
+        val value: MeeseeksBox
+            get() {
+                return MeeseeksBoxSingleton.meeseeksBox
+            }
+    }
 }
