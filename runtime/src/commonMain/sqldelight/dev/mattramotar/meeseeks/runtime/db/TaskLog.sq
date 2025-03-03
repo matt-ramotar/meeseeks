@@ -1,0 +1,19 @@
+import dev.mattramotar.meeseeks.runtime.TaskResult;
+
+CREATE TABLE taskLogEntity (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    taskId INTEGER NOT NULL,
+    created INTEGER NOT NULL,
+    result TEXT AS TaskResult.Type NOT NULL,
+    attempt INTEGER NOT NULL,
+    message TEXT,
+    FOREIGN KEY (taskId) REFERENCES taskEntity(id)
+);
+
+insertLog:
+INSERT INTO taskLogEntity (taskId, created, result, attempt, message)
+VALUES (?, ?, ?, ?, ?);
+
+selectLogsForTask:
+SELECT * FROM taskLogEntity
+WHERE taskId = ?;

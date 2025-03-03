@@ -1,5 +1,7 @@
 package dev.mattramotar.meeseeks.tooling.plugins
 
+import dev.mattramotar.meeseeks.tooling.extensions.configureKotlin
+import dev.mattramotar.meeseeks.tooling.extensions.libs
 import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -11,8 +13,6 @@ import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import dev.mattramotar.meeseeks.tooling.extensions.configureKotlin
-import dev.mattramotar.meeseeks.tooling.extensions.libs
 
 class KotlinMultiplatformConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
@@ -27,19 +27,17 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
         extensions.configure<KotlinMultiplatformExtension> {
             applyDefaultHierarchyTemplate()
 
-            if (pluginManager.hasPlugin("com.android.library")) {
-                androidTarget()
-            }
+            androidTarget()
 
             jvm()
-
+//
             iosX64()
             iosArm64()
             iosSimulatorArm64()
-
-            js {
-                browser()
-            }
+//
+//            js {
+//                browser()
+//            }
 
             targets.all {
                 compilations.all {
@@ -47,6 +45,12 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
                         freeCompilerArgs.add("-Xexpect-actual-classes")
                     }
                 }
+            }
+
+            sourceSets.commonMain.dependencies {
+                val kotlinStdLib = libs.findLibrary("kotlin-stdlib").get()
+
+                api(kotlinStdLib)
             }
 
             sourceSets.commonTest.dependencies {
@@ -57,6 +61,7 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
                 implementation(coroutinesTest)
                 implementation(kotlinTest)
                 implementation(turbine)
+
             }
 
             targets.withType<KotlinNativeTarget>().configureEach {
