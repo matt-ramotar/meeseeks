@@ -12,7 +12,7 @@ internal actual class TaskScheduler {
     }
 
     actual fun isScheduled(taskId: Long): Boolean {
-        TODO("Not yet implemented")
+        TODO("Coming soon")
     }
 
     actual fun cancelWorkById(schedulerId: String) {

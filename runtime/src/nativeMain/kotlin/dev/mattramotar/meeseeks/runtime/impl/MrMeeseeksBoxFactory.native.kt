@@ -11,6 +11,6 @@ internal actual class MeeseeksBoxFactory {
         registry: MeeseeksRegistry,
         config: MeeseeksBoxConfig
     ): MeeseeksBox {
-        TODO("Not yet implemented")
+        TODO("Coming soon")
     }
 }
