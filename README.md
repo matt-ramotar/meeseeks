@@ -1,6 +1,6 @@
 # Meeseeks
 
-![Meeseeks](.github/meeseeks.webp) 
+![Meeseeks](.github/meeseeks.svg) 
 
 ```text
 Copyright 2025 Matthew Ramotar
