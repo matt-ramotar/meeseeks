@@ -5,9 +5,8 @@ import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
 import dev.mattramotar.meeseeks.runtime.Task
 import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
+import dev.mattramotar.meeseeks.runtime.impl.coroutines.MeeseeksDispatchers
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
@@ -18,7 +17,7 @@ internal class RealMeeseeksBox(
     private val workRequestFactory: WorkRequestFactory,
     private val taskScheduler: TaskScheduler,
     private val taskRescheduler: TaskRescheduler,
-    override val coroutineContext: CoroutineContext = SupervisorJob() + Dispatchers.IO,
+    override val coroutineContext: CoroutineContext = SupervisorJob() + MeeseeksDispatchers.IO,
 ) : MeeseeksBox, CoroutineScope {
 
 

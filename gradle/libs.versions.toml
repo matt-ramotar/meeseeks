@@ -40,7 +40,6 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 native-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
 quartz = { module = "org.quartz-scheduler:quartz", version.ref = "quartz" }
 sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
-sqljs-driver = { module = "app.cash.sqldelight:sqljs-driver", version.ref = "sqldelight" }
 web-worker-driver = { module = "app.cash.sqldelight:web-worker-driver", version.ref = "sqldelight" }
 
 # Gradle Plugins

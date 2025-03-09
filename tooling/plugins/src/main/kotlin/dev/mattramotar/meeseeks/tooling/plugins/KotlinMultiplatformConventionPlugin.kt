@@ -30,14 +30,13 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
             androidTarget()
 
             jvm()
-//
             iosX64()
             iosArm64()
             iosSimulatorArm64()
-//
-//            js {
-//                browser()
-//            }
+
+            js {
+                browser()
+            }
 
             targets.all {
                 compilations.all {
