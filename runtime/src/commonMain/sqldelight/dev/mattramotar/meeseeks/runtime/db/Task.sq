@@ -90,6 +90,10 @@ selectTaskByMrMeeseeksId:
 SELECT * FROM taskEntity
 WHERE id = ?;
 
+selectTaskByTaskId:
+SELECT * FROM taskEntity
+WHERE id = ?;
+
 selectAllActive:
 SELECT * FROM taskEntity
 WHERE status = 'PENDING' OR status = 'RUNNING';

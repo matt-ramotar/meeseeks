@@ -31,7 +31,7 @@ private class RealTaskRescheduler(
     override fun rescheduleTasks() {
         val taskEntities = database.taskQueries.selectAllPending().executeAsList()
         for (taskEntity in taskEntities) {
-            if (!taskScheduler.isScheduled(taskEntity.id)) {
+            if (!taskScheduler.isScheduled(taskEntity.id, taskEntity.schedule)) {
                 rescheduleTask(taskEntity)
             }
         }
