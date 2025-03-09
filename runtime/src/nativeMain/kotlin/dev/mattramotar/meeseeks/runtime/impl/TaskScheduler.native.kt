@@ -13,13 +13,11 @@ import platform.BackgroundTasks.BGTaskScheduler
 import platform.Foundation.NSDate
 import platform.Foundation.dateWithTimeIntervalSinceNow
 
-
 @OptIn(ExperimentalForeignApi::class)
 internal actual class TaskScheduler(
     private val database: MeeseeksDatabase,
     private val bgTaskScheduler: BGTaskScheduler
 ) {
-
 
     actual fun scheduleTask(
         taskId: Long,
@@ -50,9 +48,8 @@ internal actual class TaskScheduler(
             .executeAsOneOrNull() ?: return false
 
         return (taskEntity.workRequestId != null) &&
-            (taskEntity.status is TaskStatus.Pending || taskEntity.status is TaskStatus.Running)
+                (taskEntity.status is TaskStatus.Pending || taskEntity.status is TaskStatus.Running)
     }
-
 
     actual fun cancelWorkById(schedulerId: String, taskSchedule: TaskSchedule) {
         val taskId = WorkRequestFactory.taskIdFromBGTaskIdentifier(schedulerId, taskSchedule)
@@ -103,5 +100,3 @@ internal actual class TaskScheduler(
         return request
     }
 }
-
-

@@ -21,7 +21,7 @@ internal object MeeseeksBoxSingleton {
     fun getOrCreateMeeseeksBox(
         context: MeeseeksContext,
         config: MeeseeksBoxConfig = MeeseeksBoxConfig(),
-        registryBuilder: MeeseeksRegistry.Builder.() -> Unit
+        registry: MeeseeksRegistry
     ): MeeseeksBox {
         val existingBoxCheck1 = _meeseeksBox
         if (existingBoxCheck1 != null) return existingBoxCheck1
@@ -31,7 +31,7 @@ internal object MeeseeksBoxSingleton {
             if (existingBoxCheck2 != null) {
                 existingBoxCheck2
             } else {
-                val newBox = MeeseeksBox(context, config, registryBuilder)
+                val newBox = MeeseeksBox(context, config, registry)
                 _meeseeksBox = newBox
                 newBox
             }

@@ -1,5 +1,6 @@
 package dev.mattramotar.meeseeks.runtime
 
+import dev.mattramotar.meeseeks.runtime.impl.MeeseeksAppDatabase
 import dev.mattramotar.meeseeks.runtime.impl.MeeseeksBoxSingleton
 
 object Meeseeks {
@@ -9,7 +10,21 @@ object Meeseeks {
         config: MeeseeksBoxConfig = MeeseeksBoxConfig(),
         registryBuilder: MeeseeksRegistry.Builder.() -> Unit
     ) {
-        MeeseeksBoxSingleton.getOrCreateMeeseeksBox(context, config, registryBuilder)
+        val registry = MeeseeksRegistry.Builder().apply(registryBuilder).build()
+        MeeseeksAppDatabase.init(context)
+        val meeseeksBox = MeeseeksBoxSingleton.getOrCreateMeeseeksBox(context, config, registry)
+        initializePlatformSpecificScheduling(
+            context,
+            config,
+            meeseeksBox,
+            registry
+        )
     }
 }
 
+expect fun initializePlatformSpecificScheduling(
+    context: MeeseeksContext,
+    config: MeeseeksBoxConfig = MeeseeksBoxConfig(),
+    meeseeksBox: MeeseeksBox,
+    registry: MeeseeksRegistry
+)

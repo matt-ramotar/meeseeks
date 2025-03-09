@@ -11,10 +11,8 @@ import dev.mattramotar.meeseeks.runtime.impl.MeeseeksBoxFactory
 fun MeeseeksBox(
     context: MeeseeksContext,
     config: MeeseeksBoxConfig = MeeseeksBoxConfig(),
-    registryBuilder: MeeseeksRegistry.Builder.() -> Unit
+    registry: MeeseeksRegistry
 ): MeeseeksBox {
-
-    val registry = MeeseeksRegistry.Builder().apply(registryBuilder).build()
 
     val factory = MeeseeksBoxFactory()
 

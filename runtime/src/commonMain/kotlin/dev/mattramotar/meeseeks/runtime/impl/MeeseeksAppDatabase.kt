@@ -14,7 +14,7 @@ internal object MeeseeksAppDatabase {
     @Volatile
     private var singleton: MeeseeksDatabase? = null
 
-    private fun init(context: MeeseeksContext) {
+    fun init(context: MeeseeksContext) {
         if (singleton == null) {
             synchronized(this) {
                 if (singleton == null) {
