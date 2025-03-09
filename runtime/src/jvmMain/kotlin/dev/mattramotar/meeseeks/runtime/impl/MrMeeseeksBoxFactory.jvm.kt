@@ -1,9 +1,10 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.MeeseeksContext
-import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import dev.mattramotar.meeseeks.runtime.MeeseeksBox
 import dev.mattramotar.meeseeks.runtime.MeeseeksBoxConfig
+import dev.mattramotar.meeseeks.runtime.MeeseeksContext
+import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
+import org.quartz.impl.StdSchedulerFactory
 
 internal actual class MeeseeksBoxFactory {
     actual fun create(
@@ -12,15 +13,20 @@ internal actual class MeeseeksBoxFactory {
         config: MeeseeksBoxConfig
     ): MeeseeksBox {
         val database = MeeseeksAppDatabase.require(context)
+        val scheduler = StdSchedulerFactory("quartz.properties").scheduler
+        scheduler.context["meeseeksDatabase"] = database
+        scheduler.context["meeseeksRegistry"] = registry
+        scheduler.start()
+
         val workRequestFactory = WorkRequestFactory()
-        val taskScheduler = TaskScheduler(database, registry)
+        val taskScheduler = TaskScheduler(scheduler)
         val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory)
 
         return RealMeeseeksBox(
-            database,
-            workRequestFactory,
-            taskScheduler,
-            taskRescheduler
+            database = database,
+            workRequestFactory = workRequestFactory,
+            taskScheduler = taskScheduler,
+            taskRescheduler = taskRescheduler
         )
     }
 }

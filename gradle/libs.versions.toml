@@ -16,6 +16,7 @@ meeseeks = "1.0.0-SNAPSHOT"
 dokka = "1.9.20"
 maven-publish-plugin = "0.30.0"
 buildkonfig = "0.15.1"
+quartz = "2.3.2"
 turbine = "1.2.0"
 compose-compiler = "1.5.11"
 junit = "4.13.2"
@@ -37,6 +38,7 @@ coroutines-extensions = { module = "app.cash.sqldelight:coroutines-extensions", 
 jdbc-driver = { module = "app.cash.sqldelight:jdbc-driver", version.ref = "sqldelight" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 native-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
+quartz = { module = "org.quartz-scheduler:quartz", version.ref = "quartz" }
 sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 sqljs-driver = { module = "app.cash.sqldelight:sqljs-driver", version.ref = "sqldelight" }
 web-worker-driver = { module = "app.cash.sqldelight:web-worker-driver", version.ref = "sqldelight" }

@@ -53,6 +53,7 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation(libs.sqlite.driver)
+                implementation(libs.quartz)
             }
         }
 
