@@ -6,7 +6,7 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import dev.mattramotar.meeseeks.runtime.Task
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
-import java.util.UUID
+import java.util.*
 
 internal actual class TaskScheduler(
     private val workManager: WorkManager
@@ -20,7 +20,7 @@ internal actual class TaskScheduler(
         when (task.schedule) {
             is TaskSchedule.OneTime -> {
                 workManager.enqueueUniqueWork(
-                    WorkRequestFactory.uniqueWorkNameFor(taskId),
+                    WorkRequestFactory.uniqueWorkNameFor(taskId, task.schedule),
                     existingWorkPolicy.asAndroidExistingWorkPolicy(),
                     workRequest.delegate as OneTimeWorkRequest
                 )
@@ -32,7 +32,7 @@ internal actual class TaskScheduler(
                     else -> ExistingPeriodicWorkPolicy.UPDATE
                 }
                 workManager.enqueueUniquePeriodicWork(
-                    WorkRequestFactory.uniqueWorkNameFor(taskId),
+                    WorkRequestFactory.uniqueWorkNameFor(taskId, task.schedule),
                     periodicPolicy,
                     workRequest.delegate as PeriodicWorkRequest
                 )
@@ -40,19 +40,19 @@ internal actual class TaskScheduler(
         }
     }
 
-    actual fun isScheduled(taskId: Long): Boolean {
+    actual fun isScheduled(taskId: Long, taskSchedule: TaskSchedule): Boolean {
         val infos = workManager
-            .getWorkInfosForUniqueWork(WorkRequestFactory.uniqueWorkNameFor(taskId))
+            .getWorkInfosForUniqueWork(WorkRequestFactory.uniqueWorkNameFor(taskId, taskSchedule))
             .get()
 
         return infos.isNotEmpty() && infos.any { !it.state.isFinished }
     }
 
-    actual fun cancelWorkById(schedulerId: String) {
+    actual fun cancelWorkById(schedulerId: String, taskSchedule: TaskSchedule) {
         workManager.cancelWorkById(UUID.fromString(schedulerId))
     }
 
-    actual fun cancelUniqueWork(uniqueWorkName: String) {
+    actual fun cancelUniqueWork(uniqueWorkName: String, taskSchedule: TaskSchedule) {
         workManager.cancelUniqueWork(uniqueWorkName)
     }
 

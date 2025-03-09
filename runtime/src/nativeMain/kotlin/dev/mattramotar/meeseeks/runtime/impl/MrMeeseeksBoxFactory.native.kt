@@ -1,9 +1,10 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.MeeseeksContext
-import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import dev.mattramotar.meeseeks.runtime.MeeseeksBox
 import dev.mattramotar.meeseeks.runtime.MeeseeksBoxConfig
+import dev.mattramotar.meeseeks.runtime.MeeseeksContext
+import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
+import platform.BackgroundTasks.BGTaskScheduler
 
 internal actual class MeeseeksBoxFactory {
     actual fun create(
@@ -11,6 +12,16 @@ internal actual class MeeseeksBoxFactory {
         registry: MeeseeksRegistry,
         config: MeeseeksBoxConfig
     ): MeeseeksBox {
-        TODO("Coming soon")
+        val database = MeeseeksAppDatabase.require(context)
+        val bgTaskScheduler = BGTaskScheduler.sharedScheduler
+        val workRequestFactory = WorkRequestFactory()
+        val taskScheduler = TaskScheduler(database, bgTaskScheduler)
+        val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory)
+        return RealMeeseeksBox(
+            database,
+            workRequestFactory,
+            taskScheduler,
+            taskRescheduler
+        )
     }
 }

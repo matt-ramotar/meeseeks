@@ -1,21 +1,22 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
 internal actual class WorkRequestFactory {
     actual fun createWorkRequest(
         taskId: Long,
         task: Task
-    ): WorkRequest = WorkRequest(taskId)
+    ): WorkRequest = TODO()
 
     actual companion object {
         private const val UNIQUE_WORK_NAME_PREFIX = "meeseeks_work_"
 
-        actual fun uniqueWorkNameFor(taskId: Long): String {
+        actual fun uniqueWorkNameFor(taskId: Long, taskSchedule: TaskSchedule): String {
             return UNIQUE_WORK_NAME_PREFIX + taskId
         }
 
-        actual fun taskIdFrom(uniqueWorkName: String): Long {
+        actual fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): Long {
             return uniqueWorkName.removePrefix(UNIQUE_WORK_NAME_PREFIX).toLong()
         }
 

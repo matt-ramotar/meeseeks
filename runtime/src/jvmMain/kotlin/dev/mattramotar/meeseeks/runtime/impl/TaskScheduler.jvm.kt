@@ -2,6 +2,7 @@ package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 
 internal actual class TaskScheduler(
@@ -17,16 +18,16 @@ internal actual class TaskScheduler(
         TODO("Coming soon")
     }
 
-    actual fun isScheduled(taskId: Long): Boolean {
+    actual fun isScheduled(taskId: Long, taskSchedule: TaskSchedule): Boolean {
         TODO("Coming soon")
     }
 
 
-    actual fun cancelWorkById(schedulerId: String) {
+    actual fun cancelWorkById(schedulerId: String, taskSchedule: TaskSchedule) {
         TODO("Coming soon")
     }
 
-    actual fun cancelUniqueWork(uniqueWorkName: String) {
+    actual fun cancelUniqueWork(uniqueWorkName: String, taskSchedule: TaskSchedule) {
         TODO("Coming soon")
     }
 

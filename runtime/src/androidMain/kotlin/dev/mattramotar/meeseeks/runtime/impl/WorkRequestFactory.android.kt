@@ -100,11 +100,11 @@ internal actual class WorkRequestFactory(
         private const val MINIMUM_PERIODIC_INTERVAL_MS = 15 * 60 * 1000L
         private const val UNIQUE_WORK_NAME_PREFIX = "meeseeks_work_"
 
-        actual fun uniqueWorkNameFor(taskId: Long): String {
+        actual fun uniqueWorkNameFor(taskId: Long, taskSchedule: TaskSchedule): String {
             return UNIQUE_WORK_NAME_PREFIX + taskId
         }
 
-        actual fun taskIdFrom(uniqueWorkName: String): Long {
+        actual fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): Long {
             return uniqueWorkName.removePrefix(UNIQUE_WORK_NAME_PREFIX).toLong()
         }
 

@@ -1,6 +1,7 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
 internal expect class WorkRequestFactory {
     fun createWorkRequest(
@@ -9,8 +10,8 @@ internal expect class WorkRequestFactory {
     ): WorkRequest
 
     companion object {
-        fun uniqueWorkNameFor(taskId: Long): String
-        fun taskIdFrom(uniqueWorkName: String): Long
+        fun uniqueWorkNameFor(taskId: Long, taskSchedule: TaskSchedule): String
+        fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): Long
         val WORK_REQUEST_TAG: String
     }
 }

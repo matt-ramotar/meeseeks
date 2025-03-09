@@ -51,7 +51,7 @@ internal class RealMeeseeksBox(
         taskScheduler.scheduleTask(taskId, task, workRequest, ExistingWorkPolicy.KEEP)
 
         taskQueries.updateWorkRequestId(
-            workRequestId = workRequest.id.toString(),
+            workRequestId = workRequest.id,
             updatedAt = Timestamp.now(),
             id = taskId
         )
@@ -66,12 +66,14 @@ internal class RealMeeseeksBox(
 
         val workRequestId = taskEntity.workRequestId
         if (!workRequestId.isNullOrEmpty()) {
-            taskScheduler.cancelWorkById(workRequestId)
+            taskScheduler.cancelWorkById(workRequestId, taskEntity.schedule)
         } else {
             taskScheduler.cancelUniqueWork(
                 uniqueWorkName = WorkRequestFactory.uniqueWorkNameFor(
-                    taskEntity.id
-                )
+                    taskEntity.id,
+                    taskEntity.schedule
+                ),
+                taskEntity.schedule
             )
         }
 
