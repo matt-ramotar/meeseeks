@@ -17,6 +17,9 @@ sealed class TaskStatus {
 
         @Serializable
         data object Completed : Finished()
+
+        @Serializable
+        data object Failed : Finished()
     }
 }
 

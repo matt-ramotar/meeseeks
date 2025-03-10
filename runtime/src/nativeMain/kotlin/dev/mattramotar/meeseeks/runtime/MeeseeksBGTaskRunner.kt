@@ -120,7 +120,7 @@ object MeeseeksBGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatcher
 
             is TaskResult.Failure.Permanent -> {
                 val updatedNow = Timestamp.now()
-                taskQueries.updateStatus(TaskStatus.Finished.Cancelled, updatedNow, taskId)
+                taskQueries.updateStatus(TaskStatus.Finished.Failed, updatedNow, taskId)
 
                 config?.telemetry?.onEvent(
                     MeeseeksTelemetryEvent.TaskFailed(

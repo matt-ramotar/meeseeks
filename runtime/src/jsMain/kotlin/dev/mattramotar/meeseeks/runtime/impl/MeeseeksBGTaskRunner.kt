@@ -98,7 +98,7 @@ object MeeseeksBGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
             }
 
             is TaskResult.Failure.Permanent -> {
-                taskQueries.updateStatus(TaskStatus.Finished.Cancelled, Timestamp.now(), taskId)
+                taskQueries.updateStatus(TaskStatus.Finished.Failed, Timestamp.now(), taskId)
                 config?.telemetry?.onEvent(
                     MeeseeksTelemetryEvent.TaskFailed(
                         mrMeeseeksId,

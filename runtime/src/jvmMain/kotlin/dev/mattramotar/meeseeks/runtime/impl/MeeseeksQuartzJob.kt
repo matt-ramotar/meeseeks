@@ -82,7 +82,7 @@ internal class MeeseeksQuartzJob(
             when (result) {
                 is TaskResult.Failure.Permanent -> {
                     taskQueries.updateStatus(
-                        TaskStatus.Finished.Cancelled,
+                        TaskStatus.Finished.Failed,
                         currentTimeMillis(),
                         taskEntity.id
                     )

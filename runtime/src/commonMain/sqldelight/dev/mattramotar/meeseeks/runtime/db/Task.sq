@@ -110,3 +110,19 @@ incrementRunAttemptCount:
 UPDATE taskEntity
 SET runAttemptCount = runAttemptCount + 1
 WHERE id = ?;
+
+selectAllTasks:
+SELECT * FROM taskEntity;
+
+updateTask:
+UPDATE taskEntity
+SET
+  meeseeksType = ?,
+  preconditions = ?,
+  priority = ?,
+  schedule = ?,
+  retryPolicy = ?,
+  status = ?,
+  parameters = ?,
+  updatedAt = ?
+WHERE id = ?;
