@@ -1,6 +1,9 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
+import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
+import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
+import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.TaskStatus
@@ -16,7 +19,9 @@ import java.lang.System.currentTimeMillis
 
 
 @DisallowConcurrentExecution
-internal class MeeseeksQuartzJob : Job {
+internal class MeeseeksQuartzJob(
+    private val telemetry: MeeseeksTelemetry? = null
+) : Job {
 
     override fun execute(context: JobExecutionContext) {
         runBlocking {
@@ -41,8 +46,18 @@ internal class MeeseeksQuartzJob : Job {
             taskQueries.incrementRunAttemptCount(taskEntity.id)
             taskQueries.updateStatus(TaskStatus.Running, timestamp, taskEntity.id)
 
+            val mrMeeseeksId = MrMeeseeksId(taskEntity.id)
             val task = taskEntity.toTask()
-            val attemptNumber = taskEntity.runAttemptCount + 1
+            val attemptNumber = taskEntity.runAttemptCount.toInt() + 1
+
+            telemetry?.onEvent(
+                MeeseeksTelemetryEvent.TaskStarted(
+                    taskId = mrMeeseeksId,
+                    task = task,
+                    runAttemptCount = attemptNumber,
+                )
+            )
+
             val result: TaskResult = try {
                 val meeseeksFactory = registry.getFactory(task.meeseeksType)
                 val meeseeks = meeseeksFactory.create(task)
@@ -71,10 +86,49 @@ internal class MeeseeksQuartzJob : Job {
                         currentTimeMillis(),
                         taskEntity.id
                     )
+
+                    telemetry?.onEvent(
+                        MeeseeksTelemetryEvent.TaskFailed(
+                            taskId = mrMeeseeksId,
+                            task = task,
+                            error = result.error,
+                            runAttemptCount = attemptNumber,
+                        )
+                    )
                 }
 
-                is TaskResult.Failure.Transient,
+                is TaskResult.Failure.Transient -> {
+                    telemetry?.onEvent(
+                        MeeseeksTelemetryEvent.TaskFailed(
+                            taskId = mrMeeseeksId,
+                            task = task,
+                            error = result.error,
+                            runAttemptCount = attemptNumber,
+                        )
+                    )
+
+                    when (task.schedule) {
+                        is TaskSchedule.OneTime -> {
+                            // TODO: Support retry
+                        }
+
+                        is TaskSchedule.Periodic -> {
+                            // Quartz will fire again
+                        }
+                    }
+
+                }
+
                 TaskResult.Retry -> {
+                    telemetry?.onEvent(
+                        MeeseeksTelemetryEvent.TaskFailed(
+                            taskId = mrMeeseeksId,
+                            task = task,
+                            error = null,
+                            runAttemptCount = attemptNumber,
+                        )
+                    )
+
                     when (task.schedule) {
                         is TaskSchedule.OneTime -> {
                             // TODO: Support retry
@@ -87,6 +141,15 @@ internal class MeeseeksQuartzJob : Job {
                 }
 
                 TaskResult.Success -> {
+
+                    telemetry?.onEvent(
+                        MeeseeksTelemetryEvent.TaskSucceeded(
+                            taskId = mrMeeseeksId,
+                            task = task,
+                            runAttemptCount = attemptNumber,
+                        )
+                    )
+
                     taskQueries.updateStatus(
                         TaskStatus.Finished.Completed,
                         currentTimeMillis(),

@@ -1,11 +1,15 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.MeeseeksBox
+import dev.mattramotar.meeseeks.runtime.MeeseeksBoxConfig
+import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
+import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
 import dev.mattramotar.meeseeks.runtime.Task
 import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.impl.coroutines.MeeseeksDispatchers
+import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTask
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
@@ -18,6 +22,7 @@ internal class RealMeeseeksBox(
     private val taskScheduler: TaskScheduler,
     private val taskRescheduler: TaskRescheduler,
     override val coroutineContext: CoroutineContext = SupervisorJob() + MeeseeksDispatchers.IO,
+    private val telemetry: MeeseeksTelemetry? = null,
 ) : MeeseeksBox, CoroutineScope {
 
 
@@ -55,6 +60,15 @@ internal class RealMeeseeksBox(
             id = taskId
         )
 
+        launch {
+            telemetry?.onEvent(
+                MeeseeksTelemetryEvent.TaskScheduled(
+                    taskId = MrMeeseeksId(taskId),
+                    task = task
+                )
+            )
+        }
+
         return MrMeeseeksId(taskId)
     }
 
@@ -77,14 +91,34 @@ internal class RealMeeseeksBox(
         }
 
         taskQueries.cancelTask(Timestamp.now(), id.value)
+
+        launch {
+            telemetry?.onEvent(
+                MeeseeksTelemetryEvent.TaskCancelled(
+                    taskId = id,
+                    task = taskEntity.toTask()
+                )
+            )
+        }
     }
 
     override fun sendAllBackToBox() {
         taskScheduler.cancelAllWorkByTag(WorkRequestFactory.WORK_REQUEST_TAG)
 
         val taskQueries = database.taskQueries
-        taskQueries.selectAllActive().executeAsList().forEach {
-            taskQueries.cancelTask(Timestamp.now(), it.id)
+
+        val activeTasks = taskQueries.selectAllActive().executeAsList()
+
+        activeTasks.forEach { entity ->
+            taskQueries.cancelTask(Timestamp.now(), entity.id)
+            launch {
+                telemetry?.onEvent(
+                    MeeseeksTelemetryEvent.TaskCancelled(
+                        taskId = MrMeeseeksId(entity.id),
+                        task = entity.toTask()
+                    )
+                )
+            }
         }
     }
 
