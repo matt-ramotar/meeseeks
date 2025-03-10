@@ -76,8 +76,8 @@ internal class MeeseeksWorker(
         when (result) {
             is TaskResult.Failure.Permanent -> {
                 taskQueries.updateStatus(
-                    TaskStatus.Finished.Cancelled,
-                    System.currentTimeMillis(),
+                    TaskStatus.Finished.Failed,
+                    Timestamp.now(),
                     taskEntity.id
                 )
 
@@ -120,7 +120,7 @@ internal class MeeseeksWorker(
             TaskResult.Success -> {
                 taskQueries.updateStatus(
                     TaskStatus.Finished.Completed,
-                    System.currentTimeMillis(),
+                    Timestamp.now(),
                     taskEntity.id
                 )
 
