@@ -12,13 +12,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 
-object MeeseeksBGTaskRunner {
+object MeeseeksBGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
     internal lateinit var database: MeeseeksDatabase
     internal lateinit var registry: MeeseeksRegistry
     internal var config: MeeseeksBoxConfig? = null
-    private val coroutineDispatcher = MeeseeksDispatchers.IO
-    private val coroutineScope = CoroutineScope(coroutineDispatcher)
 
 
     fun run(
@@ -35,7 +33,7 @@ object MeeseeksBGTaskRunner {
             return
         }
 
-        coroutineScope.launch {
+        launch {
             try {
                 val succeeded = runMeeseeksTask(taskId)
                 completionCallback(succeeded)
@@ -73,7 +71,7 @@ object MeeseeksBGTaskRunner {
         )
 
         val meeseeks = registry.getFactory(taskEntity.meeseeksType)
-            .create(taskEntity.toTask())
+            .create(task)
 
         val result: TaskResult = try {
             meeseeks.execute(taskEntity.parameters)

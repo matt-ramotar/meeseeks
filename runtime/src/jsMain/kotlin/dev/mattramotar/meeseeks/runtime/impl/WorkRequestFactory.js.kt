@@ -2,6 +2,7 @@ package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.Task
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
+import kotlinx.serialization.json.Json
 
 internal actual class WorkRequestFactory {
     actual fun createWorkRequest(
@@ -25,6 +26,14 @@ internal actual class WorkRequestFactory {
         ): Long = uniqueWorkName.removePrefix(UNIQUE_WORK_NAME_PREFIX).toLong()
 
         actual val WORK_REQUEST_TAG: String = "meeseeks"
+
+        fun taskIdFrom(tag: String): Long {
+            return tag.removePrefix("$WORK_REQUEST_TAG-").toLong()
+        }
+
+        fun createTag(taskId: Long): String {
+            return "$WORK_REQUEST_TAG-$taskId"
+        }
     }
 
 }
