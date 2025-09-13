@@ -16,7 +16,7 @@ interface BackgroundTaskManager {
      * @param task The [Task] to schedule.
      * @return [TaskId] identifying the summoned [TaskWorker].
      */
-    fun summon(task: Task): TaskId
+    fun enqueue(task: Task): TaskId
 
     /**
      * Sends a specific [TaskWorker] back to the box, canceling its scheduled or ongoing work.

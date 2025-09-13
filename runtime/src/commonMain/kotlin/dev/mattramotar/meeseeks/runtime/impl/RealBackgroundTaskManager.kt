@@ -37,7 +37,7 @@ internal class RealBackgroundTaskManager(
         }
     }
 
-    override fun summon(task: Task): TaskId {
+    override fun enqueue(task: Task): TaskId {
         val taskQueries = database.taskQueries
         val timestamp = Timestamp.now()
 
