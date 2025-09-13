@@ -86,10 +86,6 @@ UPDATE taskEntity
 SET status = ?, updatedAt = ?
 WHERE id = ?;
 
-selectTaskByTaskWorkerId:
-SELECT * FROM taskEntity
-WHERE id = ?;
-
 selectTaskByTaskId:
 SELECT * FROM taskEntity
 WHERE id = ?;

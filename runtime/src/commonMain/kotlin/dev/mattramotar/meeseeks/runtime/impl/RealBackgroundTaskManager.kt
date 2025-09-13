@@ -80,7 +80,7 @@ internal class RealBackgroundTaskManager(
     override fun cancel(id: TaskId) {
         val taskQueries = database.taskQueries
         val taskEntity =
-            taskQueries.selectTaskByTaskWorkerId(id.value).executeAsOneOrNull() ?: return
+            taskQueries.selectTaskByTaskId(id.value).executeAsOneOrNull() ?: return
 
         val workRequestId = taskEntity.workRequestId
         if (!workRequestId.isNullOrEmpty()) {
@@ -138,7 +138,7 @@ internal class RealBackgroundTaskManager(
 
     override fun getTaskStatus(id: TaskId): TaskStatus? {
         val row = database.taskQueries
-            .selectTaskByTaskWorkerId(id.value)
+            .selectTaskByTaskId(id.value)
             .executeAsOneOrNull() ?: return null
         return row.status
     }
@@ -151,7 +151,7 @@ internal class RealBackgroundTaskManager(
 
     override fun rescheduleTask(id: TaskId, newTask: Task): TaskId {
         val taskQueries = database.taskQueries
-        val existing = taskQueries.selectTaskByTaskWorkerId(id.value).executeAsOneOrNull()
+        val existing = taskQueries.selectTaskByTaskId(id.value).executeAsOneOrNull()
             ?: error("Update failed: Task $id not found.")
 
         val existingWorkRequestId = existing.workRequestId
@@ -204,7 +204,7 @@ internal class RealBackgroundTaskManager(
 
     override fun observeStatus(id: TaskId): Flow<TaskStatus?> {
         return database.taskQueries
-            .selectTaskByTaskWorkerId(id.value)
+            .selectTaskByTaskId(id.value)
             .asFlow()
             .mapToOneOrNull(context = MeeseeksDispatchers.IO)
             .map { entity -> entity?.status }

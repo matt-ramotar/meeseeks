@@ -34,8 +34,8 @@ internal class MeeseeksQuartzJob(
 
             val taskQueries = database.taskQueries
             val taskLogQueries = database.taskLogQueries
-            val taskId = context.jobDetail.jobDataMap.getLong("task_id")
-            val taskEntity = taskQueries.selectTaskByTaskId(taskId).executeAsOneOrNull()
+            val taskWorkerId = context.jobDetail.jobDataMap.getLong("task_id")
+            val taskEntity = taskQueries.selectTaskByTaskId(taskWorkerId).executeAsOneOrNull()
                 ?: return@runBlocking
 
             if (taskEntity.status !is TaskStatus.Pending) {
