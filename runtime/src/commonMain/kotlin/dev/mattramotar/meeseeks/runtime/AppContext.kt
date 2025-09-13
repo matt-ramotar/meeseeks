@@ -1,3 +1,3 @@
 package dev.mattramotar.meeseeks.runtime
 
-expect interface AppContext
+expect abstract class AppContext
