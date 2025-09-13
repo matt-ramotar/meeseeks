@@ -6,7 +6,7 @@ import androidx.work.WorkerParameters
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
-import dev.mattramotar.meeseeks.runtime.MrMeeseeks
+import dev.mattramotar.meeseeks.runtime.TaskWorker
 import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
 import dev.mattramotar.meeseeks.runtime.Task
 import dev.mattramotar.meeseeks.runtime.TaskResult
@@ -137,7 +137,7 @@ internal class MeeseeksWorker(
         }
     }
 
-    private fun summonMrMeeseeks(task: Task): MrMeeseeks {
+    private fun summonMrMeeseeks(task: Task): TaskWorker {
         val factory = meeseeksRegistry.getFactory(task.meeseeksType)
         return factory.create(task)
     }

@@ -11,22 +11,22 @@ interface BackgroundTaskManager {
 
 
     /**
-     * Summons a new [MrMeeseeks], scheduling the [task] for background execution.
+     * Summons a new [TaskWorker], scheduling the [task] for background execution.
      *
      * @param task The [Task] to schedule.
-     * @return [MrMeeseeksId] identifying the summoned [MrMeeseeks].
+     * @return [MrMeeseeksId] identifying the summoned [TaskWorker].
      */
     fun summon(task: Task): MrMeeseeksId
 
     /**
-     * Sends a specific [MrMeeseeks] back to the box, canceling its scheduled or ongoing work.
+     * Sends a specific [TaskWorker] back to the box, canceling its scheduled or ongoing work.
      *
-     * @param id A [MrMeeseeksId] identifying a specific [MrMeeseeks].
+     * @param id A [MrMeeseeksId] identifying a specific [TaskWorker].
      */
     fun sendBackToBox(id: MrMeeseeksId)
 
     /**
-     * Sends all currently active [MrMeeseeks] back to the box, removing them from scheduling.
+     * Sends all currently active [TaskWorker] back to the box, removing them from scheduling.
      */
     fun sendAllBackToBox()
 

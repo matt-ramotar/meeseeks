@@ -9,7 +9,7 @@ import kotlin.time.Duration
 @Serializable
 sealed class TaskRetryPolicy {
     /**
-     * Retries on a fixed interval until [maxRetries] is reached or [MrMeeseeks] succeeds.
+     * Retries on a fixed interval until [maxRetries] is reached or [TaskWorker] succeeds.
      */
     @Serializable
     data class FixedInterval(
@@ -18,7 +18,7 @@ sealed class TaskRetryPolicy {
     ) : TaskRetryPolicy()
 
     /**
-     * Retries with an exponentially increasing delay until [maxRetries] is reached or [MrMeeseeks] succeeds.
+     * Retries with an exponentially increasing delay until [maxRetries] is reached or [TaskWorker] succeeds.
      */
     @Serializable
     data class ExponentialBackoff(
