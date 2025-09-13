@@ -63,7 +63,7 @@ interface BackgroundTaskManager {
     fun observeStatus(id: TaskId): Flow<TaskStatus?>
 
     companion object Companion {
-        val value: BackgroundTaskManager
+        val instance: BackgroundTaskManager
             get() {
                 return BackgroundTaskManagerSingleton.backgroundTaskManager
             }
