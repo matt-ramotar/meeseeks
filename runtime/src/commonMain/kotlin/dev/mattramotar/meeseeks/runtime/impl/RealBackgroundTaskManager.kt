@@ -149,7 +149,7 @@ internal class RealBackgroundTaskManager(
             .map { it.toScheduledTask() }
     }
 
-    override fun reschedule(id: TaskId, newTask: Task): TaskId {
+    override fun rescheduleTask(id: TaskId, newTask: Task): TaskId {
         val taskQueries = database.taskQueries
         val existing = taskQueries.selectTaskByMrMeeseeksId(id.value).executeAsOneOrNull()
             ?: error("Update failed: Task $id not found.")
