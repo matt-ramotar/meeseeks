@@ -55,7 +55,7 @@ internal class MeeseeksWorker(
 
         val result: TaskResult = try {
             val meeseeks =
-                summonMrMeeseeks(taskEntity.toTask())
+                enqueueTask(taskEntity.toTask())
             meeseeks.execute(taskEntity.parameters)
         } catch (error: Throwable) {
             when (error) {
@@ -137,7 +137,7 @@ internal class MeeseeksWorker(
         }
     }
 
-    private fun summonMrMeeseeks(task: Task): TaskWorker {
+    private fun enqueueTask(task: Task): TaskWorker {
         val factory = taskWorkerRegistry.getFactory(task.taskType)
         return factory.create(task)
     }
