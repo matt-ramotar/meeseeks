@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 
 /**
- * Information that [MrMeeseeks] needs to execute the requested [Task].
+ * Information that [TaskWorker] needs to execute the requested [Task].
  */
 @Serializable
 @JvmInline

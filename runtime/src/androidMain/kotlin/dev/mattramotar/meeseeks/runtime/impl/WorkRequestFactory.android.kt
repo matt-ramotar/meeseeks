@@ -25,13 +25,13 @@ internal actual class WorkRequestFactory(
 
         val inputData = workDataOf(
             KEY_TASK_ID to taskId,
-            KEY_MEESEEKS_TYPE to task.meeseeksType,
+            KEY_MEESEEKS_TYPE to task.taskType,
             KEY_TASK_PARAMETERS to task.parameters
         )
 
         val delegateWorkRequest = when (val schedule = task.schedule) {
             is TaskSchedule.OneTime -> {
-                OneTimeWorkRequestBuilder<MeeseeksWorker>()
+                OneTimeWorkRequestBuilder<BackgroundTaskWorker>()
                     .setConstraints(constraints)
                     .setBackoffCriteria(backoffPolicy, backoffDelay, TimeUnit.MILLISECONDS)
                     .setInputData(inputData)
@@ -46,7 +46,7 @@ internal actual class WorkRequestFactory(
                 val repeatInterval = intervalMillis.coerceAtLeast(MINIMUM_PERIODIC_INTERVAL_MS)
                 val flexInterval = if (flexMillis > 0) flexMillis else repeatInterval
 
-                PeriodicWorkRequestBuilder<MeeseeksWorker>(
+                PeriodicWorkRequestBuilder<BackgroundTaskWorker>(
                     repeatInterval, TimeUnit.MILLISECONDS,
                     flexInterval, TimeUnit.MILLISECONDS
                 )

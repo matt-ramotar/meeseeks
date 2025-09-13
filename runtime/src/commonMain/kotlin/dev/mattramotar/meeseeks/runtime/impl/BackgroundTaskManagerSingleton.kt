@@ -1,0 +1,48 @@
+package dev.mattramotar.meeseeks.runtime.impl
+
+import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
+import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
+import dev.mattramotar.meeseeks.runtime.AppContext
+import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
+import dev.mattramotar.meeseeks.runtime.dsl.box.BackgroundTaskManager
+import dev.mattramotar.meeseeks.runtime.impl.concurrency.synchronized
+import kotlin.concurrent.Volatile
+
+internal object BackgroundTaskManagerSingleton {
+
+    @Volatile
+    private var _backgroundTaskManager: BackgroundTaskManager? = null
+
+    val backgroundTaskManager: BackgroundTaskManager
+        get() {
+            return _backgroundTaskManager ?: throw IllegalStateException("BackgroundTaskManager is not set.")
+        }
+
+    fun getOrCreateBackgroundTaskManager(
+        context: AppContext,
+        config: BackgroundTaskConfig = BackgroundTaskConfig(),
+        registry: TaskWorkerRegistry
+    ): BackgroundTaskManager {
+        val existingBoxCheck1 = _backgroundTaskManager
+        if (existingBoxCheck1 != null) return existingBoxCheck1
+
+        return synchronized(this) {
+            val existingBoxCheck2 = _backgroundTaskManager
+            if (existingBoxCheck2 != null) {
+                existingBoxCheck2
+            } else {
+                val newBox = BackgroundTaskManager(context, config, registry)
+                _backgroundTaskManager = newBox
+                newBox
+            }
+        }
+    }
+
+
+    fun resetState() {
+        synchronized(this) {
+            _backgroundTaskManager = null
+        }
+    }
+}
+

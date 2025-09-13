@@ -8,7 +8,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 @Serializable
 data class Task(
-    val meeseeksType: String,
+    val taskType: String,
     val parameters: TaskParameters = TaskParameters(),
     val preconditions: TaskPreconditions = TaskPreconditions(),
     val priority: TaskPriority = TaskPriority.MEDIUM,
