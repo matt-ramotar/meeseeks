@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime
 
 actual fun initializePlatformSpecificScheduling(
-    context: MeeseeksContext,
+    context: AppContext,
     config: BackgroundTaskConfig,
     backgroundTaskManager: BackgroundTaskManager,
     registry: MeeseeksRegistry

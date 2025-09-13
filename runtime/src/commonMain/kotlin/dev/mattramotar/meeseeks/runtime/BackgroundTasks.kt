@@ -6,7 +6,7 @@ import dev.mattramotar.meeseeks.runtime.impl.MeeseeksBoxSingleton
 object BackgroundTasks {
 
     fun initialize(
-        context: MeeseeksContext,
+        context: AppContext,
         config: BackgroundTaskConfig = BackgroundTaskConfig(),
         registryBuilder: MeeseeksRegistry.Builder.() -> Unit
     ) {
@@ -23,7 +23,7 @@ object BackgroundTasks {
 }
 
 expect fun initializePlatformSpecificScheduling(
-    context: MeeseeksContext,
+    context: AppContext,
     config: BackgroundTaskConfig = BackgroundTaskConfig(),
     backgroundTaskManager: BackgroundTaskManager,
     registry: MeeseeksRegistry

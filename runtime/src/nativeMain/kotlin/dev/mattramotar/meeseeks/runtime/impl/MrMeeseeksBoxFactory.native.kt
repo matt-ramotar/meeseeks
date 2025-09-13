@@ -2,13 +2,13 @@ package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
-import dev.mattramotar.meeseeks.runtime.MeeseeksContext
+import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import platform.BackgroundTasks.BGTaskScheduler
 
 internal actual class MeeseeksBoxFactory {
     actual fun create(
-        context: MeeseeksContext,
+        context: AppContext,
         registry: MeeseeksRegistry,
         config: BackgroundTaskConfig
     ): BackgroundTaskManager {

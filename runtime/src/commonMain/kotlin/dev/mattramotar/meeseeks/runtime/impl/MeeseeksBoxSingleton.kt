@@ -2,7 +2,7 @@ package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
-import dev.mattramotar.meeseeks.runtime.MeeseeksContext
+import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import dev.mattramotar.meeseeks.runtime.dsl.box.MeeseeksBox
 import dev.mattramotar.meeseeks.runtime.impl.concurrency.synchronized
@@ -19,7 +19,7 @@ internal object MeeseeksBoxSingleton {
         }
 
     fun getOrCreateMeeseeksBox(
-        context: MeeseeksContext,
+        context: AppContext,
         config: BackgroundTaskConfig = BackgroundTaskConfig(),
         registry: MeeseeksRegistry
     ): BackgroundTaskManager {

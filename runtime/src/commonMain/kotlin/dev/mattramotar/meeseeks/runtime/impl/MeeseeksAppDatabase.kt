@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.MeeseeksContext
+import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.impl.concurrency.synchronized
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.impl.db.adapters.taskEntityAdapter
@@ -14,7 +14,7 @@ internal object MeeseeksAppDatabase {
     @Volatile
     private var singleton: MeeseeksDatabase? = null
 
-    fun init(context: MeeseeksContext) {
+    fun init(context: AppContext) {
         if (singleton == null) {
             synchronized(this) {
                 if (singleton == null) {
@@ -33,7 +33,7 @@ internal object MeeseeksAppDatabase {
         }
     }
 
-    fun require(context: MeeseeksContext): MeeseeksDatabase {
+    fun require(context: AppContext): MeeseeksDatabase {
         init(context)
 
         var retriesRemaining = 3

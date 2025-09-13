@@ -4,7 +4,7 @@ import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.impl.MeeseeksAppDatabase
 
 actual fun initializePlatformSpecificScheduling(
-    context: MeeseeksContext,
+    context: AppContext,
     config: BackgroundTaskConfig,
     backgroundTaskManager: BackgroundTaskManager,
     registry: MeeseeksRegistry
