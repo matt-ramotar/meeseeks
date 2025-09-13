@@ -1,11 +1,11 @@
 package dev.mattramotar.meeseeks.runtime.dsl.registry
 
-import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
+import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.TaskWorker
 import dev.mattramotar.meeseeks.runtime.Task
 
 object MeeseeksRegistryBuilderExtensions {
-    fun MeeseeksRegistry.Builder.register(
+    fun TaskWorkerRegistry.Builder.register(
         type: String,
         createTaskWorker: (Task) -> TaskWorker
     ) {

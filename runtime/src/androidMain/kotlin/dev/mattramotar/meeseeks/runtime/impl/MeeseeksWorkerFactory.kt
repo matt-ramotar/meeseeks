@@ -4,14 +4,14 @@ import android.content.Context
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
-import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
+import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 
 
 internal class MeeseeksWorkerFactory(
     private val database: MeeseeksDatabase,
-    private val registry: MeeseeksRegistry
+    private val registry: TaskWorkerRegistry
 ) : WorkerFactory() {
 
     override fun createWorker(

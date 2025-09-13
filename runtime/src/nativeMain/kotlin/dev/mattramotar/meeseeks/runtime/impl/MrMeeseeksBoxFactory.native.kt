@@ -3,13 +3,13 @@ package dev.mattramotar.meeseeks.runtime.impl
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
+import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import platform.BackgroundTasks.BGTaskScheduler
 
 internal actual class MeeseeksBoxFactory {
     actual fun create(
         context: AppContext,
-        registry: MeeseeksRegistry,
+        registry: TaskWorkerRegistry,
         config: BackgroundTaskConfig
     ): BackgroundTaskManager {
         val database = MeeseeksAppDatabase.require(context)

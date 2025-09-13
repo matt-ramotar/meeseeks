@@ -8,9 +8,9 @@ object BackgroundTasks {
     fun initialize(
         context: AppContext,
         config: BackgroundTaskConfig = BackgroundTaskConfig(),
-        registryBuilder: MeeseeksRegistry.Builder.() -> Unit
+        registryBuilder: TaskWorkerRegistry.Builder.() -> Unit
     ) {
-        val registry = MeeseeksRegistry.Builder().apply(registryBuilder).build()
+        val registry = TaskWorkerRegistry.Builder().apply(registryBuilder).build()
         MeeseeksAppDatabase.init(context)
         val meeseeksBox = MeeseeksBoxSingleton.getOrCreateMeeseeksBox(context, config, registry)
         initializePlatformSpecificScheduling(
@@ -26,5 +26,5 @@ expect fun initializePlatformSpecificScheduling(
     context: AppContext,
     config: BackgroundTaskConfig = BackgroundTaskConfig(),
     backgroundTaskManager: BackgroundTaskManager,
-    registry: MeeseeksRegistry
+    registry: TaskWorkerRegistry
 )

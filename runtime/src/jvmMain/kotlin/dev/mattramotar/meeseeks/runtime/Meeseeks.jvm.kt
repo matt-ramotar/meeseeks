@@ -4,7 +4,7 @@ actual fun initializePlatformSpecificScheduling(
     context: AppContext,
     config: BackgroundTaskConfig,
     backgroundTaskManager: BackgroundTaskManager,
-    registry: MeeseeksRegistry
+    registry: TaskWorkerRegistry
 ) {
     // No platform-specific scheduling needed
 }

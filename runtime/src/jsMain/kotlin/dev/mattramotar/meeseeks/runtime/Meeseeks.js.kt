@@ -8,7 +8,7 @@ actual fun initializePlatformSpecificScheduling(
     context: AppContext,
     config: BackgroundTaskConfig,
     backgroundTaskManager: BackgroundTaskManager,
-    registry: MeeseeksRegistry
+    registry: TaskWorkerRegistry
 ) {
     val database: MeeseeksDatabase = MeeseeksAppDatabase.require(context)
     MeeseeksBGTaskRunner.database = database

@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
-import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
+import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskResult
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 object MeeseeksBGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
     internal lateinit var database: MeeseeksDatabase
-    internal lateinit var registry: MeeseeksRegistry
+    internal lateinit var registry: TaskWorkerRegistry
     internal var config: BackgroundTaskConfig? = null
 
     fun run(

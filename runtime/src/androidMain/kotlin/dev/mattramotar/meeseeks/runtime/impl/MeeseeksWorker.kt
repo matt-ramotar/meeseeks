@@ -3,7 +3,7 @@ package dev.mattramotar.meeseeks.runtime.impl
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
+import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskWorker
@@ -24,7 +24,7 @@ internal class MeeseeksWorker(
     workerParameters: WorkerParameters,
     private val database: MeeseeksDatabase,
     private val taskId: TaskId,
-    private val meeseeksRegistry: MeeseeksRegistry,
+    private val taskWorkerRegistry: TaskWorkerRegistry,
     private val telemetry: MeeseeksTelemetry? = null
 ) : CoroutineWorker(context, workerParameters) {
 
@@ -138,7 +138,7 @@ internal class MeeseeksWorker(
     }
 
     private fun summonMrMeeseeks(task: Task): TaskWorker {
-        val factory = meeseeksRegistry.getFactory(task.meeseeksType)
+        val factory = taskWorkerRegistry.getFactory(task.meeseeksType)
         return factory.create(task)
     }
 }

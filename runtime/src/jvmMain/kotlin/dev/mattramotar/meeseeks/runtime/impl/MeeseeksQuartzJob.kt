@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
+import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskId
@@ -29,7 +29,7 @@ internal class MeeseeksQuartzJob(
 
             val database = schedulerContext["meeseeksDatabase"] as? MeeseeksDatabase
                 ?: error("MeeseeksDatabase missing from scheduler context")
-            val registry = schedulerContext["meeseeksRegistry"] as? MeeseeksRegistry
+            val registry = schedulerContext["meeseeksRegistry"] as? TaskWorkerRegistry
                 ?: error("MeeseeksRegistry missing from scheduler context")
 
             val taskQueries = database.taskQueries

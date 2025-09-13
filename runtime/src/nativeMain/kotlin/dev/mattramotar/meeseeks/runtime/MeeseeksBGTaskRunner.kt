@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 object MeeseeksBGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
     internal lateinit var database: MeeseeksDatabase
-    internal lateinit var registry: MeeseeksRegistry
+    internal lateinit var registry: TaskWorkerRegistry
     internal var config: BackgroundTaskConfig? = null
 
 
