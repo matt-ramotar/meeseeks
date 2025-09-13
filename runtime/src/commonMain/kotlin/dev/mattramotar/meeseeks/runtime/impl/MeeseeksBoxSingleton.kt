@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
-import dev.mattramotar.meeseeks.runtime.MeeseeksBoxConfig
+import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
 import dev.mattramotar.meeseeks.runtime.MeeseeksContext
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import dev.mattramotar.meeseeks.runtime.dsl.box.MeeseeksBox
@@ -20,7 +20,7 @@ internal object MeeseeksBoxSingleton {
 
     fun getOrCreateMeeseeksBox(
         context: MeeseeksContext,
-        config: MeeseeksBoxConfig = MeeseeksBoxConfig(),
+        config: BackgroundTaskConfig = BackgroundTaskConfig(),
         registry: MeeseeksRegistry
     ): BackgroundTaskManager {
         val existingBoxCheck1 = _backgroundTaskManager

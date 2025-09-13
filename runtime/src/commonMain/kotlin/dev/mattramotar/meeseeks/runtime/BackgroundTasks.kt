@@ -7,7 +7,7 @@ object BackgroundTasks {
 
     fun initialize(
         context: MeeseeksContext,
-        config: MeeseeksBoxConfig = MeeseeksBoxConfig(),
+        config: BackgroundTaskConfig = BackgroundTaskConfig(),
         registryBuilder: MeeseeksRegistry.Builder.() -> Unit
     ) {
         val registry = MeeseeksRegistry.Builder().apply(registryBuilder).build()
@@ -24,7 +24,7 @@ object BackgroundTasks {
 
 expect fun initializePlatformSpecificScheduling(
     context: MeeseeksContext,
-    config: MeeseeksBoxConfig = MeeseeksBoxConfig(),
+    config: BackgroundTaskConfig = BackgroundTaskConfig(),
     backgroundTaskManager: BackgroundTaskManager,
     registry: MeeseeksRegistry
 )

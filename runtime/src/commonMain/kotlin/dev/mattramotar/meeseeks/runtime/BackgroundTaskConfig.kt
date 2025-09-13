@@ -3,7 +3,7 @@ package dev.mattramotar.meeseeks.runtime
 /**
  * Configuration for [BackgroundTaskManager].
  */
-data class MeeseeksBoxConfig(
+data class BackgroundTaskConfig(
     val maxParallelTasks: Int = 2,
     val allowExpedited: Boolean = false,
     val maxRetryCount: Int = 3,

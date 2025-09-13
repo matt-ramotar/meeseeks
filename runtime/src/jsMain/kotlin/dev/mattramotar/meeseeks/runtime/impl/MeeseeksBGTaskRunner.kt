@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.MeeseeksBoxConfig
+import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
@@ -19,7 +19,7 @@ object MeeseeksBGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
 
     internal lateinit var database: MeeseeksDatabase
     internal lateinit var registry: MeeseeksRegistry
-    internal var config: MeeseeksBoxConfig? = null
+    internal var config: BackgroundTaskConfig? = null
 
     fun run(
         tag: String
