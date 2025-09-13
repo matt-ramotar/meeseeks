@@ -9,7 +9,7 @@ import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 
 
-internal class MeeseeksWorkerFactory(
+internal class BackgroundTaskWorkerFactory(
     private val database: MeeseeksDatabase,
     private val registry: TaskWorkerRegistry
 ) : WorkerFactory() {

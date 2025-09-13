@@ -6,7 +6,7 @@ class TaskWorkerRegistry private constructor(
 ) {
 
     internal fun getFactory(type: String): TaskWorkerFactory =
-        factories[type] ?: error("MrMeeseeksFactory not found for type $type.")
+        factories[type] ?: error("TaskWorkerFactory not found for type $type.")
 
     companion object Companion {
         fun build(block: Builder.() -> Unit): TaskWorkerRegistry {

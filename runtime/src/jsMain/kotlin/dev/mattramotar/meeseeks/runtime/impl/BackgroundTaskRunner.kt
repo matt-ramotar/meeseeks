@@ -1,11 +1,11 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
-import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
-import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskStatus
+import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
+import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.db.TaskEntity
 import dev.mattramotar.meeseeks.runtime.impl.coroutines.MeeseeksDispatchers
@@ -28,12 +28,12 @@ object BackgroundTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
         val taskEntity =
             database.taskQueries.selectTaskByTaskId(taskId).executeAsOneOrNull() ?: return
         launch {
-            runMeeseeksTask(taskEntity)
+            runTask(taskEntity)
         }
 
     }
 
-    private suspend fun runMeeseeksTask(taskEntity: TaskEntity) {
+    private suspend fun runTask(taskEntity: TaskEntity) {
         val taskQueries = database.taskQueries
         val taskLogQueries = database.taskLogQueries
 
@@ -42,24 +42,24 @@ object BackgroundTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
             return
         }
 
-        val taskId = taskEntity.id
-        val mrMeeseeksId = TaskId(taskId)
+        val taskEntityId = taskEntity.id
+        val taskId = TaskId(taskEntityId)
         val task = taskEntity.toTask()
         val attemptNumber = taskEntity.runAttemptCount.toInt() + 1
 
         val timestamp = Timestamp.now()
-        taskQueries.updateStatus(TaskStatus.Running, timestamp, taskId)
+        taskQueries.updateStatus(TaskStatus.Running, timestamp, taskEntityId)
 
         config?.telemetry?.onEvent(
-            TaskTelemetryEvent.TaskStarted(mrMeeseeksId, task, attemptNumber)
+            TaskTelemetryEvent.TaskStarted(taskId, task, attemptNumber)
         )
 
-        val meeseeks = registry.getFactory(taskEntity.taskType)
+        val taskWorker = registry.getFactory(taskEntity.taskType)
             .create(task)
 
 
         val result: TaskResult = try {
-            meeseeks.execute(taskEntity.parameters)
+            taskWorker.execute(taskEntity.parameters)
         } catch (error: Throwable) {
 
             when (error) {
@@ -79,9 +79,9 @@ object BackgroundTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
 
         when (result) {
             is TaskResult.Success -> {
-                taskQueries.updateStatus(TaskStatus.Finished.Completed, Timestamp.now(), taskId)
+                taskQueries.updateStatus(TaskStatus.Finished.Completed, Timestamp.now(), taskEntityId)
                 config?.telemetry?.onEvent(
-                    TaskTelemetryEvent.TaskSucceeded(mrMeeseeksId, task, attemptNumber)
+                    TaskTelemetryEvent.TaskSucceeded(taskId, task, attemptNumber)
                 )
             }
 
@@ -89,7 +89,7 @@ object BackgroundTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
             is TaskResult.Retry -> {
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
-                        mrMeeseeksId,
+                        taskId,
                         task,
                         (result as? TaskResult.Failure)?.error,
                         attemptNumber
@@ -98,10 +98,10 @@ object BackgroundTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
             }
 
             is TaskResult.Failure.Permanent -> {
-                taskQueries.updateStatus(TaskStatus.Finished.Failed, Timestamp.now(), taskId)
+                taskQueries.updateStatus(TaskStatus.Finished.Failed, Timestamp.now(), taskEntityId)
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
-                        mrMeeseeksId,
+                        taskId,
                         task,
                         result.error,
                         attemptNumber

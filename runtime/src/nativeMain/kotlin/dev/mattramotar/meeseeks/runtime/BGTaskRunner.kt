@@ -35,7 +35,7 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
         launch {
             try {
-                val succeeded = runMeeseeksTask(taskId)
+                val succeeded = runTask(taskId)
                 completionCallback(succeeded)
             } catch (_: Throwable) {
                 completionCallback(false)
@@ -44,37 +44,37 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
     }
 
-    private suspend fun runMeeseeksTask(taskId: Long): Boolean {
+    private suspend fun runTask(id: Long): Boolean {
         val timestamp = Timestamp.now()
         val taskQueries = database.taskQueries
         val taskLogQueries = database.taskLogQueries
 
         val taskEntity =
-            taskQueries.selectTaskByTaskId(taskId).executeAsOneOrNull() ?: return false
+            taskQueries.selectTaskByTaskId(id).executeAsOneOrNull() ?: return false
 
         if (taskEntity.status !is TaskStatus.Pending) {
             return false
         }
 
-        taskQueries.updateStatus(TaskStatus.Running, timestamp, taskId)
-        val mrMeeseeksId = TaskId(taskId)
+        taskQueries.updateStatus(TaskStatus.Running, timestamp, id)
+        val taskId = TaskId(id)
         val task = taskEntity.toTask()
         val attemptNumber = taskEntity.runAttemptCount.toInt() + 1
 
 
         config?.telemetry?.onEvent(
             TaskTelemetryEvent.TaskStarted(
-                taskId = mrMeeseeksId,
+                taskId = taskId,
                 task = task,
                 runAttemptCount = attemptNumber
             )
         )
 
-        val meeseeks = registry.getFactory(taskEntity.taskType)
+        val taskWorker = registry.getFactory(taskEntity.taskType)
             .create(task)
 
         val result: TaskResult = try {
-            meeseeks.execute(taskEntity.parameters)
+            taskWorker.execute(taskEntity.parameters)
         } catch (error: Throwable) {
             when (error) {
                 is TransientNetworkException -> TaskResult.Failure.Transient(error)
@@ -94,11 +94,11 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         return when (result) {
             is TaskResult.Success -> {
                 val updatedNow = Timestamp.now()
-                taskQueries.updateStatus(TaskStatus.Finished.Completed, updatedNow, taskId)
+                taskQueries.updateStatus(TaskStatus.Finished.Completed, updatedNow, id)
 
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskSucceeded(
-                        taskId = mrMeeseeksId,
+                        taskId = taskId,
                         task = task,
                         runAttemptCount = attemptNumber
                     )
@@ -109,7 +109,7 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             is TaskResult.Retry -> {
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
-                        taskId = mrMeeseeksId,
+                        taskId = taskId,
                         task = task,
                         runAttemptCount = attemptNumber,
                         error = null
@@ -120,11 +120,11 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
             is TaskResult.Failure.Permanent -> {
                 val updatedNow = Timestamp.now()
-                taskQueries.updateStatus(TaskStatus.Finished.Failed, updatedNow, taskId)
+                taskQueries.updateStatus(TaskStatus.Finished.Failed, updatedNow, id)
 
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
-                        taskId = mrMeeseeksId,
+                        taskId = taskId,
                         task = task,
                         runAttemptCount = attemptNumber,
                         error = result.error
@@ -136,7 +136,7 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             is TaskResult.Failure.Transient -> {
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
-                        taskId = mrMeeseeksId,
+                        taskId = taskId,
                         task = task,
                         runAttemptCount = attemptNumber,
                         error = result.error
