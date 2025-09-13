@@ -14,7 +14,7 @@ internal actual class BackgroundTaskManagerFactory {
     ): BackgroundTaskManager {
         val database = MeeseeksAppDatabase.require(context)
         val scheduler = StdSchedulerFactory("quartz.properties").scheduler
-        scheduler.context["meeseeksDB"] = database
+        scheduler.context["meeseeksDatabase"] = database
         scheduler.context["taskWorkerRegistry"] = registry
         scheduler.start()
 
