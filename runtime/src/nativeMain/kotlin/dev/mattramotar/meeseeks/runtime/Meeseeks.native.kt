@@ -6,7 +6,7 @@ import dev.mattramotar.meeseeks.runtime.impl.MeeseeksAppDatabase
 actual fun initializePlatformSpecificScheduling(
     context: MeeseeksContext,
     config: MeeseeksBoxConfig,
-    meeseeksBox: MeeseeksBox,
+    backgroundTaskManager: BackgroundTaskManager,
     registry: MeeseeksRegistry
 ) {
     val database: MeeseeksDatabase = MeeseeksAppDatabase.require(context)

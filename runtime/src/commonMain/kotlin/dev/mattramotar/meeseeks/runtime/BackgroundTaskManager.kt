@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Central task manager.
  */
-interface MeeseeksBox {
+interface BackgroundTaskManager {
 
 
     /**
@@ -62,10 +62,10 @@ interface MeeseeksBox {
      */
     fun watchStatus(id: MrMeeseeksId): Flow<TaskStatus?>
 
-    companion object {
-        val value: MeeseeksBox
+    companion object Companion {
+        val value: BackgroundTaskManager
             get() {
-                return MeeseeksBoxSingleton.meeseeksBox
+                return MeeseeksBoxSingleton.backgroundTaskManager
             }
     }
 }

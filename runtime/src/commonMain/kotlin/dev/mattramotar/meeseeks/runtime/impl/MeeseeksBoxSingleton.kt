@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.MeeseeksBox
+import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.MeeseeksBoxConfig
 import dev.mattramotar.meeseeks.runtime.MeeseeksContext
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
@@ -11,28 +11,28 @@ import kotlin.concurrent.Volatile
 internal object MeeseeksBoxSingleton {
 
     @Volatile
-    private var _meeseeksBox: MeeseeksBox? = null
+    private var _backgroundTaskManager: BackgroundTaskManager? = null
 
-    val meeseeksBox: MeeseeksBox
+    val backgroundTaskManager: BackgroundTaskManager
         get() {
-            return _meeseeksBox ?: throw IllegalStateException("MeeseeksBox not set.")
+            return _backgroundTaskManager ?: throw IllegalStateException("MeeseeksBox not set.")
         }
 
     fun getOrCreateMeeseeksBox(
         context: MeeseeksContext,
         config: MeeseeksBoxConfig = MeeseeksBoxConfig(),
         registry: MeeseeksRegistry
-    ): MeeseeksBox {
-        val existingBoxCheck1 = _meeseeksBox
+    ): BackgroundTaskManager {
+        val existingBoxCheck1 = _backgroundTaskManager
         if (existingBoxCheck1 != null) return existingBoxCheck1
 
         return synchronized(this) {
-            val existingBoxCheck2 = _meeseeksBox
+            val existingBoxCheck2 = _backgroundTaskManager
             if (existingBoxCheck2 != null) {
                 existingBoxCheck2
             } else {
                 val newBox = MeeseeksBox(context, config, registry)
-                _meeseeksBox = newBox
+                _backgroundTaskManager = newBox
                 newBox
             }
         }
@@ -41,7 +41,7 @@ internal object MeeseeksBoxSingleton {
 
     fun resetState() {
         synchronized(this) {
-            _meeseeksBox = null
+            _backgroundTaskManager = null
         }
     }
 }

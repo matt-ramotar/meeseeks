@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime
 
 /**
- * Configuration for [MeeseeksBox].
+ * Configuration for [BackgroundTaskManager].
  */
 data class MeeseeksBoxConfig(
     val maxParallelTasks: Int = 2,

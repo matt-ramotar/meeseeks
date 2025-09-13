@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.MeeseeksBox
+import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.MeeseeksBoxConfig
 import dev.mattramotar.meeseeks.runtime.MeeseeksContext
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
@@ -11,13 +11,13 @@ internal actual class MeeseeksBoxFactory {
         context: MeeseeksContext,
         registry: MeeseeksRegistry,
         config: MeeseeksBoxConfig
-    ): MeeseeksBox {
+    ): BackgroundTaskManager {
         val database = MeeseeksAppDatabase.require(context)
         val bgTaskScheduler = BGTaskScheduler.sharedScheduler
         val workRequestFactory = WorkRequestFactory()
         val taskScheduler = TaskScheduler(database, bgTaskScheduler)
         val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory)
-        return RealMeeseeksBox(
+        return RealBackgroundTaskManager(
             database,
             workRequestFactory,
             taskScheduler,

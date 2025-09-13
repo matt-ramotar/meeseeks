@@ -25,6 +25,6 @@ object BackgroundTasks {
 expect fun initializePlatformSpecificScheduling(
     context: MeeseeksContext,
     config: MeeseeksBoxConfig = MeeseeksBoxConfig(),
-    meeseeksBox: MeeseeksBox,
+    backgroundTaskManager: BackgroundTaskManager,
     registry: MeeseeksRegistry
 )

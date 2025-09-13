@@ -2,7 +2,7 @@ package dev.mattramotar.meeseeks.runtime.impl
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
-import dev.mattramotar.meeseeks.runtime.MeeseeksBox
+import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
@@ -21,14 +21,14 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 
-internal class RealMeeseeksBox(
+internal class RealBackgroundTaskManager(
     private val database: MeeseeksDatabase,
     private val workRequestFactory: WorkRequestFactory,
     private val taskScheduler: TaskScheduler,
     private val taskRescheduler: TaskRescheduler,
     override val coroutineContext: CoroutineContext = SupervisorJob() + MeeseeksDispatchers.IO,
     private val telemetry: MeeseeksTelemetry? = null,
-) : MeeseeksBox, CoroutineScope {
+) : BackgroundTaskManager, CoroutineScope {
 
 
     init {
