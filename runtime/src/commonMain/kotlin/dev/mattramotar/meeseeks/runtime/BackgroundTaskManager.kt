@@ -23,7 +23,7 @@ interface BackgroundTaskManager {
      *
      * @param id A [TaskId] identifying a specific [TaskWorker].
      */
-    fun sendBackToBox(id: TaskId)
+    fun cancel(id: TaskId)
 
     /**
      * Sends all currently active [TaskWorker] back to the box, removing them from scheduling.

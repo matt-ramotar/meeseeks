@@ -77,7 +77,7 @@ internal class RealBackgroundTaskManager(
         return TaskId(taskId)
     }
 
-    override fun sendBackToBox(id: TaskId) {
+    override fun cancel(id: TaskId) {
         val taskQueries = database.taskQueries
         val taskEntity =
             taskQueries.selectTaskByMrMeeseeksId(id.value).executeAsOneOrNull() ?: return
