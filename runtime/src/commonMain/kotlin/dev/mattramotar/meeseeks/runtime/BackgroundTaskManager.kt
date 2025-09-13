@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime
 
-import dev.mattramotar.meeseeks.runtime.impl.MeeseeksBoxSingleton
+import dev.mattramotar.meeseeks.runtime.impl.BackgroundTaskManagerSingleton
 import kotlinx.coroutines.flow.Flow
 
 
@@ -65,7 +65,7 @@ interface BackgroundTaskManager {
     companion object Companion {
         val value: BackgroundTaskManager
             get() {
-                return MeeseeksBoxSingleton.backgroundTaskManager
+                return BackgroundTaskManagerSingleton.backgroundTaskManager
             }
     }
 }

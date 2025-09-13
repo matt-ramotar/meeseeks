@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime
 
 import dev.mattramotar.meeseeks.runtime.impl.MeeseeksAppDatabase
-import dev.mattramotar.meeseeks.runtime.impl.MeeseeksBoxSingleton
+import dev.mattramotar.meeseeks.runtime.impl.BackgroundTaskManagerSingleton
 
 object BackgroundTasks {
 
@@ -12,7 +12,7 @@ object BackgroundTasks {
     ) {
         val registry = TaskWorkerRegistry.Builder().apply(registryBuilder).build()
         MeeseeksAppDatabase.init(context)
-        val meeseeksBox = MeeseeksBoxSingleton.getOrCreateMeeseeksBox(context, config, registry)
+        val meeseeksBox = BackgroundTaskManagerSingleton.getOrCreateMeeseeksBox(context, config, registry)
         initializePlatformSpecificScheduling(
             context,
             config,

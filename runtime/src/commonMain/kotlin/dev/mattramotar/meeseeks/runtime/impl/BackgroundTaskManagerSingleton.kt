@@ -8,7 +8,7 @@ import dev.mattramotar.meeseeks.runtime.dsl.box.MeeseeksBox
 import dev.mattramotar.meeseeks.runtime.impl.concurrency.synchronized
 import kotlin.concurrent.Volatile
 
-internal object MeeseeksBoxSingleton {
+internal object BackgroundTaskManagerSingleton {
 
     @Volatile
     private var _backgroundTaskManager: BackgroundTaskManager? = null
