@@ -136,7 +136,7 @@ internal class RealBackgroundTaskManager(
         }
     }
 
-    override fun getStatus(id: TaskId): TaskStatus? {
+    override fun getTaskStatus(id: TaskId): TaskStatus? {
         val row = database.taskQueries
             .selectTaskByMrMeeseeksId(id.value)
             .executeAsOneOrNull() ?: return null

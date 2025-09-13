@@ -39,7 +39,7 @@ interface BackgroundTaskManager {
      * Returns the current status of the task with the given [id],
      * or `null` if the task does not exist.
      */
-    fun getStatus(id: TaskId): TaskStatus?
+    fun getTaskStatus(id: TaskId): TaskStatus?
 
     /**
      * Returns a read-only list of all tasks known to Meeseeks, including
