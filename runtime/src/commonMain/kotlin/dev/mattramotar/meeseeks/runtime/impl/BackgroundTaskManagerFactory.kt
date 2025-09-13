@@ -5,7 +5,7 @@ import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
 
-internal expect class MeeseeksBoxFactory() {
+internal expect class BackgroundTaskManagerFactory() {
     fun create(
         context: AppContext,
         registry: TaskWorkerRegistry,

@@ -8,7 +8,7 @@ import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
 
-internal actual class MeeseeksBoxFactory {
+internal actual class BackgroundTaskManagerFactory {
     actual fun create(
         context: AppContext,
         registry: TaskWorkerRegistry,

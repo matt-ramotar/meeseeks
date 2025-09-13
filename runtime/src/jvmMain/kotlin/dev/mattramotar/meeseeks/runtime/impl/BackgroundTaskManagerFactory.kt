@@ -6,7 +6,7 @@ import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import org.quartz.impl.StdSchedulerFactory
 
-internal actual class MeeseeksBoxFactory {
+internal actual class BackgroundTaskManagerFactory {
     actual fun create(
         context: AppContext,
         registry: TaskWorkerRegistry,

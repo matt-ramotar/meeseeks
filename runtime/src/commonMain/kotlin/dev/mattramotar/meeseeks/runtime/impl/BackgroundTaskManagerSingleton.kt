@@ -4,7 +4,7 @@ import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
 import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
-import dev.mattramotar.meeseeks.runtime.dsl.box.MeeseeksBox
+import dev.mattramotar.meeseeks.runtime.dsl.box.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.impl.concurrency.synchronized
 import kotlin.concurrent.Volatile
 
@@ -31,7 +31,7 @@ internal object BackgroundTaskManagerSingleton {
             if (existingBoxCheck2 != null) {
                 existingBoxCheck2
             } else {
-                val newBox = MeeseeksBox(context, config, registry)
+                val newBox = BackgroundTaskManager(context, config, registry)
                 _backgroundTaskManager = newBox
                 newBox
             }
