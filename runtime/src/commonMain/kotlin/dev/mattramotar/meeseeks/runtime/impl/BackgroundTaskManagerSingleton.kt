@@ -15,7 +15,7 @@ internal object BackgroundTaskManagerSingleton {
 
     val backgroundTaskManager: BackgroundTaskManager
         get() {
-            return _backgroundTaskManager ?: throw IllegalStateException("MeeseeksBox not set.")
+            return _backgroundTaskManager ?: throw IllegalStateException("BackgroundTaskManager is not set.")
         }
 
     fun getOrCreateBackgroundTaskManager(

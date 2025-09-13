@@ -12,11 +12,11 @@ object Meeseeks {
     ) {
         val registry = TaskWorkerRegistry.Builder().apply(registryBuilder).build()
         MeeseeksAppDatabase.init(context)
-        val meeseeksBox = BackgroundTaskManagerSingleton.getOrCreateBackgroundTaskManager(context, config, registry)
+        val backgroundTaskManager = BackgroundTaskManagerSingleton.getOrCreateBackgroundTaskManager(context, config, registry)
         initializePlatformSpecificScheduling(
             context,
             config,
-            meeseeksBox,
+            backgroundTaskManager,
             registry
         )
     }
