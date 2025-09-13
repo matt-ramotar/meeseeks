@@ -29,13 +29,13 @@ internal class MeeseeksQuartzJob(
 
             val database = schedulerContext["meeseeksDatabase"] as? MeeseeksDatabase
                 ?: error("MeeseeksDatabase missing from scheduler context")
-            val registry = schedulerContext["meeseeksRegistry"] as? TaskWorkerRegistry
-                ?: error("MeeseeksRegistry missing from scheduler context")
+            val registry = schedulerContext["taskWorkerRegistry"] as? TaskWorkerRegistry
+                ?: error("TaskWorkerRegistry missing from scheduler context")
 
             val taskQueries = database.taskQueries
             val taskLogQueries = database.taskLogQueries
-            val taskWorkerId = context.jobDetail.jobDataMap.getLong("task_id")
-            val taskEntity = taskQueries.selectTaskByTaskId(taskWorkerId).executeAsOneOrNull()
+            val taskEntityId = context.jobDetail.jobDataMap.getLong("task_id")
+            val taskEntity = taskQueries.selectTaskByTaskId(taskEntityId).executeAsOneOrNull()
                 ?: return@runBlocking
 
             if (taskEntity.status !is TaskStatus.Pending) {
@@ -46,13 +46,13 @@ internal class MeeseeksQuartzJob(
             taskQueries.incrementRunAttemptCount(taskEntity.id)
             taskQueries.updateStatus(TaskStatus.Running, timestamp, taskEntity.id)
 
-            val mrMeeseeksId = TaskId(taskEntity.id)
+            val taskId = TaskId(taskEntity.id)
             val task = taskEntity.toTask()
             val attemptNumber = taskEntity.runAttemptCount.toInt() + 1
 
             telemetry?.onEvent(
                 TaskTelemetryEvent.TaskStarted(
-                    taskId = mrMeeseeksId,
+                    taskId = taskId,
                     task = task,
                     runAttemptCount = attemptNumber,
                 )
@@ -89,7 +89,7 @@ internal class MeeseeksQuartzJob(
 
                     telemetry?.onEvent(
                         TaskTelemetryEvent.TaskFailed(
-                            taskId = mrMeeseeksId,
+                            taskId = taskId,
                             task = task,
                             error = result.error,
                             runAttemptCount = attemptNumber,
@@ -100,7 +100,7 @@ internal class MeeseeksQuartzJob(
                 is TaskResult.Failure.Transient -> {
                     telemetry?.onEvent(
                         TaskTelemetryEvent.TaskFailed(
-                            taskId = mrMeeseeksId,
+                            taskId = taskId,
                             task = task,
                             error = result.error,
                             runAttemptCount = attemptNumber,
@@ -122,7 +122,7 @@ internal class MeeseeksQuartzJob(
                 TaskResult.Retry -> {
                     telemetry?.onEvent(
                         TaskTelemetryEvent.TaskFailed(
-                            taskId = mrMeeseeksId,
+                            taskId = taskId,
                             task = task,
                             error = null,
                             runAttemptCount = attemptNumber,
@@ -144,7 +144,7 @@ internal class MeeseeksQuartzJob(
 
                     telemetry?.onEvent(
                         TaskTelemetryEvent.TaskSucceeded(
-                            taskId = mrMeeseeksId,
+                            taskId = taskId,
                             task = task,
                             runAttemptCount = attemptNumber,
                         )
