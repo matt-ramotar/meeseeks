@@ -45,7 +45,7 @@ interface BackgroundTaskManager {
      * Returns a read-only list of all tasks known to Meeseeks, including
      * their ID, status, and the original [Task] definition.
      */
-    fun getAllTasks(): List<ScheduledTask>
+    fun listTasks(): List<ScheduledTask>
 
     /**
      * Convenience to “cancel & reschedule” a task in one call.

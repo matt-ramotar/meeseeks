@@ -143,7 +143,7 @@ internal class RealBackgroundTaskManager(
         return row.status
     }
 
-    override fun getAllTasks(): List<ScheduledTask> {
+    override fun listTasks(): List<ScheduledTask> {
         return database.taskQueries.selectAllTasks()
             .executeAsList()
             .map { it.toScheduledTask() }
