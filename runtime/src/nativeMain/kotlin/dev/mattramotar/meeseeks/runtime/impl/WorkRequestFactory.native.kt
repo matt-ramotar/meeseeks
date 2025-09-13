@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.MeeseeksIdentifiers
+import dev.mattramotar.meeseeks.runtime.BGTaskIdentifiers
 import dev.mattramotar.meeseeks.runtime.Task
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
@@ -25,15 +25,15 @@ internal actual class WorkRequestFactory {
 
         fun taskIdFromBGTaskIdentifier(bgTaskIdentifier: String, taskSchedule: TaskSchedule): Long {
             return when (taskSchedule) {
-                is TaskSchedule.OneTime -> bgTaskIdentifier.removePrefix("${MeeseeksIdentifiers.BGTaskIdentifiers.ONE_TIME_TASK}-")
-                is TaskSchedule.Periodic -> bgTaskIdentifier.removePrefix("${MeeseeksIdentifiers.BGTaskIdentifiers.PERIODIC_TASK}-")
+                is TaskSchedule.OneTime -> bgTaskIdentifier.removePrefix("${BGTaskIdentifiers.ONE_TIME_TASK}-")
+                is TaskSchedule.Periodic -> bgTaskIdentifier.removePrefix("${BGTaskIdentifiers.PERIODIC_TASK}-")
             }.toLong()
         }
 
         fun bgTaskIdentifierFor(taskId: Long, taskSchedule: TaskSchedule): String {
             val prefix = when (taskSchedule) {
-                is TaskSchedule.OneTime -> MeeseeksIdentifiers.BGTaskIdentifiers.ONE_TIME_TASK
-                is TaskSchedule.Periodic -> MeeseeksIdentifiers.BGTaskIdentifiers.PERIODIC_TASK
+                is TaskSchedule.OneTime -> BGTaskIdentifiers.ONE_TIME_TASK
+                is TaskSchedule.Periodic -> BGTaskIdentifiers.PERIODIC_TASK
             }
             return "$prefix-$taskId"
         }
