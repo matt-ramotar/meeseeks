@@ -202,7 +202,7 @@ internal class RealBackgroundTaskManager(
         return id
     }
 
-    override fun watchStatus(id: TaskId): Flow<TaskStatus?> {
+    override fun observeStatus(id: TaskId): Flow<TaskStatus?> {
         return database.taskQueries
             .selectTaskByMrMeeseeksId(id.value)
             .asFlow()

@@ -60,7 +60,7 @@ interface BackgroundTaskManager {
     /**
      * A real-time subscription to status changes via [Flow].
      */
-    fun watchStatus(id: TaskId): Flow<TaskStatus?>
+    fun observeStatus(id: TaskId): Flow<TaskStatus?>
 
     companion object Companion {
         val value: BackgroundTaskManager
