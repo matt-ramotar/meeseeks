@@ -107,7 +107,7 @@ internal class RealBackgroundTaskManager(
         }
     }
 
-    override fun sendAllBackToBox() {
+    override fun cancelAll() {
         taskScheduler.cancelAllWorkByTag(WorkRequestFactory.WORK_REQUEST_TAG)
 
         val taskQueries = database.taskQueries

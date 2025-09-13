@@ -28,7 +28,7 @@ interface BackgroundTaskManager {
     /**
      * Sends all currently active [TaskWorker] back to the box, removing them from scheduling.
      */
-    fun sendAllBackToBox()
+    fun cancelAll()
 
     /**
      * Triggers an immediate scheduling check.
