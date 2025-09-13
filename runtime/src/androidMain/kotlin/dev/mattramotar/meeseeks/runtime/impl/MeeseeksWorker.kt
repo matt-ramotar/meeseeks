@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
-import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
+import dev.mattramotar.meeseeks.runtime.TaskTelemetry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskWorker
 import dev.mattramotar.meeseeks.runtime.TaskId
@@ -25,7 +25,7 @@ internal class MeeseeksWorker(
     private val database: MeeseeksDatabase,
     private val taskId: TaskId,
     private val taskWorkerRegistry: TaskWorkerRegistry,
-    private val telemetry: MeeseeksTelemetry? = null
+    private val telemetry: TaskTelemetry? = null
 ) : CoroutineWorker(context, workerParameters) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {

@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime
 
 
-interface MeeseeksTelemetry {
+interface TaskTelemetry {
     suspend fun onEvent(event: MeeseeksTelemetryEvent)
 }
 

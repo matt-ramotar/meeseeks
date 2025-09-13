@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
-import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
+import dev.mattramotar.meeseeks.runtime.TaskTelemetry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskResult
@@ -20,7 +20,7 @@ import java.lang.System.currentTimeMillis
 
 @DisallowConcurrentExecution
 internal class MeeseeksQuartzJob(
-    private val telemetry: MeeseeksTelemetry? = null
+    private val telemetry: TaskTelemetry? = null
 ) : Job {
 
     override fun execute(context: JobExecutionContext) {
