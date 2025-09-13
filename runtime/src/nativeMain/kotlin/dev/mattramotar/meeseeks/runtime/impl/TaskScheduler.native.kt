@@ -34,7 +34,7 @@ internal actual class TaskScheduler(
         if (existingWorkPolicy == ExistingWorkPolicy.KEEP && alreadyScheduled) {
             return
         }
-        if (existingWorkPolicy == ExistingWorkPolicy.REPLACE && alreadyScheduled && existingSchedulerId != null) {
+        if (existingWorkPolicy == ExistingWorkPolicy.REPLACE && existingSchedulerId != null && alreadyScheduled) {
             cancelWorkById(existingSchedulerId, task.schedule)
         }
         val bgTaskRequest = createBGTaskRequest(workRequest.id, task)
@@ -48,7 +48,7 @@ internal actual class TaskScheduler(
             .executeAsOneOrNull() ?: return false
 
         return (taskEntity.workRequestId != null) &&
-                (taskEntity.status is TaskStatus.Pending || taskEntity.status is TaskStatus.Running)
+            (taskEntity.status is TaskStatus.Pending || taskEntity.status is TaskStatus.Running)
     }
 
     actual fun cancelWorkById(schedulerId: String, taskSchedule: TaskSchedule) {
