@@ -33,7 +33,7 @@ internal class MeeseeksWorker(
         val taskLogQueries = database.taskLogQueries
 
         val taskEntity =
-            taskQueries.selectTaskByMrMeeseeksId(taskId.value).executeAsOneOrNull()
+            taskQueries.selectTaskByTaskWorkerId(taskId.value).executeAsOneOrNull()
                 ?: return@withContext Result.failure()
 
         if (taskEntity.status !is TaskStatus.Pending) {
