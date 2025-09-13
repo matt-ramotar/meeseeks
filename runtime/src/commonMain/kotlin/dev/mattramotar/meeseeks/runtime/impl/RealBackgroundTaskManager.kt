@@ -127,7 +127,7 @@ internal class RealBackgroundTaskManager(
         }
     }
 
-    override fun triggerCheckForDueTasks() {
+    override fun reschedulePendingTasks() {
         val activeTasks = database.taskQueries.selectAllActive().executeAsList()
         activeTasks.forEach { taskEntity ->
             if (taskEntity.workRequestId.isNullOrBlank()) {

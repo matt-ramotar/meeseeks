@@ -33,7 +33,7 @@ interface BackgroundTaskManager {
     /**
      * Triggers an immediate scheduling check.
      */
-    fun triggerCheckForDueTasks()
+    fun reschedulePendingTasks()
 
     /**
      * Returns the current status of the task with the given [id],
