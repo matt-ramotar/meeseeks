@@ -12,7 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 
-object MeeseeksBGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
+object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
     internal lateinit var database: MeeseeksDatabase
     internal lateinit var registry: TaskWorkerRegistry
