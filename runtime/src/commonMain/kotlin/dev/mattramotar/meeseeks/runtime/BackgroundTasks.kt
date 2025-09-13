@@ -3,7 +3,7 @@ package dev.mattramotar.meeseeks.runtime
 import dev.mattramotar.meeseeks.runtime.impl.MeeseeksAppDatabase
 import dev.mattramotar.meeseeks.runtime.impl.MeeseeksBoxSingleton
 
-object Meeseeks {
+object BackgroundTasks {
 
     fun initialize(
         context: MeeseeksContext,
