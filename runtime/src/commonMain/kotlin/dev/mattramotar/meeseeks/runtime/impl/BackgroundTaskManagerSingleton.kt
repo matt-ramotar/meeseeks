@@ -18,7 +18,7 @@ internal object BackgroundTaskManagerSingleton {
             return _backgroundTaskManager ?: throw IllegalStateException("MeeseeksBox not set.")
         }
 
-    fun getOrCreateMeeseeksBox(
+    fun getOrCreateBackgroundTaskManager(
         context: AppContext,
         config: BackgroundTaskConfig = BackgroundTaskConfig(),
         registry: TaskWorkerRegistry
