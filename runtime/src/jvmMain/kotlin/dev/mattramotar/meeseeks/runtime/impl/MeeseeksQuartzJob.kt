@@ -3,7 +3,7 @@ package dev.mattramotar.meeseeks.runtime.impl
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
-import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
+import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.TaskStatus
@@ -46,7 +46,7 @@ internal class MeeseeksQuartzJob(
             taskQueries.incrementRunAttemptCount(taskEntity.id)
             taskQueries.updateStatus(TaskStatus.Running, timestamp, taskEntity.id)
 
-            val mrMeeseeksId = MrMeeseeksId(taskEntity.id)
+            val mrMeeseeksId = TaskId(taskEntity.id)
             val task = taskEntity.toTask()
             val attemptNumber = taskEntity.runAttemptCount.toInt() + 1
 

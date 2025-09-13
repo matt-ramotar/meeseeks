@@ -5,7 +5,7 @@ import app.cash.sqldelight.coroutines.mapToOneOrNull
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
-import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
+import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.ScheduledTask
 import dev.mattramotar.meeseeks.runtime.Task
 import dev.mattramotar.meeseeks.runtime.TaskStatus
@@ -37,7 +37,7 @@ internal class RealBackgroundTaskManager(
         }
     }
 
-    override fun summon(task: Task): MrMeeseeksId {
+    override fun summon(task: Task): TaskId {
         val taskQueries = database.taskQueries
         val timestamp = Timestamp.now()
 
@@ -68,16 +68,16 @@ internal class RealBackgroundTaskManager(
         launch {
             telemetry?.onEvent(
                 MeeseeksTelemetryEvent.TaskScheduled(
-                    taskId = MrMeeseeksId(taskId),
+                    taskId = TaskId(taskId),
                     task = task
                 )
             )
         }
 
-        return MrMeeseeksId(taskId)
+        return TaskId(taskId)
     }
 
-    override fun sendBackToBox(id: MrMeeseeksId) {
+    override fun sendBackToBox(id: TaskId) {
         val taskQueries = database.taskQueries
         val taskEntity =
             taskQueries.selectTaskByMrMeeseeksId(id.value).executeAsOneOrNull() ?: return
@@ -119,7 +119,7 @@ internal class RealBackgroundTaskManager(
             launch {
                 telemetry?.onEvent(
                     MeeseeksTelemetryEvent.TaskCancelled(
-                        taskId = MrMeeseeksId(entity.id),
+                        taskId = TaskId(entity.id),
                         task = entity.toTask()
                     )
                 )
@@ -136,7 +136,7 @@ internal class RealBackgroundTaskManager(
         }
     }
 
-    override fun getStatus(id: MrMeeseeksId): TaskStatus? {
+    override fun getStatus(id: TaskId): TaskStatus? {
         val row = database.taskQueries
             .selectTaskByMrMeeseeksId(id.value)
             .executeAsOneOrNull() ?: return null
@@ -149,7 +149,7 @@ internal class RealBackgroundTaskManager(
             .map { it.toScheduledTask() }
     }
 
-    override fun updateTask(id: MrMeeseeksId, newTask: Task): MrMeeseeksId {
+    override fun updateTask(id: TaskId, newTask: Task): TaskId {
         val taskQueries = database.taskQueries
         val existing = taskQueries.selectTaskByMrMeeseeksId(id.value).executeAsOneOrNull()
             ?: error("Update failed: Task $id not found.")
@@ -193,7 +193,7 @@ internal class RealBackgroundTaskManager(
         launch {
             telemetry?.onEvent(
                 MeeseeksTelemetryEvent.TaskScheduled(
-                    taskId = MrMeeseeksId(existing.id),
+                    taskId = TaskId(existing.id),
                     task = newTask
                 )
             )
@@ -202,7 +202,7 @@ internal class RealBackgroundTaskManager(
         return id
     }
 
-    override fun watchStatus(id: MrMeeseeksId): Flow<TaskStatus?> {
+    override fun watchStatus(id: TaskId): Flow<TaskStatus?> {
         return database.taskQueries
             .selectTaskByMrMeeseeksId(id.value)
             .asFlow()
@@ -211,7 +211,7 @@ internal class RealBackgroundTaskManager(
     }
 
     private fun TaskEntity.toScheduledTask() = ScheduledTask(
-        id = MrMeeseeksId(this.id),
+        id = TaskId(this.id),
         status = this.status,
         task = this.toTask(),
         runAttemptCount = this.runAttemptCount.toInt(),

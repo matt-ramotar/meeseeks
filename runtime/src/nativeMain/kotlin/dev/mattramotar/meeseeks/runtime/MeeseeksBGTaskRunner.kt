@@ -57,7 +57,7 @@ object MeeseeksBGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatcher
         }
 
         taskQueries.updateStatus(TaskStatus.Running, timestamp, taskId)
-        val mrMeeseeksId = MrMeeseeksId(taskId)
+        val mrMeeseeksId = TaskId(taskId)
         val task = taskEntity.toTask()
         val attemptNumber = taskEntity.runAttemptCount.toInt() + 1
 

@@ -5,7 +5,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
-import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
+import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 
 
@@ -29,7 +29,7 @@ internal class MeeseeksWorkerFactory(
                     appContext,
                     workerParameters,
                     database,
-                    MrMeeseeksId(taskId),
+                    TaskId(taskId),
                     registry
                 )
             }

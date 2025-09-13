@@ -7,7 +7,7 @@ import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskWorker
-import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
+import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.Task
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskStatus
@@ -23,7 +23,7 @@ internal class MeeseeksWorker(
     context: Context,
     workerParameters: WorkerParameters,
     private val database: MeeseeksDatabase,
-    private val mrMeeseeksId: MrMeeseeksId,
+    private val taskId: TaskId,
     private val meeseeksRegistry: MeeseeksRegistry,
     private val telemetry: MeeseeksTelemetry? = null
 ) : CoroutineWorker(context, workerParameters) {
@@ -33,7 +33,7 @@ internal class MeeseeksWorker(
         val taskLogQueries = database.taskLogQueries
 
         val taskEntity =
-            taskQueries.selectTaskByMrMeeseeksId(mrMeeseeksId.value).executeAsOneOrNull()
+            taskQueries.selectTaskByMrMeeseeksId(taskId.value).executeAsOneOrNull()
                 ?: return@withContext Result.failure()
 
         if (taskEntity.status !is TaskStatus.Pending) {
@@ -42,12 +42,12 @@ internal class MeeseeksWorker(
 
 
         val now = System.currentTimeMillis()
-        taskQueries.updateStatus(TaskStatus.Running, now, mrMeeseeksId.value)
+        taskQueries.updateStatus(TaskStatus.Running, now, taskId.value)
         val attemptNumber = runAttemptCount
 
         telemetry?.onEvent(
             MeeseeksTelemetryEvent.TaskStarted(
-                taskId = mrMeeseeksId,
+                taskId = taskId,
                 task = taskEntity.toTask(),
                 runAttemptCount = attemptNumber,
             )
@@ -83,7 +83,7 @@ internal class MeeseeksWorker(
 
                 telemetry?.onEvent(
                     MeeseeksTelemetryEvent.TaskFailed(
-                        taskId = mrMeeseeksId,
+                        taskId = taskId,
                         task = taskEntity.toTask(),
                         error = result.error,
                         runAttemptCount = attemptNumber,
@@ -96,7 +96,7 @@ internal class MeeseeksWorker(
             is TaskResult.Failure.Transient -> {
                 telemetry?.onEvent(
                     MeeseeksTelemetryEvent.TaskFailed(
-                        taskId = mrMeeseeksId,
+                        taskId = taskId,
                         task = taskEntity.toTask(),
                         error = result.error,
                         runAttemptCount = attemptNumber,
@@ -108,7 +108,7 @@ internal class MeeseeksWorker(
             TaskResult.Retry -> {
                 telemetry?.onEvent(
                     MeeseeksTelemetryEvent.TaskFailed(
-                        taskId = mrMeeseeksId,
+                        taskId = taskId,
                         task = taskEntity.toTask(),
                         error = null,
                         runAttemptCount = attemptNumber,
@@ -126,7 +126,7 @@ internal class MeeseeksWorker(
 
                 telemetry?.onEvent(
                     MeeseeksTelemetryEvent.TaskSucceeded(
-                        taskId = mrMeeseeksId,
+                        taskId = taskId,
                         task = taskEntity.toTask(),
                         runAttemptCount = attemptNumber,
                     )

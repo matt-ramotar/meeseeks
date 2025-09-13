@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime
 
 data class ScheduledTask(
-    val id: MrMeeseeksId,
+    val id: TaskId,
     val status: TaskStatus,
     val task: Task,
     val runAttemptCount: Int,

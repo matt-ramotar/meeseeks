@@ -14,16 +14,16 @@ interface BackgroundTaskManager {
      * Summons a new [TaskWorker], scheduling the [task] for background execution.
      *
      * @param task The [Task] to schedule.
-     * @return [MrMeeseeksId] identifying the summoned [TaskWorker].
+     * @return [TaskId] identifying the summoned [TaskWorker].
      */
-    fun summon(task: Task): MrMeeseeksId
+    fun summon(task: Task): TaskId
 
     /**
      * Sends a specific [TaskWorker] back to the box, canceling its scheduled or ongoing work.
      *
-     * @param id A [MrMeeseeksId] identifying a specific [TaskWorker].
+     * @param id A [TaskId] identifying a specific [TaskWorker].
      */
-    fun sendBackToBox(id: MrMeeseeksId)
+    fun sendBackToBox(id: TaskId)
 
     /**
      * Sends all currently active [TaskWorker] back to the box, removing them from scheduling.
@@ -39,7 +39,7 @@ interface BackgroundTaskManager {
      * Returns the current status of the task with the given [id],
      * or `null` if the task does not exist.
      */
-    fun getStatus(id: MrMeeseeksId): TaskStatus?
+    fun getStatus(id: TaskId): TaskStatus?
 
     /**
      * Returns a read-only list of all tasks known to Meeseeks, including
@@ -50,17 +50,17 @@ interface BackgroundTaskManager {
     /**
      * Convenience to “cancel & reschedule” a task in one call.
      * This will overwrite the existing task’s schedule/parameters
-     * with [newTask], but keep the same [MrMeeseeksId].
+     * with [newTask], but keep the same [TaskId].
      *
      * @return the same ID that was updated, for convenience
      * @throws IllegalStateException if no task with [id] exists
      */
-    fun updateTask(id: MrMeeseeksId, newTask: Task): MrMeeseeksId
+    fun updateTask(id: TaskId, newTask: Task): TaskId
 
     /**
      * A real-time subscription to status changes via [Flow].
      */
-    fun watchStatus(id: MrMeeseeksId): Flow<TaskStatus?>
+    fun watchStatus(id: TaskId): Flow<TaskStatus?>
 
     companion object Companion {
         val value: BackgroundTaskManager

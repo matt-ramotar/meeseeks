@@ -3,7 +3,7 @@ package dev.mattramotar.meeseeks.runtime.impl
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
 import dev.mattramotar.meeseeks.runtime.MeeseeksRegistry
 import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
-import dev.mattramotar.meeseeks.runtime.MrMeeseeksId
+import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
@@ -43,7 +43,7 @@ object MeeseeksBGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
         }
 
         val taskId = taskEntity.id
-        val mrMeeseeksId = MrMeeseeksId(taskId)
+        val mrMeeseeksId = TaskId(taskId)
         val task = taskEntity.toTask()
         val attemptNumber = taskEntity.runAttemptCount.toInt() + 1
 
