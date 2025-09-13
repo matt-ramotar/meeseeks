@@ -2,10 +2,10 @@ package dev.mattramotar.meeseeks.runtime
 
 
 class MeeseeksRegistry private constructor(
-    private val factories: Map<String, MrMeeseeksFactory>
+    private val factories: Map<String, TaskWorkerFactory>
 ) {
 
-    internal fun getFactory(type: String): MrMeeseeksFactory =
+    internal fun getFactory(type: String): TaskWorkerFactory =
         factories[type] ?: error("MrMeeseeksFactory not found for type $type.")
 
     companion object {
@@ -15,8 +15,8 @@ class MeeseeksRegistry private constructor(
     }
 
     class Builder {
-        private val factories = mutableMapOf<String, MrMeeseeksFactory>()
-        fun registerFactory(type: String, factory: MrMeeseeksFactory) {
+        private val factories = mutableMapOf<String, TaskWorkerFactory>()
+        fun registerFactory(type: String, factory: TaskWorkerFactory) {
             factories[type] = factory
         }
 
