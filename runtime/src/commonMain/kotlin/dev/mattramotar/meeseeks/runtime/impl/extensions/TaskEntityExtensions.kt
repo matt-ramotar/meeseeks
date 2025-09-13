@@ -5,7 +5,7 @@ import dev.mattramotar.meeseeks.runtime.db.TaskEntity
 
 internal object TaskEntityExtensions {
     fun TaskEntity.toTask(): Task = Task(
-        meeseeksType,
+        taskType,
         parameters,
         preconditions,
         priority,

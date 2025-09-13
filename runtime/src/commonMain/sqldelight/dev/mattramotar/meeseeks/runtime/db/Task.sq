@@ -9,8 +9,8 @@ import dev.mattramotar.meeseeks.runtime.TaskStatus;
 CREATE TABLE taskEntity (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT ,
 
-    -- Meeseeks Type
-    meeseeksType TEXT NOT NULL,
+    -- Task Type
+    taskType TEXT NOT NULL,
 
     -- Preconditions
     preconditions TEXT AS TaskPreconditions NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE taskEntity (
 
 insertTask:
 INSERT INTO taskEntity(
-    meeseeksType,
+    taskType,
     preconditions,
     priority,
     schedule,
@@ -86,7 +86,7 @@ UPDATE taskEntity
 SET status = ?, updatedAt = ?
 WHERE id = ?;
 
-selectTaskByMrMeeseeksId:
+selectTaskByTaskWorkerId:
 SELECT * FROM taskEntity
 WHERE id = ?;
 
@@ -117,7 +117,7 @@ SELECT * FROM taskEntity;
 updateTask:
 UPDATE taskEntity
 SET
-  meeseeksType = ?,
+  taskType = ?,
   preconditions = ?,
   priority = ?,
   schedule = ?,

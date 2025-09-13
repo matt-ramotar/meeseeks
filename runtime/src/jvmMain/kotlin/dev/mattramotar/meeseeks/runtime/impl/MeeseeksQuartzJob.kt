@@ -59,7 +59,7 @@ internal class MeeseeksQuartzJob(
             )
 
             val result: TaskResult = try {
-                val meeseeksFactory = registry.getFactory(task.meeseeksType)
+                val meeseeksFactory = registry.getFactory(task.taskType)
                 val meeseeks = meeseeksFactory.create(task)
                 meeseeks.execute(task.parameters)
 

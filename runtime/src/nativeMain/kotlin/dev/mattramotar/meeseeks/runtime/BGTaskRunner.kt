@@ -70,7 +70,7 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             )
         )
 
-        val meeseeks = registry.getFactory(taskEntity.meeseeksType)
+        val meeseeks = registry.getFactory(taskEntity.taskType)
             .create(task)
 
         val result: TaskResult = try {

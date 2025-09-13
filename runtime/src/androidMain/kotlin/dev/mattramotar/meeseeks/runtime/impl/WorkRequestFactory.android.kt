@@ -25,7 +25,7 @@ internal actual class WorkRequestFactory(
 
         val inputData = workDataOf(
             KEY_TASK_ID to taskId,
-            KEY_MEESEEKS_TYPE to task.meeseeksType,
+            KEY_MEESEEKS_TYPE to task.taskType,
             KEY_TASK_PARAMETERS to task.parameters
         )
 

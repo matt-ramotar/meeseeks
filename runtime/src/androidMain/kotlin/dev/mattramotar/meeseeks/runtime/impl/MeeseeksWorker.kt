@@ -138,7 +138,7 @@ internal class MeeseeksWorker(
     }
 
     private fun summonMrMeeseeks(task: Task): TaskWorker {
-        val factory = taskWorkerRegistry.getFactory(task.meeseeksType)
+        val factory = taskWorkerRegistry.getFactory(task.taskType)
         return factory.create(task)
     }
 }

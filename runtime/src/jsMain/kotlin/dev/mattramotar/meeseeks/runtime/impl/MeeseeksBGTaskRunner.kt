@@ -54,7 +54,7 @@ object MeeseeksBGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
             TaskTelemetryEvent.TaskStarted(mrMeeseeksId, task, attemptNumber)
         )
 
-        val meeseeks = registry.getFactory(taskEntity.meeseeksType)
+        val meeseeks = registry.getFactory(taskEntity.taskType)
             .create(task)
 
 

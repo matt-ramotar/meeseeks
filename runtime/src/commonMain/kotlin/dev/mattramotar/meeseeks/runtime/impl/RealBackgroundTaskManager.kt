@@ -42,7 +42,7 @@ internal class RealBackgroundTaskManager(
         val timestamp = Timestamp.now()
 
         taskQueries.insertTask(
-            meeseeksType = task.meeseeksType,
+            taskType = task.taskType,
             preconditions = task.preconditions,
             priority = task.priority,
             schedule = task.schedule,
@@ -80,7 +80,7 @@ internal class RealBackgroundTaskManager(
     override fun cancel(id: TaskId) {
         val taskQueries = database.taskQueries
         val taskEntity =
-            taskQueries.selectTaskByMrMeeseeksId(id.value).executeAsOneOrNull() ?: return
+            taskQueries.selectTaskByTaskWorkerId(id.value).executeAsOneOrNull() ?: return
 
         val workRequestId = taskEntity.workRequestId
         if (!workRequestId.isNullOrEmpty()) {
@@ -138,7 +138,7 @@ internal class RealBackgroundTaskManager(
 
     override fun getTaskStatus(id: TaskId): TaskStatus? {
         val row = database.taskQueries
-            .selectTaskByMrMeeseeksId(id.value)
+            .selectTaskByTaskWorkerId(id.value)
             .executeAsOneOrNull() ?: return null
         return row.status
     }
@@ -151,7 +151,7 @@ internal class RealBackgroundTaskManager(
 
     override fun rescheduleTask(id: TaskId, newTask: Task): TaskId {
         val taskQueries = database.taskQueries
-        val existing = taskQueries.selectTaskByMrMeeseeksId(id.value).executeAsOneOrNull()
+        val existing = taskQueries.selectTaskByTaskWorkerId(id.value).executeAsOneOrNull()
             ?: error("Update failed: Task $id not found.")
 
         val existingWorkRequestId = existing.workRequestId
@@ -169,7 +169,7 @@ internal class RealBackgroundTaskManager(
 
         val timestamp = Timestamp.now()
         taskQueries.updateTask(
-            meeseeksType = newTask.meeseeksType,
+            taskType = newTask.taskType,
             preconditions = newTask.preconditions,
             priority = newTask.priority,
             schedule = newTask.schedule,
@@ -204,7 +204,7 @@ internal class RealBackgroundTaskManager(
 
     override fun observeStatus(id: TaskId): Flow<TaskStatus?> {
         return database.taskQueries
-            .selectTaskByMrMeeseeksId(id.value)
+            .selectTaskByTaskWorkerId(id.value)
             .asFlow()
             .mapToOneOrNull(context = MeeseeksDispatchers.IO)
             .map { entity -> entity?.status }
