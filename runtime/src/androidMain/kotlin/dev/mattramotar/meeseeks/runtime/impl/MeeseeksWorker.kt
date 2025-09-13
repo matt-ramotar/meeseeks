@@ -5,7 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.TaskTelemetry
-import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
+import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskWorker
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.Task
@@ -46,7 +46,7 @@ internal class MeeseeksWorker(
         val attemptNumber = runAttemptCount
 
         telemetry?.onEvent(
-            MeeseeksTelemetryEvent.TaskStarted(
+            TaskTelemetryEvent.TaskStarted(
                 taskId = taskId,
                 task = taskEntity.toTask(),
                 runAttemptCount = attemptNumber,
@@ -82,7 +82,7 @@ internal class MeeseeksWorker(
                 )
 
                 telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskFailed(
+                    TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
                         task = taskEntity.toTask(),
                         error = result.error,
@@ -95,7 +95,7 @@ internal class MeeseeksWorker(
 
             is TaskResult.Failure.Transient -> {
                 telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskFailed(
+                    TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
                         task = taskEntity.toTask(),
                         error = result.error,
@@ -107,7 +107,7 @@ internal class MeeseeksWorker(
 
             TaskResult.Retry -> {
                 telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskFailed(
+                    TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
                         task = taskEntity.toTask(),
                         error = null,
@@ -125,7 +125,7 @@ internal class MeeseeksWorker(
                 )
 
                 telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskSucceeded(
+                    TaskTelemetryEvent.TaskSucceeded(
                         taskId = taskId,
                         task = taskEntity.toTask(),
                         runAttemptCount = attemptNumber,

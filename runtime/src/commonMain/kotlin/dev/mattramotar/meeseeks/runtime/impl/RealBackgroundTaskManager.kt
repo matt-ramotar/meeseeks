@@ -4,7 +4,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.TaskTelemetry
-import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
+import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.ScheduledTask
 import dev.mattramotar.meeseeks.runtime.Task
@@ -67,7 +67,7 @@ internal class RealBackgroundTaskManager(
 
         launch {
             telemetry?.onEvent(
-                MeeseeksTelemetryEvent.TaskScheduled(
+                TaskTelemetryEvent.TaskScheduled(
                     taskId = TaskId(taskId),
                     task = task
                 )
@@ -99,7 +99,7 @@ internal class RealBackgroundTaskManager(
 
         launch {
             telemetry?.onEvent(
-                MeeseeksTelemetryEvent.TaskCancelled(
+                TaskTelemetryEvent.TaskCancelled(
                     taskId = id,
                     task = taskEntity.toTask()
                 )
@@ -118,7 +118,7 @@ internal class RealBackgroundTaskManager(
             taskQueries.cancelTask(Timestamp.now(), entity.id)
             launch {
                 telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskCancelled(
+                    TaskTelemetryEvent.TaskCancelled(
                         taskId = TaskId(entity.id),
                         task = entity.toTask()
                     )
@@ -192,7 +192,7 @@ internal class RealBackgroundTaskManager(
 
         launch {
             telemetry?.onEvent(
-                MeeseeksTelemetryEvent.TaskScheduled(
+                TaskTelemetryEvent.TaskScheduled(
                     taskId = TaskId(existing.id),
                     task = newTask
                 )

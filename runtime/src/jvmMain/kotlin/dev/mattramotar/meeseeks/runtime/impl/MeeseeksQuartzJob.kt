@@ -2,7 +2,7 @@ package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.TaskTelemetry
-import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
+import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
@@ -51,7 +51,7 @@ internal class MeeseeksQuartzJob(
             val attemptNumber = taskEntity.runAttemptCount.toInt() + 1
 
             telemetry?.onEvent(
-                MeeseeksTelemetryEvent.TaskStarted(
+                TaskTelemetryEvent.TaskStarted(
                     taskId = mrMeeseeksId,
                     task = task,
                     runAttemptCount = attemptNumber,
@@ -88,7 +88,7 @@ internal class MeeseeksQuartzJob(
                     )
 
                     telemetry?.onEvent(
-                        MeeseeksTelemetryEvent.TaskFailed(
+                        TaskTelemetryEvent.TaskFailed(
                             taskId = mrMeeseeksId,
                             task = task,
                             error = result.error,
@@ -99,7 +99,7 @@ internal class MeeseeksQuartzJob(
 
                 is TaskResult.Failure.Transient -> {
                     telemetry?.onEvent(
-                        MeeseeksTelemetryEvent.TaskFailed(
+                        TaskTelemetryEvent.TaskFailed(
                             taskId = mrMeeseeksId,
                             task = task,
                             error = result.error,
@@ -121,7 +121,7 @@ internal class MeeseeksQuartzJob(
 
                 TaskResult.Retry -> {
                     telemetry?.onEvent(
-                        MeeseeksTelemetryEvent.TaskFailed(
+                        TaskTelemetryEvent.TaskFailed(
                             taskId = mrMeeseeksId,
                             task = task,
                             error = null,
@@ -143,7 +143,7 @@ internal class MeeseeksQuartzJob(
                 TaskResult.Success -> {
 
                     telemetry?.onEvent(
-                        MeeseeksTelemetryEvent.TaskSucceeded(
+                        TaskTelemetryEvent.TaskSucceeded(
                             taskId = mrMeeseeksId,
                             task = task,
                             runAttemptCount = attemptNumber,

@@ -63,7 +63,7 @@ object MeeseeksBGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatcher
 
 
         config?.telemetry?.onEvent(
-            MeeseeksTelemetryEvent.TaskStarted(
+            TaskTelemetryEvent.TaskStarted(
                 taskId = mrMeeseeksId,
                 task = task,
                 runAttemptCount = attemptNumber
@@ -97,7 +97,7 @@ object MeeseeksBGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatcher
                 taskQueries.updateStatus(TaskStatus.Finished.Completed, updatedNow, taskId)
 
                 config?.telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskSucceeded(
+                    TaskTelemetryEvent.TaskSucceeded(
                         taskId = mrMeeseeksId,
                         task = task,
                         runAttemptCount = attemptNumber
@@ -108,7 +108,7 @@ object MeeseeksBGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatcher
 
             is TaskResult.Retry -> {
                 config?.telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskFailed(
+                    TaskTelemetryEvent.TaskFailed(
                         taskId = mrMeeseeksId,
                         task = task,
                         runAttemptCount = attemptNumber,
@@ -123,7 +123,7 @@ object MeeseeksBGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatcher
                 taskQueries.updateStatus(TaskStatus.Finished.Failed, updatedNow, taskId)
 
                 config?.telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskFailed(
+                    TaskTelemetryEvent.TaskFailed(
                         taskId = mrMeeseeksId,
                         task = task,
                         runAttemptCount = attemptNumber,
@@ -135,7 +135,7 @@ object MeeseeksBGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatcher
 
             is TaskResult.Failure.Transient -> {
                 config?.telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskFailed(
+                    TaskTelemetryEvent.TaskFailed(
                         taskId = mrMeeseeksId,
                         task = task,
                         runAttemptCount = attemptNumber,

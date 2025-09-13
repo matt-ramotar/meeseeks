@@ -2,7 +2,7 @@ package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
 import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
-import dev.mattramotar.meeseeks.runtime.MeeseeksTelemetryEvent
+import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskStatus
@@ -51,7 +51,7 @@ object MeeseeksBGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
         taskQueries.updateStatus(TaskStatus.Running, timestamp, taskId)
 
         config?.telemetry?.onEvent(
-            MeeseeksTelemetryEvent.TaskStarted(mrMeeseeksId, task, attemptNumber)
+            TaskTelemetryEvent.TaskStarted(mrMeeseeksId, task, attemptNumber)
         )
 
         val meeseeks = registry.getFactory(taskEntity.meeseeksType)
@@ -81,14 +81,14 @@ object MeeseeksBGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
             is TaskResult.Success -> {
                 taskQueries.updateStatus(TaskStatus.Finished.Completed, Timestamp.now(), taskId)
                 config?.telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskSucceeded(mrMeeseeksId, task, attemptNumber)
+                    TaskTelemetryEvent.TaskSucceeded(mrMeeseeksId, task, attemptNumber)
                 )
             }
 
             is TaskResult.Failure.Transient,
             is TaskResult.Retry -> {
                 config?.telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskFailed(
+                    TaskTelemetryEvent.TaskFailed(
                         mrMeeseeksId,
                         task,
                         (result as? TaskResult.Failure)?.error,
@@ -100,7 +100,7 @@ object MeeseeksBGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
             is TaskResult.Failure.Permanent -> {
                 taskQueries.updateStatus(TaskStatus.Finished.Failed, Timestamp.now(), taskId)
                 config?.telemetry?.onEvent(
-                    MeeseeksTelemetryEvent.TaskFailed(
+                    TaskTelemetryEvent.TaskFailed(
                         mrMeeseeksId,
                         task,
                         result.error,
