@@ -55,7 +55,7 @@ interface BackgroundTaskManager {
      * @return the same ID that was updated, for convenience
      * @throws IllegalStateException if no task with [id] exists
      */
-    fun updateTask(id: TaskId, newTask: Task): TaskId
+    fun reschedule(id: TaskId, newTask: Task): TaskId
 
     /**
      * A real-time subscription to status changes via [Flow].
