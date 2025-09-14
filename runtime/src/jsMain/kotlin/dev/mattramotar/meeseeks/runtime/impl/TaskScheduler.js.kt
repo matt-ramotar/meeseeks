@@ -2,7 +2,7 @@
 
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
 @JsName("setTimeout")
@@ -24,7 +24,7 @@ internal actual class TaskScheduler {
 
     actual fun scheduleTask(
         taskId: Long,
-        task: Task,
+        task: TaskRequest,
         workRequest: WorkRequest,
         existingWorkPolicy: ExistingWorkPolicy
     ) {
@@ -55,7 +55,7 @@ internal actual class TaskScheduler {
 
 
     private fun scheduleWithServiceWorker(
-        task: Task,
+        task: TaskRequest,
         taskId: Long,
         tag: String
     ) {
@@ -93,12 +93,12 @@ internal actual class TaskScheduler {
         }
     }
 
-    private fun fallbackSchedule(task: Task, taskId: Long, tag: String) {
+    private fun fallbackSchedule(task: TaskRequest, taskId: Long, tag: String) {
         clearFallbackTimer(taskId)
 
         when (val schedule = task.schedule) {
             is TaskSchedule.OneTime -> {
-                val delay = coerceTimeout(schedule.initialDelay)
+                val delay = coerceTimeout(schedule.initialDelay.inWholeMilliseconds)
                 val handle = jsSetTimeout({
                     console.log("Fallback OneTime task #$taskId fired")
                 }, delay)

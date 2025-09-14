@@ -1,32 +1,31 @@
 package dev.mattramotar.meeseeks.runtime
 
-import dev.mattramotar.meeseeks.runtime.impl.BackgroundTaskManagerSingleton
 import kotlinx.coroutines.flow.Flow
 
 
 /**
  * Central task manager.
  */
-interface BackgroundTaskManager {
+interface BGTaskManager {
 
 
     /**
-     * Summons a new [TaskWorker], scheduling the [task] for background execution.
+     * Summons a new [Worker], scheduling the [request] for background execution.
      *
-     * @param task The [Task] to schedule.
-     * @return [TaskId] identifying the summoned [TaskWorker].
+     * @param request The [TaskRequest] to schedule.
+     * @return [TaskId] identifying the summoned [Worker].
      */
-    fun enqueue(task: Task): TaskId
+    fun schedule(request: TaskRequest): TaskId
 
     /**
-     * Sends a specific [TaskWorker] back to the box, canceling its scheduled or ongoing work.
+     * Sends a specific [Worker] back to the box, canceling its scheduled or ongoing work.
      *
-     * @param id A [TaskId] identifying a specific [TaskWorker].
+     * @param id A [TaskId] identifying a specific [Worker].
      */
     fun cancel(id: TaskId)
 
     /**
-     * Sends all currently active [TaskWorker] back to the box, removing them from scheduling.
+     * Sends all currently active [Worker] back to the box, removing them from scheduling.
      */
     fun cancelAll()
 
@@ -43,29 +42,28 @@ interface BackgroundTaskManager {
 
     /**
      * Returns a read-only list of all tasks known to Meeseeks, including
-     * their ID, status, and the original [Task] definition.
+     * their ID, status, and the original [LegacyTask] task.
      */
     fun listTasks(): List<ScheduledTask>
 
     /**
      * Convenience to “cancel & reschedule” a task in one call.
      * This will overwrite the existing task’s schedule/parameters
-     * with [newTask], but keep the same [TaskId].
+     * with [request], but keep the same [TaskId].
      *
      * @return the same ID that was updated, for convenience
      * @throws IllegalStateException if no task with [id] exists
      */
-    fun rescheduleTask(id: TaskId, newTask: Task): TaskId
+    fun reschedule(id: TaskId, request: TaskRequest): TaskId
 
     /**
      * A real-time subscription to status changes via [Flow].
      */
     fun observeStatus(id: TaskId): Flow<TaskStatus?>
 
-    companion object Companion {
-        val instance: BackgroundTaskManager
-            get() {
-                return BackgroundTaskManagerSingleton.backgroundTaskManager
-            }
+    companion object {
+        fun builder(appContext: AppContext): BGTaskManagerBuilder {
+            return BGTaskManagerBuilder(appContext)
+        }
     }
 }

@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
@@ -21,7 +21,7 @@ internal actual class TaskScheduler(
 
     actual fun scheduleTask(
         taskId: Long,
-        task: Task,
+        task: TaskRequest,
         workRequest: WorkRequest,
         existingWorkPolicy: ExistingWorkPolicy
     ) {
@@ -70,7 +70,7 @@ internal actual class TaskScheduler(
         activeTasks.forEach { entity -> entity.workRequestId?.let { cancelWorkById(it, entity.schedule) } }
     }
 
-    private fun createBGTaskRequest(identifier: String, task: Task): BGTaskRequest {
+    private fun createBGTaskRequest(identifier: String, task: TaskRequest): BGTaskRequest {
         val requiresNetwork = task.preconditions.requiresNetwork
         val requiresCharging = task.preconditions.requiresCharging
 
@@ -86,7 +86,7 @@ internal actual class TaskScheduler(
         val schedule = task.schedule
         val earliestDelaySeconds = when (schedule) {
             is TaskSchedule.OneTime -> {
-                schedule.initialDelay / 1000.0
+                schedule.initialDelay.inWholeSeconds / 1000.0
             }
 
             is TaskSchedule.Periodic -> {

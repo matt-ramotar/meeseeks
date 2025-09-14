@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import org.quartz.JobBuilder
 import org.quartz.JobKey
@@ -14,18 +14,18 @@ internal actual class WorkRequestFactory {
 
     actual fun createWorkRequest(
         taskId: Long,
-        task: Task
+        taskRequest: TaskRequest
     ): WorkRequest {
-        val jobKey = JobKey(uniqueWorkNameFor(taskId, task.schedule), JOB_GROUP)
+        val jobKey = JobKey(uniqueWorkNameFor(taskId, taskRequest.schedule), JOB_GROUP)
 
-        val jobDetail = JobBuilder.newJob(BackgroundTaskQuartzJob::class.java)
+        val jobDetail = JobBuilder.newJob(BGTaskQuartzJob::class.java)
             .withIdentity(jobKey)
             .usingJobData(KEY_TASK_ID, taskId)
             .build()
 
-        val triggers: List<Trigger> = when (val schedule = task.schedule) {
+        val triggers: List<Trigger> = when (val schedule = taskRequest.schedule) {
             is TaskSchedule.OneTime -> {
-                listOf(buildOneTimeTrigger(schedule.initialDelay))
+                listOf(buildOneTimeTrigger(schedule.initialDelay.inWholeMilliseconds))
             }
 
             is TaskSchedule.Periodic -> {

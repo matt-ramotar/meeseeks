@@ -1,14 +1,18 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
+import dev.mattramotar.meeseeks.runtime.DynamicData
+import dev.mattramotar.meeseeks.runtime.EmptyAppContext
+import dev.mattramotar.meeseeks.runtime.RuntimeContext
 import dev.mattramotar.meeseeks.runtime.TaskTelemetry
 import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.TaskId
+import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.TaskStatus
+import dev.mattramotar.meeseeks.runtime.Worker
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTask
+import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTaskRequest
 import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
 import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.coroutines.runBlocking
@@ -19,7 +23,7 @@ import java.lang.System.currentTimeMillis
 
 
 @DisallowConcurrentExecution
-internal class BackgroundTaskQuartzJob(
+internal class BGTaskQuartzJob(
     private val telemetry: TaskTelemetry? = null
 ) : Job {
 
@@ -29,8 +33,8 @@ internal class BackgroundTaskQuartzJob(
 
             val database = schedulerContext["meeseeksDatabase"] as? MeeseeksDatabase
                 ?: error("MeeseeksDatabase missing from scheduler context")
-            val registry = schedulerContext["taskWorkerRegistry"] as? TaskWorkerRegistry
-                ?: error("TaskWorkerRegistry missing from scheduler context")
+            val registry = schedulerContext["workerRegistry"] as? WorkerRegistry
+                ?: error("WorkerRegistry missing from scheduler context")
 
             val taskQueries = database.taskQueries
             val taskLogQueries = database.taskLogQueries
@@ -47,21 +51,20 @@ internal class BackgroundTaskQuartzJob(
             taskQueries.updateStatus(TaskStatus.Running, timestamp, taskEntity.id)
 
             val taskId = TaskId(taskEntity.id)
-            val task = taskEntity.toTask()
-            val attemptNumber = taskEntity.runAttemptCount.toInt() + 1
+            val request = taskEntity.toTaskRequest()
+            val attemptCount = taskEntity.runAttemptCount.toInt() + 1
 
             telemetry?.onEvent(
                 TaskTelemetryEvent.TaskStarted(
                     taskId = taskId,
-                    task = task,
-                    runAttemptCount = attemptNumber,
+                    task = request,
+                    runAttemptCount = attemptCount,
                 )
             )
 
             val result: TaskResult = try {
-                val meeseeksFactory = registry.getFactory(task.taskType)
-                val meeseeks = meeseeksFactory.create(task)
-                meeseeks.execute(task.parameters)
+                val worker = getWorker(request, registry)
+                worker.run(request.data, RuntimeContext(attemptCount))
 
             } catch (error: Throwable) {
                 when (error) {
@@ -75,7 +78,7 @@ internal class BackgroundTaskQuartzJob(
                 taskId = taskEntity.id,
                 created = timestamp,
                 result = result.type,
-                attempt = attemptNumber.toLong(),
+                attempt = attemptCount.toLong(),
                 message = null
             )
 
@@ -90,9 +93,9 @@ internal class BackgroundTaskQuartzJob(
                     telemetry?.onEvent(
                         TaskTelemetryEvent.TaskFailed(
                             taskId = taskId,
-                            task = task,
+                            task = request,
                             error = result.error,
-                            runAttemptCount = attemptNumber,
+                            runAttemptCount = attemptCount,
                         )
                     )
                 }
@@ -101,13 +104,13 @@ internal class BackgroundTaskQuartzJob(
                     telemetry?.onEvent(
                         TaskTelemetryEvent.TaskFailed(
                             taskId = taskId,
-                            task = task,
+                            task = request,
                             error = result.error,
-                            runAttemptCount = attemptNumber,
+                            runAttemptCount = attemptCount,
                         )
                     )
 
-                    when (task.schedule) {
+                    when (request.schedule) {
                         is TaskSchedule.OneTime -> {
                             // TODO: Support retry
                         }
@@ -123,13 +126,13 @@ internal class BackgroundTaskQuartzJob(
                     telemetry?.onEvent(
                         TaskTelemetryEvent.TaskFailed(
                             taskId = taskId,
-                            task = task,
+                            task = request,
                             error = null,
-                            runAttemptCount = attemptNumber,
+                            runAttemptCount = attemptCount,
                         )
                     )
 
-                    when (task.schedule) {
+                    when (request.schedule) {
                         is TaskSchedule.OneTime -> {
                             // TODO: Support retry
                         }
@@ -145,8 +148,8 @@ internal class BackgroundTaskQuartzJob(
                     telemetry?.onEvent(
                         TaskTelemetryEvent.TaskSucceeded(
                             taskId = taskId,
-                            task = task,
-                            runAttemptCount = attemptNumber,
+                            task = request,
+                            runAttemptCount = attemptCount,
                         )
                     )
 
@@ -158,5 +161,11 @@ internal class BackgroundTaskQuartzJob(
                 }
             }
         }
+    }
+
+    private fun getWorker(request: TaskRequest, registry: WorkerRegistry): Worker<DynamicData> {
+        val factory = registry.getFactory(request.data::class)
+        @Suppress("UNCHECKED_CAST")
+        return factory.create(EmptyAppContext()) as Worker<DynamicData>
     }
 }

@@ -1,28 +1,27 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
+import dev.mattramotar.meeseeks.runtime.BGTaskManager
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import org.quartz.impl.StdSchedulerFactory
 
-internal actual class BackgroundTaskManagerFactory {
+internal actual class BGTaskManagerFactory {
     actual fun create(
         context: AppContext,
-        registry: TaskWorkerRegistry,
-        config: BackgroundTaskConfig
-    ): BackgroundTaskManager {
+        registry: WorkerRegistry,
+        config: BGTaskManagerConfig
+    ): BGTaskManager {
         val database = MeeseeksAppDatabase.require(context)
         val scheduler = StdSchedulerFactory("quartz.properties").scheduler
         scheduler.context["meeseeksDatabase"] = database
-        scheduler.context["taskWorkerRegistry"] = registry
+        scheduler.context["workerRegistry"] = registry
         scheduler.start()
 
         val workRequestFactory = WorkRequestFactory()
         val taskScheduler = TaskScheduler(scheduler)
         val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory)
 
-        return RealBackgroundTaskManager(
+        return RealBGTaskManager(
             database = database,
             workRequestFactory = workRequestFactory,
             taskScheduler = taskScheduler,

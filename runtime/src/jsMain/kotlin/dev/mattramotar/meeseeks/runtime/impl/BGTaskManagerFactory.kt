@@ -1,21 +1,20 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
+import dev.mattramotar.meeseeks.runtime.BGTaskManager
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 
-internal actual class BackgroundTaskManagerFactory actual constructor() {
+internal actual class BGTaskManagerFactory actual constructor() {
     actual fun create(
         context: AppContext,
-        registry: TaskWorkerRegistry,
-        config: BackgroundTaskConfig
-    ): BackgroundTaskManager {
+        registry: WorkerRegistry,
+        config: BGTaskManagerConfig
+    ): BGTaskManager {
         val database = MeeseeksAppDatabase.require(context)
         val workRequestFactory = WorkRequestFactory()
         val taskScheduler = TaskScheduler()
         val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory)
-        return RealBackgroundTaskManager(
+        return RealBGTaskManager(
             database = database,
             workRequestFactory = workRequestFactory,
             taskScheduler = taskScheduler,

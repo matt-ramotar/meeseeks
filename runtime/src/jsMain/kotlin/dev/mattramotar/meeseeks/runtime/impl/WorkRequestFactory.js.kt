@@ -1,13 +1,12 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
-import kotlinx.serialization.json.Json
 
 internal actual class WorkRequestFactory {
     actual fun createWorkRequest(
         taskId: Long,
-        task: Task
+        taskRequest: TaskRequest,
     ): WorkRequest {
         return WorkRequest(taskId)
     }

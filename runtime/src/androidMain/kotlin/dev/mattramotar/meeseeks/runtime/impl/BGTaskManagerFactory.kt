@@ -4,18 +4,17 @@ import android.util.Log
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
+import dev.mattramotar.meeseeks.runtime.BGTaskManager
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 
-internal actual class BackgroundTaskManagerFactory {
+internal actual class BGTaskManagerFactory {
     actual fun create(
         context: AppContext,
-        registry: TaskWorkerRegistry,
-        config: BackgroundTaskConfig
-    ): BackgroundTaskManager {
+        registry: WorkerRegistry,
+        config: BGTaskManagerConfig
+    ): BGTaskManager {
         val database = MeeseeksAppDatabase.require(context)
-        val workerFactory = BackgroundTaskWorkerFactory(database, registry)
+        val workerFactory = BGTaskWorkerFactory(database, registry)
         val workRequestFactory = WorkRequestFactory(config.backoffMinimumMillis)
 
         val configuration = Configuration.Builder()
@@ -29,7 +28,7 @@ internal actual class BackgroundTaskManagerFactory {
         val taskScheduler = TaskScheduler(workManager)
         val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory)
 
-        return RealBackgroundTaskManager(
+        return RealBGTaskManager(
             database,
             workRequestFactory,
             taskScheduler,

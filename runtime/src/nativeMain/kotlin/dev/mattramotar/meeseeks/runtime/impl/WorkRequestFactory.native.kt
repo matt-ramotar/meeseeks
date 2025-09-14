@@ -1,15 +1,15 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.BGTaskIdentifiers
-import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
 internal actual class WorkRequestFactory {
     actual fun createWorkRequest(
         taskId: Long,
-        task: Task
+        taskRequest: TaskRequest
     ): WorkRequest {
-        val bgTaskIdentifier = bgTaskIdentifierFor(taskId, task.schedule)
+        val bgTaskIdentifier = bgTaskIdentifierFor(taskId, taskRequest.schedule)
         return WorkRequest(bgTaskIdentifier)
     }
 

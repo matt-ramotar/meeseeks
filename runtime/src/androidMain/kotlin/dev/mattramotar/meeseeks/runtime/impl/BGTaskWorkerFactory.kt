@@ -4,14 +4,13 @@ import android.content.Context
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
-import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 
 
-internal class BackgroundTaskWorkerFactory(
+internal class BGTaskWorkerFactory(
     private val database: MeeseeksDatabase,
-    private val registry: TaskWorkerRegistry
+    private val registry: WorkerRegistry,
 ) : WorkerFactory() {
 
     override fun createWorker(
@@ -19,13 +18,13 @@ internal class BackgroundTaskWorkerFactory(
         workerClassName: String,
         workerParameters: WorkerParameters
     ): ListenableWorker? {
-        return if (workerClassName == BackgroundTaskWorker::class.qualifiedName) {
+        return if (workerClassName == BGTaskCoroutineWorker::class.qualifiedName) {
             val taskId =
                 workerParameters.inputData.getLong(WorkRequestFactory.KEY_TASK_ID, -1)
             if (taskId <= 0) {
                 null
             } else {
-                BackgroundTaskWorker(
+                BGTaskCoroutineWorker(
                     appContext,
                     workerParameters,
                     database,
