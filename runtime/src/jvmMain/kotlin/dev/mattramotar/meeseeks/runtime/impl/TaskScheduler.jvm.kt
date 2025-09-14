@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.impl.WorkRequestFactory.Companion.JOB_GROUP
 import org.quartz.JobKey
@@ -13,7 +13,7 @@ internal actual class TaskScheduler(
 
     actual fun scheduleTask(
         taskId: Long,
-        task: Task,
+        task: TaskRequest,
         workRequest: WorkRequest,
         existingWorkPolicy: ExistingWorkPolicy
     ) {

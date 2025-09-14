@@ -2,17 +2,17 @@ package dev.mattramotar.meeseeks.runtime.impl
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
+import dev.mattramotar.meeseeks.runtime.BGTaskManager
+import dev.mattramotar.meeseeks.runtime.ScheduledTask
+import dev.mattramotar.meeseeks.runtime.TaskId
+import dev.mattramotar.meeseeks.runtime.TaskRequest
+import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.TaskTelemetry
 import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
-import dev.mattramotar.meeseeks.runtime.TaskId
-import dev.mattramotar.meeseeks.runtime.ScheduledTask
-import dev.mattramotar.meeseeks.runtime.Task
-import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.db.TaskEntity
 import dev.mattramotar.meeseeks.runtime.impl.coroutines.MeeseeksDispatchers
-import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTask
+import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTaskRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +28,7 @@ internal class RealBackgroundTaskManager(
     private val taskRescheduler: TaskRescheduler,
     override val coroutineContext: CoroutineContext = SupervisorJob() + MeeseeksDispatchers.IO,
     private val telemetry: TaskTelemetry? = null,
-) : BackgroundTaskManager, CoroutineScope {
+) : BGTaskManager, CoroutineScope {
 
 
     init {
@@ -37,27 +37,26 @@ internal class RealBackgroundTaskManager(
         }
     }
 
-    override fun enqueue(task: Task): TaskId {
+    override fun schedule(request: TaskRequest): TaskId {
         val taskQueries = database.taskQueries
         val timestamp = Timestamp.now()
 
         taskQueries.insertTask(
-            taskType = task.taskType,
-            preconditions = task.preconditions,
-            priority = task.priority,
-            schedule = task.schedule,
-            retryPolicy = task.retryPolicy,
+            dynamicData = request.data,
+            preconditions = request.preconditions,
+            priority = request.priority,
+            schedule = request.schedule,
+            retryPolicy = request.retryPolicy,
             status = TaskStatus.Pending,
-            parameters = task.parameters,
             workRequestId = null,
             createdAt = timestamp,
             updatedAt = timestamp
         )
 
         val taskId = taskQueries.lastInsertedTaskId().executeAsOne()
-        val workRequest = workRequestFactory.createWorkRequest(taskId, task)
+        val workRequest = workRequestFactory.createWorkRequest(taskId, request)
 
-        taskScheduler.scheduleTask(taskId, task, workRequest, ExistingWorkPolicy.KEEP)
+        taskScheduler.scheduleTask(taskId, request, workRequest, ExistingWorkPolicy.KEEP)
 
         taskQueries.updateWorkRequestId(
             workRequestId = workRequest.id,
@@ -69,7 +68,7 @@ internal class RealBackgroundTaskManager(
             telemetry?.onEvent(
                 TaskTelemetryEvent.TaskScheduled(
                     taskId = TaskId(taskId),
-                    task = task
+                    task = request
                 )
             )
         }
@@ -101,7 +100,7 @@ internal class RealBackgroundTaskManager(
             telemetry?.onEvent(
                 TaskTelemetryEvent.TaskCancelled(
                     taskId = id,
-                    task = taskEntity.toTask()
+                    task = taskEntity.toTaskRequest()
                 )
             )
         }
@@ -120,7 +119,7 @@ internal class RealBackgroundTaskManager(
                 telemetry?.onEvent(
                     TaskTelemetryEvent.TaskCancelled(
                         taskId = TaskId(entity.id),
-                        task = entity.toTask()
+                        task = entity.toTaskRequest()
                     )
                 )
             }
@@ -149,7 +148,11 @@ internal class RealBackgroundTaskManager(
             .map { it.toScheduledTask() }
     }
 
-    override fun rescheduleTask(id: TaskId, newTask: Task): TaskId {
+
+    override fun reschedule(
+        id: TaskId,
+        request: TaskRequest
+    ): TaskId {
         val taskQueries = database.taskQueries
         val existing = taskQueries.selectTaskByTaskId(id.value).executeAsOneOrNull()
             ?: error("Update failed: Task $id not found.")
@@ -169,21 +172,20 @@ internal class RealBackgroundTaskManager(
 
         val timestamp = Timestamp.now()
         taskQueries.updateTask(
-            taskType = newTask.taskType,
-            preconditions = newTask.preconditions,
-            priority = newTask.priority,
-            schedule = newTask.schedule,
-            retryPolicy = newTask.retryPolicy,
+            dynamicData = request.data,
+            preconditions = request.preconditions,
+            priority = request.priority,
+            schedule = request.schedule,
+            retryPolicy = request.retryPolicy,
             status = TaskStatus.Pending,
-            parameters = newTask.parameters,
             updatedAt = timestamp,
             id = existing.id
         )
 
-        val newWorkRequest = workRequestFactory.createWorkRequest(existing.id, newTask)
+        val newWorkRequest = workRequestFactory.createWorkRequest(existing.id, request)
         taskScheduler.scheduleTask(
             existing.id,
-            newTask,
+            request,
             newWorkRequest,
             ExistingWorkPolicy.KEEP
         )
@@ -194,7 +196,7 @@ internal class RealBackgroundTaskManager(
             telemetry?.onEvent(
                 TaskTelemetryEvent.TaskScheduled(
                     taskId = TaskId(existing.id),
-                    task = newTask
+                    task = request
                 )
             )
         }
@@ -213,7 +215,7 @@ internal class RealBackgroundTaskManager(
     private fun TaskEntity.toScheduledTask() = ScheduledTask(
         id = TaskId(this.id),
         status = this.status,
-        task = this.toTask(),
+        task = this.toTaskRequest(),
         runAttemptCount = this.runAttemptCount.toInt(),
         createdAt = this.createdAt,
         updatedAt = this.updatedAt

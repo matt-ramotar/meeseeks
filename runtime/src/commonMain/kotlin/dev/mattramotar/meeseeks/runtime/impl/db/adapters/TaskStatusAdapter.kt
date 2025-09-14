@@ -17,3 +17,4 @@ internal class TaskStatusAdapter(
     }
 
 }
+

@@ -2,20 +2,22 @@ package dev.mattramotar.meeseeks.runtime
 
 
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
+import dev.mattramotar.meeseeks.runtime.db.TaskEntity
 import dev.mattramotar.meeseeks.runtime.impl.Timestamp
 import dev.mattramotar.meeseeks.runtime.impl.WorkRequestFactory
+import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.impl.coroutines.MeeseeksDispatchers
-import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTask
+import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTaskRequest
 import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
 import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 
-object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
+object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
     internal lateinit var database: MeeseeksDatabase
-    internal lateinit var registry: TaskWorkerRegistry
+    internal lateinit var registry: WorkerRegistry
     internal var config: BackgroundTaskConfig? = null
 
 
@@ -58,23 +60,21 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
         taskQueries.updateStatus(TaskStatus.Running, timestamp, id)
         val taskId = TaskId(id)
-        val task = taskEntity.toTask()
-        val attemptNumber = taskEntity.runAttemptCount.toInt() + 1
+        val task = taskEntity.toTaskRequest()
+        val attemptCount = taskEntity.runAttemptCount.toInt() + 1
 
 
         config?.telemetry?.onEvent(
             TaskTelemetryEvent.TaskStarted(
                 taskId = taskId,
                 task = task,
-                runAttemptCount = attemptNumber
+                runAttemptCount = attemptCount
             )
         )
 
-        val taskWorker = registry.getFactory(taskEntity.taskType)
-            .create(task)
-
+        val worker = getWorker(taskEntity)
         val result: TaskResult = try {
-            taskWorker.execute(taskEntity.parameters)
+            worker.run(data = taskEntity.dynamicData, context = RuntimeContext(attemptCount))
         } catch (error: Throwable) {
             when (error) {
                 is TransientNetworkException -> TaskResult.Failure.Transient(error)
@@ -100,7 +100,7 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
                     TaskTelemetryEvent.TaskSucceeded(
                         taskId = taskId,
                         task = task,
-                        runAttemptCount = attemptNumber
+                        runAttemptCount = attemptCount
                     )
                 )
                 true
@@ -111,7 +111,7 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
                     TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
                         task = task,
-                        runAttemptCount = attemptNumber,
+                        runAttemptCount = attemptCount,
                         error = null
                     )
                 )
@@ -126,7 +126,7 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
                     TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
                         task = task,
-                        runAttemptCount = attemptNumber,
+                        runAttemptCount = attemptCount,
                         error = result.error
                     )
                 )
@@ -138,12 +138,18 @@ object BGTaskRunner: CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
                     TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
                         task = task,
-                        runAttemptCount = attemptNumber,
+                        runAttemptCount = attemptCount,
                         error = result.error
                     )
                 )
                 false
             }
         }
+    }
+
+    private fun getWorker(taskEntity: TaskEntity): Worker<DynamicData> {
+        val factory = registry.getFactory(taskEntity.dynamicData::class)
+        @Suppress("UNCHECKED_CAST")
+        return factory.create(EmptyAppContext()) as Worker<DynamicData>
     }
 }

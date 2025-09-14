@@ -2,17 +2,17 @@ package dev.mattramotar.meeseeks.runtime.dsl.box
 
 
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
+import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
+import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.impl.BackgroundTaskManagerFactory
 
 
-fun BackgroundTaskManager(
+internal fun BackgroundTaskManager(
     context: AppContext,
+    registry: WorkerRegistry,
     config: BackgroundTaskConfig = BackgroundTaskConfig(),
-    registry: TaskWorkerRegistry
-): BackgroundTaskManager {
+): BGTaskManager {
 
     val factory = BackgroundTaskManagerFactory()
 

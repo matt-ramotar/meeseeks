@@ -46,3 +46,22 @@ data class ListValue(val value: List<Value>) : Collection()
 
 @Serializable
 data class MapValue(val value: Map<String, Value>) : Collection()
+
+internal fun Any?.wrapped(): Value = when (this) {
+    null -> NullValue
+    is Value -> this
+    is String -> StringValue(this)
+    is Boolean -> BooleanValue(this)
+    is Int -> IntValue(this)
+    is Long -> LongValue(this)
+    is Float -> FloatValue(this)
+    is Double -> DoubleValue(this)
+    is Byte -> ByteValue(this)
+    is Short -> ShortValue(this)
+    is Char -> CharValue(this)
+    is Map<*, *> -> MapValue(this.entries.mapNotNull { (k, v) ->
+        (k as? String)?.let { it to v.wrapped() }
+    }.toMap())
+    is List<*> -> ListValue(this.map { it.wrapped() })
+    else -> StringValue(this.toString())
+}

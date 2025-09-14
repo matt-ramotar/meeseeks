@@ -6,7 +6,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.workDataOf
-import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskRetryPolicy
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import java.util.concurrent.TimeUnit
@@ -16,20 +16,19 @@ internal actual class WorkRequestFactory(
 ) {
     actual fun createWorkRequest(
         taskId: Long,
-        task: Task
+        taskRequest: TaskRequest
     ): WorkRequest {
 
-        val constraints = buildConstraints(task)
+        val constraints = buildConstraints(taskRequest)
 
-        val (backoffPolicy, backoffDelay) = buildBackoffPolicy(task.retryPolicy)
+        val (backoffPolicy, backoffDelay) = buildBackoffPolicy(taskRequest.retryPolicy)
 
         val inputData = workDataOf(
             KEY_TASK_ID to taskId,
-            KEY_MEESEEKS_TYPE to task.taskType,
-            KEY_TASK_PARAMETERS to task.parameters
+            KEY_DYNAMIC_DATA to taskRequest.data
         )
 
-        val delegateWorkRequest = when (val schedule = task.schedule) {
+        val delegateWorkRequest = when (val schedule = taskRequest.schedule) {
             is TaskSchedule.OneTime -> {
                 OneTimeWorkRequestBuilder<BackgroundTaskWorker>()
                     .setConstraints(constraints)
@@ -61,7 +60,7 @@ internal actual class WorkRequestFactory(
         return WorkRequest(delegateWorkRequest)
     }
 
-    private fun buildConstraints(task: Task): Constraints {
+    private fun buildConstraints(task: TaskRequest): Constraints {
         val builder = Constraints.Builder()
         if (task.preconditions.requiresNetwork) {
             builder.setRequiredNetworkType(NetworkType.CONNECTED)
@@ -96,7 +95,7 @@ internal actual class WorkRequestFactory(
 
         const val KEY_TASK_ID = "task_id"
         const val KEY_MEESEEKS_TYPE = "meeseeks_type"
-        const val KEY_TASK_PARAMETERS = "task_parameters"
+        const val KEY_DYNAMIC_DATA = "dynamic_data"
         private const val MINIMUM_PERIODIC_INTERVAL_MS = 15 * 60 * 1000L
         private const val UNIQUE_WORK_NAME_PREFIX = "meeseeks_work_"
 
@@ -110,5 +109,4 @@ internal actual class WorkRequestFactory(
 
         actual val WORK_REQUEST_TAG: String = "meeseeks"
     }
-
 }

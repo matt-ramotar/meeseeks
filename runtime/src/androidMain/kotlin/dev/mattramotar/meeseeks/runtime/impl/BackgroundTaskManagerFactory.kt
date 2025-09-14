@@ -4,16 +4,16 @@ import android.util.Log
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskManager
+import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
+import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
 
 internal actual class BackgroundTaskManagerFactory {
     actual fun create(
         context: AppContext,
-        registry: TaskWorkerRegistry,
+        registry: WorkerRegistry,
         config: BackgroundTaskConfig
-    ): BackgroundTaskManager {
+    ): BGTaskManager {
         val database = MeeseeksAppDatabase.require(context)
         val workerFactory = BackgroundTaskWorkerFactory(database, registry)
         val workRequestFactory = WorkRequestFactory(config.backoffMinimumMillis)

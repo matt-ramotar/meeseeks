@@ -3,16 +3,18 @@ package dev.mattramotar.meeseeks.runtime.impl
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import dev.mattramotar.meeseeks.runtime.TaskWorkerRegistry
-import dev.mattramotar.meeseeks.runtime.TaskTelemetry
-import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
-import dev.mattramotar.meeseeks.runtime.TaskWorker
+import dev.mattramotar.meeseeks.runtime.AppContext
+import dev.mattramotar.meeseeks.runtime.DynamicData
+import dev.mattramotar.meeseeks.runtime.RuntimeContext
 import dev.mattramotar.meeseeks.runtime.TaskId
-import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskStatus
+import dev.mattramotar.meeseeks.runtime.TaskTelemetry
+import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
+import dev.mattramotar.meeseeks.runtime.Worker
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTask
+import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTaskRequest
 import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
 import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.coroutines.Dispatchers
@@ -24,8 +26,9 @@ internal class BackgroundTaskWorker(
     workerParameters: WorkerParameters,
     private val database: MeeseeksDatabase,
     private val taskId: TaskId,
-    private val taskWorkerRegistry: TaskWorkerRegistry,
-    private val telemetry: TaskTelemetry? = null
+    private val workerRegistry: WorkerRegistry,
+    private val telemetry: TaskTelemetry? = null,
+    private val appContext: AppContext = context.applicationContext
 ) : CoroutineWorker(context, workerParameters) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -40,23 +43,22 @@ internal class BackgroundTaskWorker(
             return@withContext Result.failure()
         }
 
-
         val now = System.currentTimeMillis()
         taskQueries.updateStatus(TaskStatus.Running, now, taskId.value)
-        val attemptNumber = runAttemptCount
+        val attemptCount = runAttemptCount
 
         telemetry?.onEvent(
             TaskTelemetryEvent.TaskStarted(
                 taskId = taskId,
-                task = taskEntity.toTask(),
-                runAttemptCount = attemptNumber,
+                task = taskEntity.toTaskRequest(),
+                runAttemptCount = attemptCount,
             )
         )
 
         val result: TaskResult = try {
-            val meeseeks =
-                enqueueTask(taskEntity.toTask())
-            meeseeks.execute(taskEntity.parameters)
+            val request = taskEntity.toTaskRequest()
+            val worker = getWorker(request)
+            worker.run(data = request.data, context = RuntimeContext(attemptCount))
         } catch (error: Throwable) {
             when (error) {
                 is TransientNetworkException -> TaskResult.Failure.Transient(error)
@@ -69,7 +71,7 @@ internal class BackgroundTaskWorker(
             taskId = taskEntity.id,
             created = now,
             result = result.type,
-            attempt = attemptNumber.toLong(),
+            attempt = attemptCount.toLong(),
             message = null
         )
 
@@ -84,9 +86,9 @@ internal class BackgroundTaskWorker(
                 telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
-                        task = taskEntity.toTask(),
+                        task = taskEntity.toTaskRequest(),
                         error = result.error,
-                        runAttemptCount = attemptNumber,
+                        runAttemptCount = attemptCount,
                     )
                 )
 
@@ -97,9 +99,9 @@ internal class BackgroundTaskWorker(
                 telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
-                        task = taskEntity.toTask(),
+                        task = taskEntity.toTaskRequest(),
                         error = result.error,
-                        runAttemptCount = attemptNumber,
+                        runAttemptCount = attemptCount,
                     )
                 )
                 Result.retry()
@@ -109,9 +111,9 @@ internal class BackgroundTaskWorker(
                 telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
-                        task = taskEntity.toTask(),
+                        task = taskEntity.toTaskRequest(),
                         error = null,
-                        runAttemptCount = attemptNumber,
+                        runAttemptCount = attemptCount,
                     )
                 )
                 Result.retry()
@@ -127,8 +129,8 @@ internal class BackgroundTaskWorker(
                 telemetry?.onEvent(
                     TaskTelemetryEvent.TaskSucceeded(
                         taskId = taskId,
-                        task = taskEntity.toTask(),
-                        runAttemptCount = attemptNumber,
+                        task = taskEntity.toTaskRequest(),
+                        runAttemptCount = attemptCount,
                     )
                 )
 
@@ -137,8 +139,9 @@ internal class BackgroundTaskWorker(
         }
     }
 
-    private fun enqueueTask(task: Task): TaskWorker {
-        val factory = taskWorkerRegistry.getFactory(task.taskType)
-        return factory.create(task)
+    private fun getWorker(request: TaskRequest): Worker<DynamicData> {
+        val factory = workerRegistry.getFactory(request.data::class)
+        @Suppress("UNCHECKED_CAST")
+        return factory.create(appContext) as Worker<DynamicData>
     }
 }

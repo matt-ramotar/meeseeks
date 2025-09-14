@@ -1,4 +1,4 @@
-import dev.mattramotar.meeseeks.runtime.TaskParameters;
+import dev.mattramotar.meeseeks.runtime.DynamicData;
 import dev.mattramotar.meeseeks.runtime.TaskPreconditions;
 import dev.mattramotar.meeseeks.runtime.TaskPriority;
 import dev.mattramotar.meeseeks.runtime.TaskRetryPolicy;
@@ -9,8 +9,8 @@ import dev.mattramotar.meeseeks.runtime.TaskStatus;
 CREATE TABLE taskEntity (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT ,
 
-    -- Task Type
-    taskType TEXT NOT NULL,
+    -- Task
+    dynamicData TEXT AS DynamicData NOT NULL,
 
     -- Preconditions
     preconditions TEXT AS TaskPreconditions NOT NULL,
@@ -28,7 +28,6 @@ CREATE TABLE taskEntity (
     status TEXT AS TaskStatus NOT NULL,
 
     -- Context
-    parameters TEXT AS TaskParameters NOT NULL,
     workRequestId TEXT,
 
     -- Metadata
@@ -39,20 +38,18 @@ CREATE TABLE taskEntity (
 
 insertTask:
 INSERT INTO taskEntity(
-    taskType,
+    dynamicData,
     preconditions,
     priority,
     schedule,
     retryPolicy,
     status,
-    parameters,
     workRequestId,
     createdAt,
     updatedAt,
     runAttemptCount
 )
 VALUES (
-    ?,
     ?,
     ?,
     ?,
@@ -113,12 +110,11 @@ SELECT * FROM taskEntity;
 updateTask:
 UPDATE taskEntity
 SET
-  taskType = ?,
+  dynamicData = ?,
   preconditions = ?,
   priority = ?,
   schedule = ?,
   retryPolicy = ?,
   status = ?,
-  parameters = ?,
   updatedAt = ?
 WHERE id = ?;

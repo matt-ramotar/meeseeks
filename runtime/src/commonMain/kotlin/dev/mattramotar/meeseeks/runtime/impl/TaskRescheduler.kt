@@ -3,7 +3,7 @@ package dev.mattramotar.meeseeks.runtime.impl
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.db.TaskEntity
-import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTask
+import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTaskRequest
 import kotlinx.datetime.Clock
 
 
@@ -38,15 +38,15 @@ private class RealTaskRescheduler(
     }
 
     override fun rescheduleTask(taskEntity: TaskEntity) {
-        val task = taskEntity.toTask()
+        val taskRequest = taskEntity.toTaskRequest()
         val workRequest =
-            workRequestFactory.createWorkRequest(taskEntity.id, task)
+            workRequestFactory.createWorkRequest(taskEntity.id, taskRequest)
 
-        taskScheduler.scheduleTask(taskEntity.id, task, workRequest, ExistingWorkPolicy.REPLACE)
+        taskScheduler.scheduleTask(taskEntity.id, taskRequest, workRequest, ExistingWorkPolicy.REPLACE)
 
         val now = Clock.System.now().toEpochMilliseconds()
         database.taskQueries.updateWorkRequestId(
-            workRequestId = workRequest.id.toString(),
+            workRequestId = workRequest.id,
             updatedAt = now,
             id = taskEntity.id
         )

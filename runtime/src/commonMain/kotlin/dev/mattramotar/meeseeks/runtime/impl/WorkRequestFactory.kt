@@ -1,12 +1,12 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.Task
+import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
 internal expect class WorkRequestFactory {
     fun createWorkRequest(
         taskId: Long,
-        task: Task
+        taskRequest: TaskRequest,
     ): WorkRequest
 
     companion object {

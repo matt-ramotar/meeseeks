@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime
 
 /**
- * Configuration for [BackgroundTaskManager].
+ * Configuration for [BGTaskManager].
  */
 data class BackgroundTaskConfig(
     val maxParallelTasks: Int = 2,

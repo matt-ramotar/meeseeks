@@ -2,12 +2,13 @@ package dev.mattramotar.meeseeks.runtime
 
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.impl.MeeseeksAppDatabase
+import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
 
-actual fun initializePlatformSpecificScheduling(
+internal actual fun initializePlatformDependencies(
     context: AppContext,
-    config: BackgroundTaskConfig,
-    backgroundTaskManager: BackgroundTaskManager,
-    registry: TaskWorkerRegistry
+    manager: BGTaskManager,
+    registry: WorkerRegistry,
+    config: BackgroundTaskConfig
 ) {
     val database: MeeseeksDatabase = MeeseeksAppDatabase.require(context)
     BGTaskRunner.database = database

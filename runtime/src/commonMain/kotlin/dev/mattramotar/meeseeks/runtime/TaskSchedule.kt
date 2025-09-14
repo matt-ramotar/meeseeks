@@ -5,7 +5,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Defines whether a [Task] runs once or periodically.
+ * Defines whether a [LegacyTask] runs once or periodically.
  */
 @Serializable
 sealed class TaskSchedule {
@@ -14,7 +14,7 @@ sealed class TaskSchedule {
      */
     @Serializable
     data class OneTime(
-        val initialDelay: Long = 0L
+        val initialDelay: Duration = 0.seconds
     ) : TaskSchedule()
 
     /**
@@ -22,6 +22,7 @@ sealed class TaskSchedule {
      */
     @Serializable
     data class Periodic(
+        val initialDelay: Duration = 0.seconds,
         val interval: Duration = 60.seconds,
         val flexWindow: Duration = Duration.ZERO
     ) : TaskSchedule()
