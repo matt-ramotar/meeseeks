@@ -18,7 +18,7 @@ internal actual class WorkRequestFactory {
     ): WorkRequest {
         val jobKey = JobKey(uniqueWorkNameFor(taskId, taskRequest.schedule), JOB_GROUP)
 
-        val jobDetail = JobBuilder.newJob(BackgroundTaskQuartzJob::class.java)
+        val jobDetail = JobBuilder.newJob(BGTaskQuartzJob::class.java)
             .withIdentity(jobKey)
             .usingJobData(KEY_TASK_ID, taskId)
             .build()

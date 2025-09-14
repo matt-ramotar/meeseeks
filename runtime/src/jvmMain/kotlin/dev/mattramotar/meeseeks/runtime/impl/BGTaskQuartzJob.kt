@@ -23,7 +23,7 @@ import java.lang.System.currentTimeMillis
 
 
 @DisallowConcurrentExecution
-internal class BackgroundTaskQuartzJob(
+internal class BGTaskQuartzJob(
     private val telemetry: TaskTelemetry? = null
 ) : Job {
 
