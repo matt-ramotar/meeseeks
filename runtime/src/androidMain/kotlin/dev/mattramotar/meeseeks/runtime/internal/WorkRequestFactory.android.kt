@@ -30,12 +30,16 @@ internal actual class WorkRequestFactory(
 
         val delegateWorkRequest = when (val schedule = taskRequest.schedule) {
             is TaskSchedule.OneTime -> {
-                OneTimeWorkRequestBuilder<BGTaskCoroutineWorker>()
+                val builder = OneTimeWorkRequestBuilder<BGTaskCoroutineWorker>()
                     .setConstraints(constraints)
                     .setBackoffCriteria(backoffPolicy, backoffDelay, TimeUnit.MILLISECONDS)
                     .setInputData(inputData)
-                    .addTag(WORK_REQUEST_TAG)
-                    .build()
+
+                if (schedule.initialDelay.inWholeMilliseconds > 0) {
+                    builder.setInitialDelay(schedule.initialDelay.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+                }
+
+                builder.addTag(WORK_REQUEST_TAG).build()
             }
 
             is TaskSchedule.Periodic -> {
@@ -45,15 +49,19 @@ internal actual class WorkRequestFactory(
                 val repeatInterval = intervalMillis.coerceAtLeast(MINIMUM_PERIODIC_INTERVAL_MS)
                 val flexInterval = if (flexMillis > 0) flexMillis else repeatInterval
 
-                PeriodicWorkRequestBuilder<BGTaskCoroutineWorker>(
-                    repeatInterval, TimeUnit.MILLISECONDS,
-                    flexInterval, TimeUnit.MILLISECONDS
-                )
-                    .setConstraints(constraints)
+                val builder = PeriodicWorkRequestBuilder<BGTaskCoroutineWorker>(
+                    repeatInterval = repeatInterval,
+                    repeatIntervalTimeUnit = TimeUnit.MILLISECONDS,
+                    flexTimeInterval = flexInterval,
+                    flexTimeIntervalUnit = TimeUnit.MILLISECONDS
+                ).setConstraints(constraints)
                     .setBackoffCriteria(backoffPolicy, backoffDelay, TimeUnit.MILLISECONDS)
-                    .setInputData(inputData)
-                    .addTag(WORK_REQUEST_TAG)
-                    .build()
+
+                if (schedule.initialDelay.inWholeMilliseconds > 0) {
+                    builder.setInitialDelay(schedule.initialDelay.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+                }
+
+                builder.addTag(WORK_REQUEST_TAG).build()
             }
         }
 
