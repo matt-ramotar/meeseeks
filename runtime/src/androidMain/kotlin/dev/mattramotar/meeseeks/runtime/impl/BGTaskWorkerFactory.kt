@@ -18,13 +18,13 @@ internal class BGTaskWorkerFactory(
         workerClassName: String,
         workerParameters: WorkerParameters
     ): ListenableWorker? {
-        return if (workerClassName == BackgroundTaskWorker::class.qualifiedName) {
+        return if (workerClassName == BGTaskCoroutineWorker::class.qualifiedName) {
             val taskId =
                 workerParameters.inputData.getLong(WorkRequestFactory.KEY_TASK_ID, -1)
             if (taskId <= 0) {
                 null
             } else {
-                BackgroundTaskWorker(
+                BGTaskCoroutineWorker(
                     appContext,
                     workerParameters,
                     database,

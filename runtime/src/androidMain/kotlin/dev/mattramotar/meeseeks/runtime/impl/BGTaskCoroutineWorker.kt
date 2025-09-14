@@ -21,7 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-internal class BackgroundTaskWorker(
+internal class BGTaskCoroutineWorker(
     context: Context,
     workerParameters: WorkerParameters,
     private val database: MeeseeksDatabase,

@@ -30,7 +30,7 @@ internal actual class WorkRequestFactory(
 
         val delegateWorkRequest = when (val schedule = taskRequest.schedule) {
             is TaskSchedule.OneTime -> {
-                OneTimeWorkRequestBuilder<BackgroundTaskWorker>()
+                OneTimeWorkRequestBuilder<BGTaskCoroutineWorker>()
                     .setConstraints(constraints)
                     .setBackoffCriteria(backoffPolicy, backoffDelay, TimeUnit.MILLISECONDS)
                     .setInputData(inputData)
@@ -45,7 +45,7 @@ internal actual class WorkRequestFactory(
                 val repeatInterval = intervalMillis.coerceAtLeast(MINIMUM_PERIODIC_INTERVAL_MS)
                 val flexInterval = if (flexMillis > 0) flexMillis else repeatInterval
 
-                PeriodicWorkRequestBuilder<BackgroundTaskWorker>(
+                PeriodicWorkRequestBuilder<BGTaskCoroutineWorker>(
                     repeatInterval, TimeUnit.MILLISECONDS,
                     flexInterval, TimeUnit.MILLISECONDS
                 )
