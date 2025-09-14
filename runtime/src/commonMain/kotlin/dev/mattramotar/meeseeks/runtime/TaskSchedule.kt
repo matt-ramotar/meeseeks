@@ -5,7 +5,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Defines whether a [LegacyTask] runs once or periodically.
+ * Defines whether a [TaskRequest] runs once or periodically.
  */
 @Serializable
 sealed class TaskSchedule {

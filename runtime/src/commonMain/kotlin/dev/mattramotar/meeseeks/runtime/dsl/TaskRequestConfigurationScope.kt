@@ -10,7 +10,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @TaskRequestDsl
-class TaskRequestBuilder<T : TaskPayload> internal constructor(
+open class TaskRequestConfigurationScope<T : TaskPayload> internal constructor(
     private val payload: T,
     private var schedule: TaskSchedule,
 ) {
@@ -20,13 +20,6 @@ class TaskRequestBuilder<T : TaskPayload> internal constructor(
         initialInterval = 30.seconds,
         maxRetries = 5
     )
-
-    fun setInitialDelay(duration: Duration) {
-        schedule = when (schedule) {
-            is TaskSchedule.OneTime -> (schedule as TaskSchedule.OneTime).copy(initialDelay = duration)
-            is TaskSchedule.Periodic -> (schedule as TaskSchedule.Periodic).copy(initialDelay = duration)
-        }
-    }
 
     fun requireNetwork(required: Boolean = true) {
         preconditions = preconditions.copy(requiresNetwork = required)
@@ -60,6 +53,7 @@ class TaskRequestBuilder<T : TaskPayload> internal constructor(
         retryPolicy = TaskRetryPolicy.ExponentialBackoff(initialDelay, maxAttempts)
     }
 
+    @PublishedApi
     internal fun build(): TaskRequest {
         return TaskRequest(
             payload = payload,

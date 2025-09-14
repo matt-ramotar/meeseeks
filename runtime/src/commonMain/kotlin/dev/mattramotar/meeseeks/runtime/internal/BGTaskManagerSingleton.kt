@@ -6,6 +6,7 @@ import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.internal.concurrency.synchronized
 import kotlin.concurrent.Volatile
 
+@PublishedApi
 internal object BGTaskManagerSingleton {
 
     @Volatile

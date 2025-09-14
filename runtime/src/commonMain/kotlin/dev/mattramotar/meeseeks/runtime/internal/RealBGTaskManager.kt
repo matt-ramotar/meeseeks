@@ -151,7 +151,7 @@ internal class RealBGTaskManager(
 
     override fun reschedule(
         id: TaskId,
-        request: TaskRequest
+        updatedRequest: TaskRequest
     ): TaskId {
         val taskQueries = database.taskQueries
         val existing = taskQueries.selectTaskByTaskId(id.value).executeAsOneOrNull()
@@ -172,20 +172,20 @@ internal class RealBGTaskManager(
 
         val timestamp = Timestamp.now()
         taskQueries.updateTask(
-            payload = request.payload,
-            preconditions = request.preconditions,
-            priority = request.priority,
-            schedule = request.schedule,
-            retryPolicy = request.retryPolicy,
+            payload = updatedRequest.payload,
+            preconditions = updatedRequest.preconditions,
+            priority = updatedRequest.priority,
+            schedule = updatedRequest.schedule,
+            retryPolicy = updatedRequest.retryPolicy,
             status = TaskStatus.Pending,
             updatedAt = timestamp,
             id = existing.id
         )
 
-        val newWorkRequest = workRequestFactory.createWorkRequest(existing.id, request)
+        val newWorkRequest = workRequestFactory.createWorkRequest(existing.id, updatedRequest)
         taskScheduler.scheduleTask(
             existing.id,
-            request,
+            updatedRequest,
             newWorkRequest,
             ExistingWorkPolicy.KEEP
         )
@@ -196,7 +196,7 @@ internal class RealBGTaskManager(
             telemetry?.onEvent(
                 TaskTelemetryEvent.TaskScheduled(
                     taskId = TaskId(existing.id),
-                    task = request
+                    task = updatedRequest
                 )
             )
         }
