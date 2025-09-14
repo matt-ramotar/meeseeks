@@ -1,6 +1,8 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
+import dev.mattramotar.meeseeks.runtime.BGTaskRunner
 import dev.mattramotar.meeseeks.runtime.TaskRequest
+import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
@@ -70,11 +72,11 @@ internal actual class TaskScheduler(
         activeTasks.forEach { entity -> entity.workRequestId?.let { cancelWorkById(it, entity.schedule) } }
     }
 
-    private fun createBGTaskRequest(identifier: String, task: TaskRequest): BGTaskRequest {
-        val requiresNetwork = task.preconditions.requiresNetwork
-        val requiresCharging = task.preconditions.requiresCharging
+    private fun createBGTaskRequest(identifier: String, request: TaskRequest): BGTaskRequest {
+        val requiresNetwork = request.preconditions.requiresNetwork
+        val requiresCharging = request.preconditions.requiresCharging
 
-        val request = if (requiresNetwork || requiresCharging) {
+        val bgTaskRequest = if (requiresNetwork || requiresCharging) {
             BGProcessingTaskRequest(identifier).apply {
                 requiresNetworkConnectivity = requiresNetwork
                 requiresExternalPower = requiresCharging
@@ -83,7 +85,7 @@ internal actual class TaskScheduler(
             BGAppRefreshTaskRequest(identifier)
         }
 
-        val earliestDelaySeconds = when (val schedule = task.schedule) {
+        val earliestDelaySeconds = when (val schedule = request.schedule) {
             is TaskSchedule.OneTime -> {
                 schedule.initialDelay.inWholeSeconds.toDouble()
             }
@@ -93,9 +95,9 @@ internal actual class TaskScheduler(
             }
         }
         if (earliestDelaySeconds > 0) {
-            request.earliestBeginDate = NSDate.dateWithTimeIntervalSinceNow(earliestDelaySeconds)
+            bgTaskRequest.earliestBeginDate = NSDate.dateWithTimeIntervalSinceNow(earliestDelaySeconds)
         }
 
-        return request
+        return bgTaskRequest
     }
 }

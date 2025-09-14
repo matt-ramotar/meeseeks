@@ -10,8 +10,15 @@ import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import dev.mattramotar.meeseeks.runtime.internal.extensions.TaskEntityExtensions.toTaskRequest
 import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
 import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import platform.BackgroundTasks.BGAppRefreshTaskRequest
+import platform.BackgroundTasks.BGProcessingTaskRequest
+import platform.BackgroundTasks.BGTaskRequest
+import platform.BackgroundTasks.BGTaskScheduler
+import platform.Foundation.NSDate
+import platform.Foundation.dateWithTimeIntervalSinceNow
 
 
 object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
@@ -19,7 +26,6 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
     internal lateinit var database: MeeseeksDatabase
     internal lateinit var registry: WorkerRegistry
     internal var config: BGTaskManagerConfig? = null
-
 
     fun run(
         bgTaskIdentifier: String,
@@ -43,7 +49,6 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
                 completionCallback(false)
             }
         }
-
     }
 
     private suspend fun runTask(id: Long): Boolean {
@@ -51,23 +56,17 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         val taskQueries = database.taskQueries
         val taskLogQueries = database.taskLogQueries
 
-        val taskEntity =
-            taskQueries.selectTaskByTaskId(id).executeAsOneOrNull() ?: return false
-
-        if (taskEntity.status !is TaskStatus.Pending) {
-            return false
-        }
-
+        val taskEntity = taskQueries.selectTaskByTaskId(id).executeAsOneOrNull() ?: return false
+        if (taskEntity.status !is TaskStatus.Pending) return false
         taskQueries.updateStatus(TaskStatus.Running, timestamp, id)
+        val request: TaskRequest = taskEntity.toTaskRequest()
+        val attemptCount: Int = taskEntity.runAttemptCount.toInt() + 1
         val taskId = TaskId(id)
-        val task = taskEntity.toTaskRequest()
-        val attemptCount = taskEntity.runAttemptCount.toInt() + 1
-
 
         config?.telemetry?.onEvent(
             TaskTelemetryEvent.TaskStarted(
                 taskId = taskId,
-                task = task,
+                task = request,
                 runAttemptCount = attemptCount
             )
         )
@@ -93,16 +92,24 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
         return when (result) {
             is TaskResult.Success -> {
-                val updatedNow = Timestamp.now()
-                taskQueries.updateStatus(TaskStatus.Finished.Completed, updatedNow, id)
 
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskSucceeded(
                         taskId = taskId,
-                        task = task,
+                        task = request,
                         runAttemptCount = attemptCount
                     )
                 )
+
+                when (request.schedule) {
+                    is TaskSchedule.OneTime -> {
+                        taskQueries.updateStatus(TaskStatus.Finished.Completed, Timestamp.now(), id)
+                    }
+
+                    is TaskSchedule.Periodic -> {
+                        resubmitPeriodic(id, request, attemptCount)
+                    }
+                }
                 true
             }
 
@@ -110,11 +117,16 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
-                        task = task,
+                        task = request,
                         runAttemptCount = attemptCount,
                         error = null
                     )
                 )
+
+                if (request.schedule is TaskSchedule.Periodic) {
+                    resubmitPeriodic(id, request, attemptCount)
+                }
+
                 false
             }
 
@@ -125,7 +137,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
-                        task = task,
+                        task = request,
                         runAttemptCount = attemptCount,
                         error = result.error
                     )
@@ -137,11 +149,14 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
                         taskId = taskId,
-                        task = task,
+                        task = request,
                         runAttemptCount = attemptCount,
                         error = result.error
                     )
                 )
+                if (request.schedule is TaskSchedule.Periodic) {
+                    resubmitPeriodic(id, request, attemptCount)
+                }
                 false
             }
         }
@@ -151,5 +166,54 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         val factory = registry.getFactory(taskEntity.payload::class)
         @Suppress("UNCHECKED_CAST")
         return factory.create(EmptyAppContext()) as Worker<TaskPayload>
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    private fun resubmitPeriodic(
+        taskId: Long, request: TaskRequest, attemptCount: Int
+    ) {
+        val schedule = request.schedule as? TaskSchedule.Periodic ?: return
+
+        val identifier = WorkRequestFactory.bgTaskIdentifierFor(taskId, schedule)
+        val bgTaskRequest = createNextBGTaskRequest(identifier, request, schedule)
+        BGTaskScheduler.sharedScheduler.submitTaskRequest(bgTaskRequest, null)
+
+        val now = Timestamp.now()
+        database.taskQueries.updateWorkRequestId(identifier, now, taskId)
+        database.taskQueries.updateStatus(TaskStatus.Pending, now, taskId)
+
+        database.taskLogQueries.insertLog(
+            taskId = taskId,
+            created = now,
+            result = TaskResult.Type.SuccessAndScheduledNext,
+            attempt = attemptCount.toLong(),
+            message = "Periodic task resubmitted by BGTaskRunner."
+        )
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    private fun createNextBGTaskRequest(
+        identifier: String,
+        request: TaskRequest,
+        periodic: TaskSchedule.Periodic
+    ): BGTaskRequest {
+        val requiresNetwork = request.preconditions.requiresNetwork
+        val requiresCharging = request.preconditions.requiresCharging
+
+        val bgTaskRequest: BGTaskRequest = if (requiresNetwork || requiresCharging) {
+            BGProcessingTaskRequest(identifier).apply {
+                requiresNetworkConnectivity = requiresNetwork
+                requiresExternalPower = requiresCharging
+            }
+        } else {
+            BGAppRefreshTaskRequest(identifier)
+        }
+
+        val earliestSeconds = periodic.interval.inWholeSeconds.toDouble()
+        if (earliestSeconds > 0.0) {
+            bgTaskRequest.earliestBeginDate = NSDate.dateWithTimeIntervalSinceNow(earliestSeconds)
+        }
+
+        return bgTaskRequest
     }
 }
