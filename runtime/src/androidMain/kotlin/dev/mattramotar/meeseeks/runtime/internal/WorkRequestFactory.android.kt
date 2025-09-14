@@ -1,11 +1,14 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
+import android.os.Build
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.workDataOf
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskRetryPolicy
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
@@ -16,7 +19,8 @@ internal actual class WorkRequestFactory(
 ) {
     actual fun createWorkRequest(
         taskId: Long,
-        taskRequest: TaskRequest
+        taskRequest: TaskRequest,
+        config: BGTaskManagerConfig
     ): WorkRequest {
 
         val constraints = buildConstraints(taskRequest)
@@ -36,6 +40,10 @@ internal actual class WorkRequestFactory(
 
                 if (schedule.initialDelay.inWholeMilliseconds > 0) {
                     builder.setInitialDelay(schedule.initialDelay.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+                }
+
+                if (config.allowExpedited && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    builder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 }
 
                 builder.addTag(WORK_REQUEST_TAG).build()

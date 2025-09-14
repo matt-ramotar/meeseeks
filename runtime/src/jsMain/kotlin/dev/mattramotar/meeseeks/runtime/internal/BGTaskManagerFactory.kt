@@ -13,12 +13,13 @@ internal actual class BGTaskManagerFactory actual constructor() {
         val database = MeeseeksAppDatabase.require(context)
         val workRequestFactory = WorkRequestFactory()
         val taskScheduler = TaskScheduler()
-        val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory)
+        val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory, config)
         return RealBGTaskManager(
             database = database,
             workRequestFactory = workRequestFactory,
             taskScheduler = taskScheduler,
-            taskRescheduler = taskRescheduler
+            taskRescheduler = taskRescheduler,
+            config = config
         )
     }
 }

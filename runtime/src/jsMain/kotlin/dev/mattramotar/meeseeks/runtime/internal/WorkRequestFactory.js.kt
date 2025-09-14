@@ -1,5 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
@@ -7,6 +8,7 @@ internal actual class WorkRequestFactory {
     actual fun createWorkRequest(
         taskId: Long,
         taskRequest: TaskRequest,
+        config: BGTaskManagerConfig
     ): WorkRequest {
         return WorkRequest(taskId)
     }

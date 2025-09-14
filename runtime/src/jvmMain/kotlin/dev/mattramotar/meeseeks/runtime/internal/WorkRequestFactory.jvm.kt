@@ -1,5 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import org.quartz.JobBuilder
@@ -14,7 +15,8 @@ internal actual class WorkRequestFactory {
 
     actual fun createWorkRequest(
         taskId: Long,
-        taskRequest: TaskRequest
+        taskRequest: TaskRequest,
+        config: BGTaskManagerConfig
     ): WorkRequest {
         val jobKey = JobKey(uniqueWorkNameFor(taskId, taskRequest.schedule), JOB_GROUP)
 

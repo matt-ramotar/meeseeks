@@ -1,5 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.db.TaskEntity
@@ -15,9 +16,10 @@ internal interface TaskRescheduler {
         operator fun invoke(
             database: MeeseeksDatabase,
             taskScheduler: TaskScheduler,
-            workRequestFactory: WorkRequestFactory
+            workRequestFactory: WorkRequestFactory,
+            config: BGTaskManagerConfig
         ): TaskRescheduler {
-            return RealTaskRescheduler(database, taskScheduler, workRequestFactory)
+            return RealTaskRescheduler(database, taskScheduler, workRequestFactory, config)
         }
     }
 }
@@ -25,7 +27,8 @@ internal interface TaskRescheduler {
 private class RealTaskRescheduler(
     private val database: MeeseeksDatabase,
     private val taskScheduler: TaskScheduler,
-    private val workRequestFactory: WorkRequestFactory
+    private val workRequestFactory: WorkRequestFactory,
+    private val config: BGTaskManagerConfig
 ) : TaskRescheduler {
 
     override fun rescheduleTasks() {
@@ -40,7 +43,7 @@ private class RealTaskRescheduler(
     override fun rescheduleTask(taskEntity: TaskEntity) {
         val taskRequest = taskEntity.toTaskRequest()
         val workRequest =
-            workRequestFactory.createWorkRequest(taskEntity.id, taskRequest)
+            workRequestFactory.createWorkRequest(taskEntity.id, taskRequest, config)
 
         taskScheduler.scheduleTask(taskEntity.id, taskRequest, workRequest, ExistingWorkPolicy.REPLACE)
 

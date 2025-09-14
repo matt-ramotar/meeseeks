@@ -3,6 +3,7 @@ package dev.mattramotar.meeseeks.runtime.internal
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.ScheduledTask
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskRequest
@@ -26,6 +27,7 @@ internal class RealBGTaskManager(
     private val workRequestFactory: WorkRequestFactory,
     private val taskScheduler: TaskScheduler,
     private val taskRescheduler: TaskRescheduler,
+    private val config: BGTaskManagerConfig,
     override val coroutineContext: CoroutineContext = SupervisorJob() + MeeseeksDispatchers.IO,
     private val telemetry: TaskTelemetry? = null,
 ) : BGTaskManager, CoroutineScope {
@@ -54,7 +56,7 @@ internal class RealBGTaskManager(
         )
 
         val taskId = taskQueries.lastInsertedTaskId().executeAsOne()
-        val workRequest = workRequestFactory.createWorkRequest(taskId, request)
+        val workRequest = workRequestFactory.createWorkRequest(taskId, request, config)
 
         taskScheduler.scheduleTask(taskId, request, workRequest, ExistingWorkPolicy.KEEP)
 
@@ -182,7 +184,7 @@ internal class RealBGTaskManager(
             id = existing.id
         )
 
-        val newWorkRequest = workRequestFactory.createWorkRequest(existing.id, updatedRequest)
+        val newWorkRequest = workRequestFactory.createWorkRequest(existing.id, updatedRequest, config)
         taskScheduler.scheduleTask(
             existing.id,
             updatedRequest,
