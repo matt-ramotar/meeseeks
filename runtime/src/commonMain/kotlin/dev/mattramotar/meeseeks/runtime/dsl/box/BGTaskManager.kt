@@ -8,7 +8,7 @@ import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.impl.BackgroundTaskManagerFactory
 
 
-internal fun BackgroundTaskManager(
+internal fun BGTaskManager(
     context: AppContext,
     registry: WorkerRegistry,
     config: BGTaskManagerConfig = BGTaskManagerConfig(),
