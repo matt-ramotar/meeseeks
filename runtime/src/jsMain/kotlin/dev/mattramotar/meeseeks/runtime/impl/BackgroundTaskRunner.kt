@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.DynamicData
 import dev.mattramotar.meeseeks.runtime.EmptyAppContext
 import dev.mattramotar.meeseeks.runtime.RuntimeContext
@@ -23,7 +23,7 @@ object BackgroundTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatche
 
     internal lateinit var database: MeeseeksDatabase
     internal lateinit var registry: WorkerRegistry
-    internal var config: BackgroundTaskConfig? = null
+    internal var config: BGTaskManagerConfig? = null
 
     fun run(
         tag: String

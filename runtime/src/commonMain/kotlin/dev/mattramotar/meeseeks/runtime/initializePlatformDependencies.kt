@@ -6,5 +6,5 @@ internal expect fun initializePlatformDependencies(
     context: AppContext,
     manager: BGTaskManager,
     registry: WorkerRegistry,
-    config: BackgroundTaskConfig = BackgroundTaskConfig(),
+    config: BGTaskManagerConfig = BGTaskManagerConfig(),
 )

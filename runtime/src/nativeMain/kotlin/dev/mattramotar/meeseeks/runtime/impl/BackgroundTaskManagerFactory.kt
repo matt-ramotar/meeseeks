@@ -1,16 +1,15 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
 import platform.BackgroundTasks.BGTaskScheduler
 
 internal actual class BackgroundTaskManagerFactory {
     actual fun create(
         context: AppContext,
         registry: WorkerRegistry,
-        config: BackgroundTaskConfig
+        config: BGTaskManagerConfig
     ): BGTaskManager {
         val database = MeeseeksAppDatabase.require(context)
         val bgTaskScheduler = BGTaskScheduler.sharedScheduler

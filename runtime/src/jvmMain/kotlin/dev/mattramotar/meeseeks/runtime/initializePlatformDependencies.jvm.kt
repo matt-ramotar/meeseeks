@@ -7,6 +7,6 @@ internal actual fun initializePlatformDependencies(
     context: AppContext,
     manager: BGTaskManager,
     registry: WorkerRegistry,
-    config: BackgroundTaskConfig
+    config: BGTaskManagerConfig
 ) {
 }

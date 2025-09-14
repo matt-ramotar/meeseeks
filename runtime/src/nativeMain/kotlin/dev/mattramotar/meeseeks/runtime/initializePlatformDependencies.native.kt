@@ -8,7 +8,7 @@ internal actual fun initializePlatformDependencies(
     context: AppContext,
     manager: BGTaskManager,
     registry: WorkerRegistry,
-    config: BackgroundTaskConfig
+    config: BGTaskManagerConfig
 ) {
     val database: MeeseeksDatabase = MeeseeksAppDatabase.require(context)
     BGTaskRunner.database = database

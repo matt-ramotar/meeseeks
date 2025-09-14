@@ -18,7 +18,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
     internal lateinit var database: MeeseeksDatabase
     internal lateinit var registry: WorkerRegistry
-    internal var config: BackgroundTaskConfig? = null
+    internal var config: BGTaskManagerConfig? = null
 
 
     fun run(

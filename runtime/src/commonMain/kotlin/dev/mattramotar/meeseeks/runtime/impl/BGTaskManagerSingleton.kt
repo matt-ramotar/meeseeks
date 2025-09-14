@@ -1,9 +1,8 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.dsl.box.BackgroundTaskManager
 import dev.mattramotar.meeseeks.runtime.impl.concurrency.synchronized
 import kotlin.concurrent.Volatile
@@ -21,7 +20,7 @@ internal object BGTaskManagerSingleton {
     fun getOrCreate(
         context: AppContext,
         registry: WorkerRegistry,
-        config: BackgroundTaskConfig = BackgroundTaskConfig(),
+        config: BGTaskManagerConfig = BGTaskManagerConfig(),
     ): BGTaskManager {
         val existingManager1 = _manager
         if (existingManager1 != null) return existingManager1

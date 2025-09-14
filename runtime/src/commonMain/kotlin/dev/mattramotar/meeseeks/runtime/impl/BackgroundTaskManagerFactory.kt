@@ -2,13 +2,12 @@ package dev.mattramotar.meeseeks.runtime.impl
 
 import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
-import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 
 internal expect class BackgroundTaskManagerFactory() {
     fun create(
         context: AppContext,
         registry: WorkerRegistry,
-        config: BackgroundTaskConfig = BackgroundTaskConfig()
+        config: BGTaskManagerConfig = BGTaskManagerConfig()
     ): BGTaskManager
 }

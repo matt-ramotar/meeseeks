@@ -5,14 +5,13 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
-import dev.mattramotar.meeseeks.runtime.BackgroundTaskConfig
-import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 
 internal actual class BackgroundTaskManagerFactory {
     actual fun create(
         context: AppContext,
         registry: WorkerRegistry,
-        config: BackgroundTaskConfig
+        config: BGTaskManagerConfig
     ): BGTaskManager {
         val database = MeeseeksAppDatabase.require(context)
         val workerFactory = BackgroundTaskWorkerFactory(database, registry)

@@ -13,10 +13,10 @@ import kotlin.reflect.KClass
 
 
 class BGTaskManagerBuilder internal constructor(private val appContext: AppContext) {
-    private var config: BackgroundTaskConfig = BackgroundTaskConfig()
+    private var config: BGTaskManagerConfig = BGTaskManagerConfig()
     private val registrations = mutableMapOf<KClass<out DynamicData>, DynamicDataRegistration>()
 
-    fun configuration(block: BackgroundTaskConfig.() -> BackgroundTaskConfig): BGTaskManagerBuilder {
+    fun configuration(block: BGTaskManagerConfig.() -> BGTaskManagerConfig): BGTaskManagerBuilder {
         config = config.block()
         return this
     }

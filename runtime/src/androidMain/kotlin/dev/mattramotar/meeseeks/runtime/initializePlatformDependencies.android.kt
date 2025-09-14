@@ -6,7 +6,7 @@ internal actual fun initializePlatformDependencies(
     context: AppContext,
     manager: BGTaskManager,
     registry: WorkerRegistry,
-    config: BackgroundTaskConfig
+    config: BGTaskManagerConfig
 ) {
     // No platform-specific scheduling needed
 }
