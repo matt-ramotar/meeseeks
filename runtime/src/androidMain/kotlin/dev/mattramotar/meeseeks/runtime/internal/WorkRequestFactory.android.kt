@@ -24,8 +24,7 @@ internal actual class WorkRequestFactory(
         val (backoffPolicy, backoffDelay) = buildBackoffPolicy(taskRequest.retryPolicy)
 
         val inputData = workDataOf(
-            KEY_TASK_ID to taskId,
-            KEY_PAYLOAD to taskRequest.payload
+            KEY_TASK_ID to taskId
         )
 
         val delegateWorkRequest = when (val schedule = taskRequest.schedule) {
@@ -100,10 +99,7 @@ internal actual class WorkRequestFactory(
     }
 
     actual companion object {
-
         const val KEY_TASK_ID = "task_id"
-        const val KEY_MEESEEKS_TYPE = "meeseeks_type"
-        const val KEY_PAYLOAD = "payload"
         private const val MINIMUM_PERIODIC_INTERVAL_MS = 15 * 60 * 1000L
         private const val UNIQUE_WORK_NAME_PREFIX = "meeseeks_work_"
 
