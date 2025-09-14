@@ -1,9 +1,9 @@
 package dev.mattramotar.meeseeks.runtime
 
-import dev.mattramotar.meeseeks.runtime.impl.BGTaskManagerSingleton
-import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistration
-import dev.mattramotar.meeseeks.runtime.impl.MeeseeksAppDatabase
-import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
+import dev.mattramotar.meeseeks.runtime.internal.BGTaskManagerSingleton
+import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistration
+import dev.mattramotar.meeseeks.runtime.internal.MeeseeksAppDatabase
+import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule

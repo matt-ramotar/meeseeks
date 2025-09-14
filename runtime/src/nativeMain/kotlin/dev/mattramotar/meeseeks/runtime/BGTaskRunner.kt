@@ -3,11 +3,11 @@ package dev.mattramotar.meeseeks.runtime
 
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.db.TaskEntity
-import dev.mattramotar.meeseeks.runtime.impl.Timestamp
-import dev.mattramotar.meeseeks.runtime.impl.WorkRequestFactory
-import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
-import dev.mattramotar.meeseeks.runtime.impl.coroutines.MeeseeksDispatchers
-import dev.mattramotar.meeseeks.runtime.impl.extensions.TaskEntityExtensions.toTaskRequest
+import dev.mattramotar.meeseeks.runtime.internal.Timestamp
+import dev.mattramotar.meeseeks.runtime.internal.WorkRequestFactory
+import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
+import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
+import dev.mattramotar.meeseeks.runtime.internal.extensions.TaskEntityExtensions.toTaskRequest
 import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
 import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.coroutines.CoroutineScope
