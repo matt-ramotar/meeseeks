@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime
 
-import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
+import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
 
 internal expect fun initializePlatformDependencies(
     context: AppContext,
