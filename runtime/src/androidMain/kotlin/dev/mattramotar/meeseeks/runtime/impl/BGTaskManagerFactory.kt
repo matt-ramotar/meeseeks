@@ -14,7 +14,7 @@ internal actual class BGTaskManagerFactory {
         config: BGTaskManagerConfig
     ): BGTaskManager {
         val database = MeeseeksAppDatabase.require(context)
-        val workerFactory = BackgroundTaskWorkerFactory(database, registry)
+        val workerFactory = BGTaskWorkerFactory(database, registry)
         val workRequestFactory = WorkRequestFactory(config.backoffMinimumMillis)
 
         val configuration = Configuration.Builder()
