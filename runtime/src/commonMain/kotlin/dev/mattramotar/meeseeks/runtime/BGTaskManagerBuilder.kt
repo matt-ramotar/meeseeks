@@ -42,6 +42,7 @@ class BGTaskManagerBuilder internal constructor(private val appContext: AppConte
         MeeseeksAppDatabase.init(appContext)
         val manager = BGTaskManagerSingleton.getOrCreate(appContext, registry, config)
         initializePlatformDependencies(appContext, manager, registry, config)
+        configureJson(registry)
         return manager
     }
 
