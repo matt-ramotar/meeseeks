@@ -83,10 +83,9 @@ internal actual class TaskScheduler(
             BGAppRefreshTaskRequest(identifier)
         }
 
-        val schedule = task.schedule
-        val earliestDelaySeconds = when (schedule) {
+        val earliestDelaySeconds = when (val schedule = task.schedule) {
             is TaskSchedule.OneTime -> {
-                schedule.initialDelay.inWholeSeconds / 1000.0
+                schedule.initialDelay.inWholeSeconds.toDouble()
             }
 
             is TaskSchedule.Periodic -> {
