@@ -29,6 +29,7 @@ internal actual class TaskScheduler {
         existingWorkPolicy: ExistingWorkPolicy
     ) {
         val uniqueName = WorkRequestFactory.uniqueWorkNameFor(taskId, task.schedule)
+        val tagForRunner = WorkRequestFactory.createTag(taskId)
         val alreadyScheduled = scheduledTasks.containsKey(taskId)
 
         when (existingWorkPolicy) {
@@ -44,10 +45,10 @@ internal actual class TaskScheduler {
         }
 
         try {
-            scheduleWithServiceWorker(task, taskId, uniqueName)
+            scheduleWithServiceWorker(task, taskId, tagForRunner)
         } catch (e: Throwable) {
             console.warn("scheduleWithServiceWorker failed: ${e.message}, using fallback")
-            fallbackSchedule(task, taskId, uniqueName)
+            fallbackSchedule(task, taskId)
         }
 
         scheduledTasks[taskId] = uniqueName
@@ -57,7 +58,7 @@ internal actual class TaskScheduler {
     private fun scheduleWithServiceWorker(
         task: TaskRequest,
         taskId: Long,
-        tag: String
+        tagForRunner: String
     ) {
         val container = navigatorServiceWorker()
             ?: throw IllegalStateException("ServiceWorker not available")
@@ -68,9 +69,9 @@ internal actual class TaskScheduler {
                 is TaskSchedule.OneTime -> {
                     val syncManager = registration.sync
                         ?: throw IllegalStateException("SyncManager not supported")
-                    syncManager.register(tag).catch { err: dynamic ->
+                    syncManager.register(tagForRunner).catch { err: dynamic ->
                         console.warn("SyncManager registration failed: ${err?.message}")
-                        fallbackSchedule(task, taskId, tag)
+                        fallbackSchedule(task, taskId)
                     }
                 }
 
@@ -81,31 +82,27 @@ internal actual class TaskScheduler {
 
                     val options: dynamic = {}
                     options.minInterval = intervalMs
-                    periodicSync.register(tag, options).catch { err: dynamic ->
+                    periodicSync.register(tagForRunner, options).catch { err: dynamic ->
                         console.warn("PeriodicSync registration failed: ${err?.message}")
-                        fallbackSchedule(task, taskId, tag)
+                        fallbackSchedule(task, taskId)
                     }
                 }
             }
         }.catch { err: dynamic ->
             console.warn("ServiceWorker registration.ready promise failed: ${err?.message}")
-            fallbackSchedule(task, taskId, tag)
+            fallbackSchedule(task, taskId)
         }
     }
 
-    private fun fallbackSchedule(task: TaskRequest, taskId: Long, tag: String) {
+    private fun fallbackSchedule(task: TaskRequest, taskId: Long) {
         clearFallbackTimer(taskId)
+        val tag = WorkRequestFactory.createTag(taskId)
 
         when (val schedule = task.schedule) {
             is TaskSchedule.OneTime -> {
                 val delay = coerceTimeout(schedule.initialDelay.inWholeMilliseconds)
                 val handle = jsSetTimeout({
-                    val runner = js("self?.BGTaskRunner")
-
-                    runner?.let {run ->
-                        run.invoke(tag)
-                    } ?: console.warn("Runner unavailable")
-
+                    BGTaskRunner.run(tag)
                 }, delay)
                 fallbackTimers[taskId] = handle
             }
@@ -113,12 +110,7 @@ internal actual class TaskScheduler {
             is TaskSchedule.Periodic -> {
                 val interval = coerceTimeout(schedule.interval.inWholeMilliseconds)
                 val handle = jsSetInterval({
-                    val runner = js("self?.BGTaskRunner")
-
-                    runner?.let {run ->
-                        run.invoke(tag)
-                    } ?: console.warn("Runner unavailable")
-
+                    BGTaskRunner.run(tag)
                 }, interval)
                 fallbackTimers[taskId] = handle
             }
@@ -162,7 +154,7 @@ internal actual class TaskScheduler {
     private fun removeServiceWorkerSync(taskId: Long) {
         val container = navigatorServiceWorker() ?: return
         container.ready.then { registration ->
-            val tag = WorkRequestFactory.uniqueWorkNameFor(taskId, TaskSchedule.OneTime())
+            val tag = WorkRequestFactory.createTag(taskId)
 
             registration.periodicSync?.let { periodicSyncManager ->
                 periodicSyncManager.getTags().then { tags ->
@@ -177,7 +169,7 @@ internal actual class TaskScheduler {
             registration.sync?.let { syncManager ->
                 syncManager.getTags().then { tags ->
                     if (tags.contains(tag)) {
-                        // TODO: Support unregistering a task
+                        // Most browsers don't support unregistering for one-off Sync yet
                         console.log("Unregistering a task is not currently supported")
                     }
                 }
