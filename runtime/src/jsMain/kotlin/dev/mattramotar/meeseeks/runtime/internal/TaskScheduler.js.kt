@@ -100,7 +100,12 @@ internal actual class TaskScheduler {
             is TaskSchedule.OneTime -> {
                 val delay = coerceTimeout(schedule.initialDelay.inWholeMilliseconds)
                 val handle = jsSetTimeout({
-                    console.log("Fallback OneTime task #$taskId fired")
+                    val runner = js("self?.BGTaskRunner")
+
+                    runner?.let {run ->
+                        run.invoke(tag)
+                    } ?: console.warn("Runner unavailable")
+
                 }, delay)
                 fallbackTimers[taskId] = handle
             }
@@ -108,7 +113,12 @@ internal actual class TaskScheduler {
             is TaskSchedule.Periodic -> {
                 val interval = coerceTimeout(schedule.interval.inWholeMilliseconds)
                 val handle = jsSetInterval({
-                    console.log("Fallback Periodic task #$taskId fired")
+                    val runner = js("self?.BGTaskRunner")
+
+                    runner?.let {run ->
+                        run.invoke(tag)
+                    } ?: console.warn("Runner unavailable")
+
                 }, interval)
                 fallbackTimers[taskId] = handle
             }
