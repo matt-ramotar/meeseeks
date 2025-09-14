@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 
-internal class RealBackgroundTaskManager(
+internal class RealBGTaskManager(
     private val database: MeeseeksDatabase,
     private val workRequestFactory: WorkRequestFactory,
     private val taskScheduler: TaskScheduler,
