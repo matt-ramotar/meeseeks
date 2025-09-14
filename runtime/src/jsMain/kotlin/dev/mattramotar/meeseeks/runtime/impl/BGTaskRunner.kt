@@ -19,7 +19,7 @@ import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-object BackgroundTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
+object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
     internal lateinit var database: MeeseeksDatabase
     internal lateinit var registry: WorkerRegistry
