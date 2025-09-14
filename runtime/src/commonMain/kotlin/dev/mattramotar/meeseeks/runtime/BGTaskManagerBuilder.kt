@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime
 
 import dev.mattramotar.meeseeks.runtime.impl.BGTaskManagerSingleton
-import dev.mattramotar.meeseeks.runtime.impl.DynamicDataRegistration
+import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistration
 import dev.mattramotar.meeseeks.runtime.impl.MeeseeksAppDatabase
 import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
 import kotlinx.serialization.KSerializer
@@ -14,14 +14,14 @@ import kotlin.reflect.KClass
 
 class BGTaskManagerBuilder internal constructor(private val appContext: AppContext) {
     private var config: BGTaskManagerConfig = BGTaskManagerConfig()
-    private val registrations = mutableMapOf<KClass<out DynamicData>, DynamicDataRegistration>()
+    private val registrations = mutableMapOf<KClass<out TaskPayload>, WorkerRegistration>()
 
     fun configuration(block: BGTaskManagerConfig.() -> BGTaskManagerConfig): BGTaskManagerBuilder {
         config = config.block()
         return this
     }
 
-    inline fun <reified T : DynamicData> register(
+    inline fun <reified T : TaskPayload> register(
         noinline factory: (appContext: AppContext) -> Worker<T>
     ): BGTaskManagerBuilder = apply {
         val type = T::class
@@ -33,7 +33,7 @@ class BGTaskManagerBuilder internal constructor(private val appContext: AppConte
             throw IllegalStateException("Worker already registered for Task type: ${type.simpleName}")
         }
 
-        val registration = DynamicDataRegistration(type, serializer, WorkerFactory(factory))
+        val registration = WorkerRegistration(type, serializer, WorkerFactory(factory))
         addRegistration(type, registration)
     }
 
@@ -52,12 +52,12 @@ class BGTaskManagerBuilder internal constructor(private val appContext: AppConte
             classDiscriminator = "__type"
             ignoreUnknownKeys = true
             serializersModule = SerializersModule {
-                polymorphic(DynamicData::class) {
+                polymorphic(TaskPayload::class) {
                     registry.getAllRegistrations().forEach { registration ->
                         @Suppress("UNCHECKED_CAST")
-                        val type = registration.type as KClass<DynamicData>
+                        val type = registration.type as KClass<TaskPayload>
                         @Suppress("UNCHECKED_CAST")
-                        val serializer = registration.serializer as KSerializer<DynamicData>
+                        val serializer = registration.serializer as KSerializer<TaskPayload>
                         subclass(type, serializer)
                     }
                 }
@@ -66,11 +66,11 @@ class BGTaskManagerBuilder internal constructor(private val appContext: AppConte
     }
 
     @PublishedApi
-    internal fun getRegistrations(): Map<KClass<out DynamicData>, DynamicDataRegistration> =
+    internal fun getRegistrations(): Map<KClass<out TaskPayload>, WorkerRegistration> =
         registrations
 
     @PublishedApi
-    internal fun addRegistration(type: KClass<out DynamicData>, registration: DynamicDataRegistration) {
+    internal fun addRegistration(type: KClass<out TaskPayload>, registration: WorkerRegistration) {
         registrations[type] = registration
     }
 }

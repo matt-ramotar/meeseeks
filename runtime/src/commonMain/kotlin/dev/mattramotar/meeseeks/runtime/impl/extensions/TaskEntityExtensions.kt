@@ -5,7 +5,7 @@ import dev.mattramotar.meeseeks.runtime.db.TaskEntity
 
 internal object TaskEntityExtensions {
     fun TaskEntity.toTaskRequest(): TaskRequest = TaskRequest(
-        dynamicData,
+        payload,
         preconditions,
         priority,
         schedule,

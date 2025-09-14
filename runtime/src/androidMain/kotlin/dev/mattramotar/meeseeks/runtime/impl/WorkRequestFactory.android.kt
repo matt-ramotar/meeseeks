@@ -25,7 +25,7 @@ internal actual class WorkRequestFactory(
 
         val inputData = workDataOf(
             KEY_TASK_ID to taskId,
-            KEY_DYNAMIC_DATA to taskRequest.data
+            KEY_PAYLOAD to taskRequest.payload
         )
 
         val delegateWorkRequest = when (val schedule = taskRequest.schedule) {
@@ -95,7 +95,7 @@ internal actual class WorkRequestFactory(
 
         const val KEY_TASK_ID = "task_id"
         const val KEY_MEESEEKS_TYPE = "meeseeks_type"
-        const val KEY_DYNAMIC_DATA = "dynamic_data"
+        const val KEY_PAYLOAD = "payload"
         private const val MINIMUM_PERIODIC_INTERVAL_MS = 15 * 60 * 1000L
         private const val UNIQUE_WORK_NAME_PREFIX = "meeseeks_work_"
 

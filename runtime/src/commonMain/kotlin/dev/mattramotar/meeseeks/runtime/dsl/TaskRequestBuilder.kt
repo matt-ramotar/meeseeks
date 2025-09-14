@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.dsl
 
-import dev.mattramotar.meeseeks.runtime.DynamicData
+import dev.mattramotar.meeseeks.runtime.TaskPayload
 import dev.mattramotar.meeseeks.runtime.TaskPreconditions
 import dev.mattramotar.meeseeks.runtime.TaskPriority
 import dev.mattramotar.meeseeks.runtime.TaskRequest
@@ -10,8 +10,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @TaskRequestDsl
-class TaskRequestBuilder<T : DynamicData> internal constructor(
-    private val data: T,
+class TaskRequestBuilder<T : TaskPayload> internal constructor(
+    private val payload: T,
     private var schedule: TaskSchedule,
 ) {
     private var preconditions: TaskPreconditions = TaskPreconditions()
@@ -62,7 +62,7 @@ class TaskRequestBuilder<T : DynamicData> internal constructor(
 
     internal fun build(): TaskRequest {
         return TaskRequest(
-            data = data,
+            payload = payload,
             preconditions = preconditions,
             priority = priority,
             schedule = schedule,

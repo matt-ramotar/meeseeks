@@ -9,5 +9,5 @@ internal fun taskEntityAdapter(json: Json = Json) = TaskEntity.Adapter(
     scheduleAdapter = TaskScheduleAdapter(json),
     retryPolicyAdapter = TaskRetryPolicyAdapter(json),
     statusAdapter = TaskStatusAdapter(json),
-    dynamicDataAdapter = DynamicDataAdapter(json),
+    payloadAdapter = TaskPayloadAdapter(json),
 )
