@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 rootProject.name = "meeseeks"
 
 include(":runtime")
+include(":sample")

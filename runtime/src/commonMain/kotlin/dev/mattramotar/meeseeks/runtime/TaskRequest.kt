@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime
 
-import dev.mattramotar.meeseeks.runtime.dsl.TaskRequestBuilder
+import dev.mattramotar.meeseeks.runtime.dsl.TaskRequestConfigurationScope
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -15,14 +15,14 @@ data class TaskRequest(
     )
 ) {
     companion object Companion {
-        fun <T : TaskPayload> oneTime(payload: T, block: TaskRequestBuilder<T>.() -> Unit = {}): TaskRequest {
+        fun <T : TaskPayload> oneTime(payload: T, block: TaskRequestConfigurationScope<T>.() -> Unit = {}): TaskRequest {
             return builder(payload, TaskSchedule.OneTime(), block)
         }
 
         fun <T : TaskPayload> periodic(
             payload: T,
             interval: Duration,
-            block: TaskRequestBuilder<T>.() -> Unit = {}
+            block: TaskRequestConfigurationScope<T>.() -> Unit = {}
         ): TaskRequest {
             return builder(payload, TaskSchedule.Periodic(interval), block)
         }
@@ -30,9 +30,9 @@ data class TaskRequest(
         private fun <T : TaskPayload> builder(
             payload: T,
             schedule: TaskSchedule,
-            block: TaskRequestBuilder<T>.() -> Unit
+            block: TaskRequestConfigurationScope<T>.() -> Unit
         ): TaskRequest {
-            return TaskRequestBuilder(payload, schedule).apply(block).build()
+            return TaskRequestConfigurationScope(payload, schedule).apply(block).build()
         }
     }
 }
