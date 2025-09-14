@@ -42,7 +42,7 @@ internal class RealBGTaskManager(
         val timestamp = Timestamp.now()
 
         taskQueries.insertTask(
-            dynamicData = request.data,
+            payload = request.payload,
             preconditions = request.preconditions,
             priority = request.priority,
             schedule = request.schedule,
@@ -172,7 +172,7 @@ internal class RealBGTaskManager(
 
         val timestamp = Timestamp.now()
         taskQueries.updateTask(
-            dynamicData = request.data,
+            payload = request.payload,
             preconditions = request.preconditions,
             priority = request.priority,
             schedule = request.schedule,

@@ -1,4 +1,4 @@
-import dev.mattramotar.meeseeks.runtime.DynamicData;
+import dev.mattramotar.meeseeks.runtime.TaskPayload;
 import dev.mattramotar.meeseeks.runtime.TaskPreconditions;
 import dev.mattramotar.meeseeks.runtime.TaskPriority;
 import dev.mattramotar.meeseeks.runtime.TaskRetryPolicy;
@@ -10,7 +10,7 @@ CREATE TABLE taskEntity (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT ,
 
     -- Task
-    dynamicData TEXT AS DynamicData NOT NULL,
+    payload TEXT AS TaskPayload NOT NULL,
 
     -- Preconditions
     preconditions TEXT AS TaskPreconditions NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE taskEntity (
 
 insertTask:
 INSERT INTO taskEntity(
-    dynamicData,
+    payload,
     preconditions,
     priority,
     schedule,
@@ -110,7 +110,7 @@ SELECT * FROM taskEntity;
 updateTask:
 UPDATE taskEntity
 SET
-  dynamicData = ?,
+  payload = ?,
   preconditions = ?,
   priority = ?,
   schedule = ?,

@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.DynamicData
+import dev.mattramotar.meeseeks.runtime.TaskPayload
 import dev.mattramotar.meeseeks.runtime.RuntimeContext
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskRequest
@@ -58,7 +58,7 @@ internal class BGTaskCoroutineWorker(
         val result: TaskResult = try {
             val request = taskEntity.toTaskRequest()
             val worker = getWorker(request)
-            worker.run(data = request.data, context = RuntimeContext(attemptCount))
+            worker.run(payload = request.payload, context = RuntimeContext(attemptCount))
         } catch (error: Throwable) {
             when (error) {
                 is TransientNetworkException -> TaskResult.Failure.Transient(error)
@@ -139,9 +139,9 @@ internal class BGTaskCoroutineWorker(
         }
     }
 
-    private fun getWorker(request: TaskRequest): Worker<DynamicData> {
-        val factory = workerRegistry.getFactory(request.data::class)
+    private fun getWorker(request: TaskRequest): Worker<TaskPayload> {
+        val factory = workerRegistry.getFactory(request.payload::class)
         @Suppress("UNCHECKED_CAST")
-        return factory.create(appContext) as Worker<DynamicData>
+        return factory.create(appContext) as Worker<TaskPayload>
     }
 }

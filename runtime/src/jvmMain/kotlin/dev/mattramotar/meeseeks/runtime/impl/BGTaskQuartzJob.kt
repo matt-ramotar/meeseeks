@@ -1,6 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.impl
 
-import dev.mattramotar.meeseeks.runtime.DynamicData
+import dev.mattramotar.meeseeks.runtime.TaskPayload
 import dev.mattramotar.meeseeks.runtime.EmptyAppContext
 import dev.mattramotar.meeseeks.runtime.RuntimeContext
 import dev.mattramotar.meeseeks.runtime.TaskTelemetry
@@ -64,7 +64,7 @@ internal class BGTaskQuartzJob(
 
             val result: TaskResult = try {
                 val worker = getWorker(request, registry)
-                worker.run(request.data, RuntimeContext(attemptCount))
+                worker.run(request.payload, RuntimeContext(attemptCount))
 
             } catch (error: Throwable) {
                 when (error) {
@@ -163,9 +163,9 @@ internal class BGTaskQuartzJob(
         }
     }
 
-    private fun getWorker(request: TaskRequest, registry: WorkerRegistry): Worker<DynamicData> {
-        val factory = registry.getFactory(request.data::class)
+    private fun getWorker(request: TaskRequest, registry: WorkerRegistry): Worker<TaskPayload> {
+        val factory = registry.getFactory(request.payload::class)
         @Suppress("UNCHECKED_CAST")
-        return factory.create(EmptyAppContext()) as Worker<DynamicData>
+        return factory.create(EmptyAppContext()) as Worker<TaskPayload>
     }
 }

@@ -5,7 +5,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 data class TaskRequest(
-    val data: DynamicData,
+    val payload: TaskPayload,
     val preconditions: TaskPreconditions = TaskPreconditions(),
     val priority: TaskPriority = TaskPriority.MEDIUM,
     val schedule: TaskSchedule = TaskSchedule.OneTime(),
@@ -15,24 +15,24 @@ data class TaskRequest(
     )
 ) {
     companion object Companion {
-        fun <T : DynamicData> oneTime(task: T, block: TaskRequestBuilder<T>.() -> Unit = {}): TaskRequest {
-            return builder(task, TaskSchedule.OneTime(), block)
+        fun <T : TaskPayload> oneTime(payload: T, block: TaskRequestBuilder<T>.() -> Unit = {}): TaskRequest {
+            return builder(payload, TaskSchedule.OneTime(), block)
         }
 
-        fun <T : DynamicData> periodic(
-            data: T,
+        fun <T : TaskPayload> periodic(
+            payload: T,
             interval: Duration,
             block: TaskRequestBuilder<T>.() -> Unit = {}
         ): TaskRequest {
-            return builder(data, TaskSchedule.Periodic(interval), block)
+            return builder(payload, TaskSchedule.Periodic(interval), block)
         }
 
-        private fun <T : DynamicData> builder(
-            data: T,
+        private fun <T : TaskPayload> builder(
+            payload: T,
             schedule: TaskSchedule,
             block: TaskRequestBuilder<T>.() -> Unit
         ): TaskRequest {
-            return TaskRequestBuilder(data, schedule).apply(block).build()
+            return TaskRequestBuilder(payload, schedule).apply(block).build()
         }
     }
 }

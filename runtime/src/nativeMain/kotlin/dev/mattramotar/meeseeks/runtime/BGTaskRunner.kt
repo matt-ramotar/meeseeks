@@ -74,7 +74,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
         val worker = getWorker(taskEntity)
         val result: TaskResult = try {
-            worker.run(data = taskEntity.dynamicData, context = RuntimeContext(attemptCount))
+            worker.run(payload = taskEntity.payload, context = RuntimeContext(attemptCount))
         } catch (error: Throwable) {
             when (error) {
                 is TransientNetworkException -> TaskResult.Failure.Transient(error)
@@ -147,9 +147,9 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         }
     }
 
-    private fun getWorker(taskEntity: TaskEntity): Worker<DynamicData> {
-        val factory = registry.getFactory(taskEntity.dynamicData::class)
+    private fun getWorker(taskEntity: TaskEntity): Worker<TaskPayload> {
+        val factory = registry.getFactory(taskEntity.payload::class)
         @Suppress("UNCHECKED_CAST")
-        return factory.create(EmptyAppContext()) as Worker<DynamicData>
+        return factory.create(EmptyAppContext()) as Worker<TaskPayload>
     }
 }
