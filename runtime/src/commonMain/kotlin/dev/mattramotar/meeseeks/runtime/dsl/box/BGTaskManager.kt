@@ -5,7 +5,7 @@ import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.impl.WorkerRegistry
-import dev.mattramotar.meeseeks.runtime.impl.BackgroundTaskManagerFactory
+import dev.mattramotar.meeseeks.runtime.impl.BGTaskManagerFactory
 
 
 internal fun BGTaskManager(
@@ -14,7 +14,7 @@ internal fun BGTaskManager(
     config: BGTaskManagerConfig = BGTaskManagerConfig(),
 ): BGTaskManager {
 
-    val factory = BackgroundTaskManagerFactory()
+    val factory = BGTaskManagerFactory()
 
     return factory.create(
         context,

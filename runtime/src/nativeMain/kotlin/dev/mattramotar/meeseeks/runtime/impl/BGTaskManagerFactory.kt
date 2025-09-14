@@ -5,7 +5,7 @@ import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.AppContext
 import platform.BackgroundTasks.BGTaskScheduler
 
-internal actual class BackgroundTaskManagerFactory {
+internal actual class BGTaskManagerFactory {
     actual fun create(
         context: AppContext,
         registry: WorkerRegistry,

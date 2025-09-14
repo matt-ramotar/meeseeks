@@ -4,7 +4,7 @@ import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 
-internal expect class BackgroundTaskManagerFactory() {
+internal expect class BGTaskManagerFactory() {
     fun create(
         context: AppContext,
         registry: WorkerRegistry,
