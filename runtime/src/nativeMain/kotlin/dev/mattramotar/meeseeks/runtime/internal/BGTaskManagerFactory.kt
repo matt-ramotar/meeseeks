@@ -1,10 +1,12 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
+import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
-import dev.mattramotar.meeseeks.runtime.AppContext
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.BackgroundTasks.BGTaskScheduler
 
+@OptIn(ExperimentalForeignApi::class)
 internal actual class BGTaskManagerFactory {
     actual fun create(
         context: AppContext,
@@ -13,15 +15,24 @@ internal actual class BGTaskManagerFactory {
     ): BGTaskManager {
         val database = MeeseeksAppDatabase.require(context)
         val bgTaskScheduler = BGTaskScheduler.sharedScheduler
+        val nativeTaskScheduler = NativeTaskScheduler(bgTaskScheduler)
+        val nativeCoordinator = NativeTaskCoordinator(database, nativeTaskScheduler)
+        val bgTaskRegistry = BGTaskRegistry(bgTaskScheduler, nativeCoordinator)
+
+        val platformSchedulerAdapter = TaskScheduler(database, nativeTaskScheduler)
+
         val workRequestFactory = WorkRequestFactory()
-        val taskScheduler = TaskScheduler(database, bgTaskScheduler)
-        val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory, config)
+        val taskRescheduler = TaskRescheduler(database, platformSchedulerAdapter, workRequestFactory, config)
+
+        bgTaskRegistry.registerHandlers()
+
         return RealBGTaskManager(
-            database,
-            workRequestFactory,
-            taskScheduler,
-            taskRescheduler,
-            config
+            database = database,
+            workRequestFactory = workRequestFactory,
+            taskScheduler = platformSchedulerAdapter,
+            taskRescheduler = taskRescheduler,
+            config = config,
+            telemetry = config.telemetry
         )
     }
 }
