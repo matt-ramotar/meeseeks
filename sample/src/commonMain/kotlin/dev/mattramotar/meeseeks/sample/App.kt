@@ -23,10 +23,9 @@ class App(
             maxParallelTasks(5)
             allowExpedited()
             telemetry(telemetry)
-            register<SyncPayload> { syncWorker }
-            register<RefreshPayload> { refreshWorker }
+            register<SyncPayload>(SyncPayload.stableId) { syncWorker }
+            register<RefreshPayload>(RefreshPayload.stableId) { refreshWorker }
         }
     }
 }
-
 

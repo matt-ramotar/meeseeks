@@ -5,7 +5,7 @@ import dev.mattramotar.meeseeks.runtime.BGTaskRunner
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.TaskPreconditions
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.db.TaskEntity
+import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.*
@@ -57,12 +57,11 @@ internal class NativeTaskCoordinator(
 
         try {
             // 3. Find eligible tasks
-            // TODO: This query is inefficient due to DB schema
-            val pendingTasks = database.taskQueries.selectAllPending().executeAsList()
+            val pendingTasks = database.taskSpecQueries.selectAllPending().executeAsList()
             val eligibleTasks = filterAndSortEligibleTasks(pendingTasks, identifier)
 
             // 4. Execute tasks sequentially until the scope is canceled or the list is exhausted
-            for (taskEntity in eligibleTasks) {
+            for (taskSpec in eligibleTasks) {
                 if (!windowJob.isActive) {
                     overallSuccess = false
                     break
@@ -72,7 +71,7 @@ internal class NativeTaskCoordinator(
                 val executionJob = windowScope.launch {
 
                     // TaskRunner handles the actual execution, atomic claiming, and result processing
-                    val success = BGTaskRunner.runTask(taskEntity.id)
+                    val success = BGTaskRunner.runTask(taskSpec.id)
 
                     if (!success) {
                         // If a task fails transiently or cannot be claimed, mark the overall window as incomplete
@@ -100,11 +99,11 @@ internal class NativeTaskCoordinator(
         }
     }
 
-    private fun filterAndSortEligibleTasks(tasks: List<TaskEntity>, identifier: String): List<TaskEntity> {
+    private fun filterAndSortEligibleTasks(tasks: List<TaskSpec>, identifier: String): List<TaskSpec> {
         val eligible = if (identifier == BGTaskIdentifiers.REFRESH) {
             // If invoked via REFRESH, only run tasks that don't require Processing constraints
             tasks.filter {
-                !it.preconditions.requiresNetwork && !it.preconditions.requiresCharging
+                !it.requires_network && !it.requires_charging
             }
         } else {
             // If invoked via PROCESSING, we can run anything
@@ -112,15 +111,14 @@ internal class NativeTaskCoordinator(
         }
 
         // Sort by Priority then CreatedAt
-        return eligible.sortedWith(compareByDescending<TaskEntity> { it.priority }.thenBy { it.createdAt })
+        return eligible.sortedWith(compareByDescending<TaskSpec> { it.priority }.thenBy { it.created_at_ms })
     }
 
     /**
      * Checks the database for remaining work and schedules the appropriate platform wakeup
      */
     private fun rescheduleIfPendingWorkRemains() {
-        // TODO: This query is inefficient due to DB schema
-        val remainingTasks = database.taskQueries.selectAllPending().executeAsList()
+        val remainingTasks = database.taskSpecQueries.selectAllPending().executeAsList()
 
         if (remainingTasks.isEmpty()) {
             return
@@ -131,7 +129,7 @@ internal class NativeTaskCoordinator(
         var needsRefresh = false
 
         for (task in remainingTasks) {
-            if (task.preconditions.requiresNetwork || task.preconditions.requiresCharging) {
+            if (task.requires_network || task.requires_charging) {
                 needsProcessing = true
             } else {
                 needsRefresh = true

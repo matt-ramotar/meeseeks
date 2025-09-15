@@ -2,11 +2,13 @@ package dev.mattramotar.meeseeks.runtime
 
 
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.db.TaskEntity
+import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.Timestamp
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
-import dev.mattramotar.meeseeks.runtime.internal.extensions.TaskEntityExtensions.toTaskRequest
+import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
+import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
 import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
 import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -43,12 +45,12 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
     internal suspend fun runTask(id: Long): Boolean {
         val timestamp = Timestamp.now()
-        val taskQueries = database.taskQueries
+        val taskSpecQueries = database.taskSpecQueries
         val taskLogQueries = database.taskLogQueries
-        val taskEntity = claimTask(id) ?: return false
-        taskQueries.updateStatus(TaskStatus.Running, timestamp, id)
-        val request: TaskRequest = taskEntity.toTaskRequest()
-        val attemptCount: Int = taskEntity.runAttemptCount.toInt() + 1
+        val taskSpec = claimTask(id) ?: return false
+        taskSpecQueries.updateState(TaskState.RUNNING, timestamp, id)
+        val request: TaskRequest = TaskMapper.mapToTaskRequest(taskSpec, registry)
+        val attemptCount: Int = taskSpec.run_attempt_count.toInt() + 1
         val taskId = TaskId(id)
 
         config?.telemetry?.onEvent(
@@ -59,9 +61,9 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             )
         )
 
-        val worker = getWorker(taskEntity)
+        val worker = getWorker(taskSpec)
         val result: TaskResult = try {
-            worker.run(payload = taskEntity.payload, context = RuntimeContext(attemptCount))
+            worker.run(payload = request.payload, context = RuntimeContext(attemptCount))
         } catch (error: Throwable) {
             when (error) {
                 is TransientNetworkException -> TaskResult.Failure.Transient(error)
@@ -71,7 +73,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         }
 
         taskLogQueries.insertLog(
-            taskId = taskEntity.id,
+            taskId = taskSpec.id,
             created = timestamp,
             result = result.type,
             attempt = attemptCount.toLong(),
@@ -91,7 +93,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
                 when (request.schedule) {
                     is TaskSchedule.OneTime -> {
-                        taskQueries.updateStatus(TaskStatus.Finished.Completed, Timestamp.now(), id)
+                        taskSpecQueries.updateState(TaskState.SUCCEEDED, Timestamp.now(), id)
                     }
 
                     is TaskSchedule.Periodic -> {
@@ -120,7 +122,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
             is TaskResult.Failure.Permanent -> {
                 val updatedNow = Timestamp.now()
-                taskQueries.updateStatus(TaskStatus.Finished.Failed, updatedNow, id)
+                taskSpecQueries.updateState(TaskState.FAILED, updatedNow, id)
 
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
@@ -150,8 +152,9 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         }
     }
 
-    private fun getWorker(taskEntity: TaskEntity): Worker<TaskPayload> {
-        val factory = registry.getFactory(taskEntity.payload::class)
+    private fun getWorker(taskSpec: TaskSpec): Worker<TaskPayload> {
+        val request = TaskMapper.mapToTaskRequest(taskSpec, registry)
+        val factory = registry.getFactory(request.payload::class)
         @Suppress("UNCHECKED_CAST")
         return factory.create(EmptyAppContext()) as Worker<TaskPayload>
     }
@@ -172,8 +175,8 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         BGTaskScheduler.sharedScheduler.submitTaskRequest(bgTaskRequest, null)
 
         val now = Timestamp.now()
-        database.taskQueries.updateWorkRequestId(identifier, now, taskId)
-        database.taskQueries.updateStatus(TaskStatus.Pending, now, taskId)
+        database.taskSpecQueries.updatePlatformId(identifier, now, taskId)
+        database.taskSpecQueries.updateState(TaskState.ENQUEUED, now, taskId)
 
         database.taskLogQueries.insertLog(
             taskId = taskId,
@@ -210,12 +213,12 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         return bgTaskRequest
     }
 
-    private fun claimTask(id: Long): TaskEntity? {
+    private fun claimTask(id: Long): TaskSpec? {
         val timestamp = Timestamp.now()
 
         val rowsAffected = database.transactionWithResult {
-            database.taskQueries.atomicallyClaimAndStartTask(id, timestamp)
-            database.taskQueries.selectChanges().executeAsOne().toInt()
+            database.taskSpecQueries.atomicallyClaimAndStartTask(id, timestamp)
+            database.taskSpecQueries.selectChanges().executeAsOne().toInt()
         }
 
 
@@ -223,6 +226,6 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             return null
         }
 
-        return database.taskQueries.selectTaskByTaskId(id).executeAsOne()
+        return database.taskSpecQueries.selectTaskById(id).executeAsOne()
     }
 }

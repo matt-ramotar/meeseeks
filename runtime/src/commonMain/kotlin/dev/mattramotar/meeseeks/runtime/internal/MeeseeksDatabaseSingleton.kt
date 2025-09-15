@@ -3,7 +3,7 @@ package dev.mattramotar.meeseeks.runtime.internal
 import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.internal.concurrency.synchronized
-import dev.mattramotar.meeseeks.runtime.internal.db.adapters.taskEntityAdapter
+import dev.mattramotar.meeseeks.runtime.internal.db.adapters.TaskSpecAdapter
 import dev.mattramotar.meeseeks.runtime.internal.db.adapters.taskLogEntityAdapter
 import kotlinx.serialization.json.Json
 import kotlin.concurrent.Volatile
@@ -25,8 +25,8 @@ internal object MeeseeksDatabaseSingleton {
                     val factory = MeeseeksDatabaseFactory()
                     _instance = factory.create(
                         context = context,
-                        taskAdapter = taskEntityAdapter(json),
-                        taskLogAdapter = taskLogEntityAdapter(json)
+                        taskLogAdapter = taskLogEntityAdapter(json),
+                        taskSpecAdapter = TaskSpecAdapter
                     )
                 }
             }

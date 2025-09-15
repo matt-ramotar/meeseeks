@@ -3,23 +3,24 @@ package dev.mattramotar.meeseeks.runtime.internal
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.db.TaskEntity
-import dev.mattramotar.meeseeks.runtime.internal.extensions.TaskEntityExtensions.toTaskRequest
+import dev.mattramotar.meeseeks.runtime.db.TaskSpec
+import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
 import kotlinx.datetime.Clock
 
 
 internal interface TaskRescheduler {
     fun rescheduleTasks()
-    fun rescheduleTask(taskEntity: TaskEntity)
+    fun rescheduleTask(taskSpec: TaskSpec)
 
     companion object {
         operator fun invoke(
             database: MeeseeksDatabase,
             taskScheduler: TaskScheduler,
             workRequestFactory: WorkRequestFactory,
-            config: BGTaskManagerConfig
+            config: BGTaskManagerConfig,
+            registry: WorkerRegistry
         ): TaskRescheduler {
-            return RealTaskRescheduler(database, taskScheduler, workRequestFactory, config)
+            return RealTaskRescheduler(database, taskScheduler, workRequestFactory, config, registry)
         }
     }
 }
@@ -28,37 +29,38 @@ private class RealTaskRescheduler(
     private val database: MeeseeksDatabase,
     private val taskScheduler: TaskScheduler,
     private val workRequestFactory: WorkRequestFactory,
-    private val config: BGTaskManagerConfig
+    private val config: BGTaskManagerConfig,
+    private val registry: WorkerRegistry
 ) : TaskRescheduler {
 
     override fun rescheduleTasks() {
-        val taskEntities = database.taskQueries.selectAllPending().executeAsList()
-        for (taskEntity in taskEntities) {
-            if (!taskScheduler.isScheduled(taskEntity.id, taskEntity.schedule)) {
-                rescheduleTask(taskEntity)
+        val taskSpecs = database.taskSpecQueries.selectAllPending().executeAsList()
+        for (taskSpec in taskSpecs) {
+            val taskRequest = TaskMapper.mapToTaskRequest(taskSpec, registry)
+            if (!taskScheduler.isScheduled(taskSpec.id, taskRequest.schedule)) {
+                rescheduleTask(taskSpec)
             }
         }
     }
 
-    override fun rescheduleTask(taskEntity: TaskEntity) {
-        val taskRequest = taskEntity.toTaskRequest()
-        val workRequest =
-            workRequestFactory.createWorkRequest(taskEntity.id, taskRequest, config)
+    override fun rescheduleTask(taskSpec: TaskSpec) {
+        val taskRequest = TaskMapper.mapToTaskRequest(taskSpec, registry)
+        val workRequest = workRequestFactory.createWorkRequest(taskSpec.id, taskRequest, config)
 
-        taskScheduler.scheduleTask(taskEntity.id, taskRequest, workRequest, ExistingWorkPolicy.REPLACE)
+        taskScheduler.scheduleTask(taskSpec.id, taskRequest, workRequest, ExistingWorkPolicy.REPLACE)
 
         val now = Clock.System.now().toEpochMilliseconds()
-        database.taskQueries.updateWorkRequestId(
-            workRequestId = workRequest.id,
-            updatedAt = now,
-            id = taskEntity.id
+        database.taskSpecQueries.updatePlatformId(
+            platform_id = workRequest.id,
+            updated_at_ms = now,
+            id = taskSpec.id
         )
 
         database.taskLogQueries.insertLog(
-            taskId = taskEntity.id,
+            taskId = taskSpec.id,
             created = now,
             result = TaskResult.Retry.type,
-            attempt = taskEntity.runAttemptCount,
+            attempt = taskSpec.run_attempt_count,
             message = "Task resurrected by TaskRescheduler."
         )
     }

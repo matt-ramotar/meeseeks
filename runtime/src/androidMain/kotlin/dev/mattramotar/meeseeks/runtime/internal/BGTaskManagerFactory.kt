@@ -27,7 +27,7 @@ internal actual class BGTaskManagerFactory {
         }
 
         val taskScheduler = TaskScheduler(workManager)
-        val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory, config)
+        val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory, config, registry)
 
         return RealBGTaskManager(
             database,
