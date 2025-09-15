@@ -45,9 +45,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         val timestamp = Timestamp.now()
         val taskQueries = database.taskQueries
         val taskLogQueries = database.taskLogQueries
-
         val taskEntity = claimTask(id) ?: return false
-        if (taskEntity.status !is TaskStatus.Pending) return false
         taskQueries.updateStatus(TaskStatus.Running, timestamp, id)
         val request: TaskRequest = taskEntity.toTaskRequest()
         val attemptCount: Int = taskEntity.runAttemptCount.toInt() + 1
@@ -76,7 +74,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             taskId = taskEntity.id,
             created = timestamp,
             result = result.type,
-            attempt = taskEntity.runAttemptCount,
+            attempt = attemptCount.toLong(),
             message = null
         )
 
