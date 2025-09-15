@@ -62,10 +62,10 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
 
     internal fun build(): BGTaskManager {
         val registry = WorkerRegistry(getRegistrations())
-        MeeseeksAppDatabase.init(appContext)
-        val manager = BGTaskManagerSingleton.getOrCreate(appContext, registry, config)
-        initializePlatformDependencies(appContext, manager, registry, config)
-        configureJson(registry)
+        val json = configureJson(registry)
+        MeeseeksAppDatabase.init(appContext, json)
+        val manager = BGTaskManagerSingleton.getOrCreate(appContext, registry, json, config)
+        initializePlatformDependencies(appContext, manager, registry, json, config)
         return manager
     }
 

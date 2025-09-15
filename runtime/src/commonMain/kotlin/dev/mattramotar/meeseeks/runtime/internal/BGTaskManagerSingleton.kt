@@ -4,6 +4,7 @@ import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.internal.concurrency.synchronized
+import kotlinx.serialization.json.Json
 import kotlin.concurrent.Volatile
 
 @PublishedApi
@@ -20,6 +21,7 @@ internal object BGTaskManagerSingleton {
     fun getOrCreate(
         context: AppContext,
         registry: WorkerRegistry,
+        json: Json,
         config: BGTaskManagerConfig = BGTaskManagerConfig(),
     ): BGTaskManager {
         val existingBGTaskManager1 = _bgTaskManager
@@ -30,7 +32,7 @@ internal object BGTaskManagerSingleton {
             if (existingBGTaskManager2 != null) {
                 existingBGTaskManager2
             } else {
-                val bgTaskManager = createBGTaskManager(context, registry, config)
+                val bgTaskManager = createBGTaskManager(context, registry, json, config)
                 _bgTaskManager = bgTaskManager
                 bgTaskManager
             }

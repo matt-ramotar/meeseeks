@@ -9,6 +9,6 @@ internal expect class MeeseeksDatabaseFactory() {
     fun create(
         context: AppContext,
         taskAdapter: TaskEntity.Adapter,
-        taskLogAdapter: TaskLogEntity.Adapter
+        taskLogAdapter: TaskLogEntity.Adapter,
     ): MeeseeksDatabase
 }

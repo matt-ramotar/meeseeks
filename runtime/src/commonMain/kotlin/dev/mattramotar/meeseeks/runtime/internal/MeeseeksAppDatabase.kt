@@ -14,14 +14,10 @@ internal object MeeseeksAppDatabase {
     @Volatile
     private var singleton: MeeseeksDatabase? = null
 
-    fun init(context: AppContext) {
+    fun init(context: AppContext, json: Json) {
         if (singleton == null) {
             synchronized(this) {
                 if (singleton == null) {
-                    val json = Json {
-                        ignoreUnknownKeys = true
-                        isLenient = true
-                    }
                     val factory = MeeseeksDatabaseFactory()
                     singleton = factory.create(
                         context = context,
@@ -33,8 +29,8 @@ internal object MeeseeksAppDatabase {
         }
     }
 
-    fun require(context: AppContext): MeeseeksDatabase {
-        init(context)
+    fun require(context: AppContext, json: Json): MeeseeksDatabase {
+        init(context, json)
 
         var retriesRemaining = 3
         var singleton: MeeseeksDatabase? = null
