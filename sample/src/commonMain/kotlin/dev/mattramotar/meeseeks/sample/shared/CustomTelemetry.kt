@@ -1,10 +1,10 @@
 package dev.mattramotar.meeseeks.sample.shared
 
-import dev.mattramotar.meeseeks.runtime.TaskTelemetry
-import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
+import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
+import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
 
-class CustomTelemetry(private val logger: UserLogger) : TaskTelemetry {
-    override suspend fun onEvent(event: TaskTelemetryEvent) {
+class CustomTelemetry(private val logger: UserLogger) : Telemetry {
+    override suspend fun onEvent(event: TelemetryEvent) {
         logger.log(event)
     }
 }

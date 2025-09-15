@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.sample.shared
 
-import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
+import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
 
 interface UserLogger {
-    fun log(event: TaskTelemetryEvent)
+    fun log(event: TelemetryEvent)
 }
