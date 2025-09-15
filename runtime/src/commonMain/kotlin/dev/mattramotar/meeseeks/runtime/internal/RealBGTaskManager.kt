@@ -27,7 +27,8 @@ internal class RealBGTaskManager(
     private val workRequestFactory: WorkRequestFactory,
     private val taskScheduler: TaskScheduler,
     private val taskRescheduler: TaskRescheduler,
-    private val config: BGTaskManagerConfig,
+    internal val config: BGTaskManagerConfig,
+    internal val registry: WorkerRegistry,
     override val coroutineContext: CoroutineContext = SupervisorJob() + MeeseeksDispatchers.IO,
     private val telemetry: TaskTelemetry? = null,
 ) : BGTaskManager, CoroutineScope {

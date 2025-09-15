@@ -12,7 +12,7 @@ internal actual class BGTaskManagerFactory actual constructor() {
         json: Json,
         config: BGTaskManagerConfig
     ): BGTaskManager {
-        val database = MeeseeksAppDatabase.require(context, json)
+        val database = MeeseeksDatabaseSingleton.instance
         val workRequestFactory = WorkRequestFactory()
         val taskScheduler = TaskScheduler()
         val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory, config)
@@ -21,6 +21,7 @@ internal actual class BGTaskManagerFactory actual constructor() {
             workRequestFactory = workRequestFactory,
             taskScheduler = taskScheduler,
             taskRescheduler = taskRescheduler,
+            registry = registry,
             config = config
         )
     }

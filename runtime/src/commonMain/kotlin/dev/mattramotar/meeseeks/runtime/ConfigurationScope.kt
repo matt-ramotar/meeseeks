@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime
 
 import dev.mattramotar.meeseeks.runtime.internal.BGTaskManagerSingleton
-import dev.mattramotar.meeseeks.runtime.internal.MeeseeksAppDatabase
+import dev.mattramotar.meeseeks.runtime.internal.MeeseeksDatabaseSingleton
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistration
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
 import kotlinx.serialization.KSerializer
@@ -63,7 +63,7 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
     internal fun build(): BGTaskManager {
         val registry = WorkerRegistry(getRegistrations())
         val json = configureJson(registry)
-        MeeseeksAppDatabase.init(appContext, json)
+        MeeseeksDatabaseSingleton.init(appContext, json)
         val manager = BGTaskManagerSingleton.getOrCreate(appContext, registry, json, config)
         initializePlatformDependencies(appContext, manager, registry, json, config)
         return manager

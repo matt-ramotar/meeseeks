@@ -1,7 +1,5 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
-import android.util.Log
-import androidx.work.Configuration
 import androidx.work.WorkManager
 import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
@@ -15,17 +13,18 @@ internal actual class BGTaskManagerFactory {
         json: Json,
         config: BGTaskManagerConfig
     ): BGTaskManager {
-        val database = MeeseeksAppDatabase.require(context, json)
-        val workerFactory = BGTaskWorkerFactory(database, registry)
+        val database = MeeseeksDatabaseSingleton.instance
+
         val workRequestFactory = WorkRequestFactory(config.minBackoff.inWholeMilliseconds)
 
-        val configuration = Configuration.Builder()
-            .setMinimumLoggingLevel(Log.INFO)
-            .setWorkerFactory(workerFactory)
-            .build()
-
-        WorkManager.initialize(context.applicationContext, configuration)
-        val workManager = WorkManager.getInstance(context.applicationContext)
+        val workManager = try {
+            WorkManager.getInstance(context.applicationContext)
+        } catch (e: IllegalStateException) {
+            throw IllegalStateException(
+                "WorkManager is not initialized. Ensure the default WorkManager initializer is enabled or On-Demand initialization is configured in your application class.",
+                e
+            )
+        }
 
         val taskScheduler = TaskScheduler(workManager)
         val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory, config)
@@ -35,7 +34,9 @@ internal actual class BGTaskManagerFactory {
             workRequestFactory,
             taskScheduler,
             taskRescheduler,
-            config
+            config,
+            registry = registry,
+            telemetry = config.telemetry,
         )
     }
 }

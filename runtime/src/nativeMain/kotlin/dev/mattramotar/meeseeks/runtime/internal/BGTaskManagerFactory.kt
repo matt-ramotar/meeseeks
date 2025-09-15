@@ -15,7 +15,7 @@ internal actual class BGTaskManagerFactory {
         json: Json,
         config: BGTaskManagerConfig
     ): BGTaskManager {
-        val database = MeeseeksAppDatabase.require(context, json)
+        val database = MeeseeksDatabaseSingleton.instance
         val bgTaskScheduler = BGTaskScheduler.sharedScheduler
         val nativeTaskScheduler = NativeTaskScheduler(bgTaskScheduler)
         val nativeCoordinator = NativeTaskCoordinator(database, nativeTaskScheduler)
@@ -34,6 +34,7 @@ internal actual class BGTaskManagerFactory {
             taskScheduler = platformSchedulerAdapter,
             taskRescheduler = taskRescheduler,
             config = config,
+            registry = registry,
             telemetry = config.telemetry
         )
     }

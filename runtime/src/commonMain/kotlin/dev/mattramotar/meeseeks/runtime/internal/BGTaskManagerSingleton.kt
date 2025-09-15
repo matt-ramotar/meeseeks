@@ -18,6 +18,10 @@ internal object BGTaskManagerSingleton {
             return _bgTaskManager ?: throw IllegalStateException("BGTaskManager is not set.")
         }
 
+    fun isInitialized(): Boolean {
+        return _bgTaskManager != null
+    }
+
     fun getOrCreate(
         context: AppContext,
         registry: WorkerRegistry,

@@ -1,25 +1,29 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.internal.concurrency.synchronized
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
+import dev.mattramotar.meeseeks.runtime.internal.concurrency.synchronized
 import dev.mattramotar.meeseeks.runtime.internal.db.adapters.taskEntityAdapter
 import dev.mattramotar.meeseeks.runtime.internal.db.adapters.taskLogEntityAdapter
 import kotlinx.serialization.json.Json
 import kotlin.concurrent.Volatile
 
 
-internal object MeeseeksAppDatabase {
+internal object MeeseeksDatabaseSingleton {
 
     @Volatile
-    private var singleton: MeeseeksDatabase? = null
+    private var _instance: MeeseeksDatabase? = null
+
+    val instance: MeeseeksDatabase
+        get() = require()
+
 
     fun init(context: AppContext, json: Json) {
-        if (singleton == null) {
+        if (_instance == null) {
             synchronized(this) {
-                if (singleton == null) {
+                if (_instance == null) {
                     val factory = MeeseeksDatabaseFactory()
-                    singleton = factory.create(
+                    _instance = factory.create(
                         context = context,
                         taskAdapter = taskEntityAdapter(json),
                         taskLogAdapter = taskLogEntityAdapter(json)
@@ -29,14 +33,12 @@ internal object MeeseeksAppDatabase {
         }
     }
 
-    fun require(context: AppContext, json: Json): MeeseeksDatabase {
-        init(context, json)
-
+    private fun require(): MeeseeksDatabase {
         var retriesRemaining = 3
         var singleton: MeeseeksDatabase? = null
 
         while (retriesRemaining > 0 && singleton == null) {
-            singleton = MeeseeksAppDatabase.singleton
+            singleton = _instance
             retriesRemaining--
         }
 

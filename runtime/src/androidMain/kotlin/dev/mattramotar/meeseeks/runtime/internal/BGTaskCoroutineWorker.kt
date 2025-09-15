@@ -1,19 +1,20 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dev.mattramotar.meeseeks.runtime.AppContext
-import dev.mattramotar.meeseeks.runtime.TaskPayload
 import dev.mattramotar.meeseeks.runtime.RuntimeContext
 import dev.mattramotar.meeseeks.runtime.TaskId
+import dev.mattramotar.meeseeks.runtime.TaskPayload
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskStatus
-import dev.mattramotar.meeseeks.runtime.TaskTelemetry
 import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.Worker
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
+import dev.mattramotar.meeseeks.runtime.db.TaskEntity
 import dev.mattramotar.meeseeks.runtime.internal.extensions.TaskEntityExtensions.toTaskRequest
 import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
 import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
@@ -24,27 +25,47 @@ import kotlinx.coroutines.withContext
 internal class BGTaskCoroutineWorker(
     context: Context,
     workerParameters: WorkerParameters,
-    private val database: MeeseeksDatabase,
-    private val taskId: TaskId,
-    private val workerRegistry: WorkerRegistry,
-    private val telemetry: TaskTelemetry? = null,
-    private val appContext: AppContext = context.applicationContext
 ) : CoroutineWorker(context, workerParameters) {
 
+    companion object {
+        private const val TAG = "MeeseeksWorker"
+    }
+
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+
+        if (!BGTaskManagerSingleton.isInitialized()) {
+            Log.w(TAG, "Worker attempting to run before Meeseeks initialization. Retrying later.")
+            return@withContext Result.retry()
+        }
+
+        val appContext = applicationContext
+        val database: MeeseeksDatabase = try {
+            MeeseeksDatabaseSingleton.instance
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Database unavailable.", e)
+            return@withContext Result.retry()
+        }
+
+        val manager = BGTaskManagerSingleton.instance as? RealBGTaskManager
+        if (manager == null) {
+            Log.w(TAG, "BGTaskManager instance unavailable or wrong type.")
+            return@withContext Result.retry()
+        }
+
+        val workerRegistry = manager.registry
+        val telemetry = manager.config.telemetry
+
+        val taskIdLong = inputData.getLong(WorkRequestFactory.KEY_TASK_ID, -1)
+        if (taskIdLong == -1L) {
+            Log.e(TAG, "Worker started without KEY_TASK_ID.")
+            return@withContext Result.failure()
+        }
+        val taskId = TaskId(taskIdLong)
+
         val taskQueries = database.taskQueries
         val taskLogQueries = database.taskLogQueries
 
-        val taskEntity =
-            taskQueries.selectTaskByTaskId(taskId.value).executeAsOneOrNull()
-                ?: return@withContext Result.failure()
-
-        if (taskEntity.status !is TaskStatus.Pending) {
-            return@withContext Result.failure()
-        }
-
-        val now = System.currentTimeMillis()
-        taskQueries.updateStatus(TaskStatus.Running, now, taskId.value)
+        val taskEntity = database.claimTask(taskIdLong) ?: return@withContext Result.failure()
         val attemptCount = runAttemptCount
 
         telemetry?.onEvent(
@@ -55,9 +76,10 @@ internal class BGTaskCoroutineWorker(
             )
         )
 
+        val request = taskEntity.toTaskRequest()
+
         val result: TaskResult = try {
-            val request = taskEntity.toTaskRequest()
-            val worker = getWorker(request)
+            val worker = getWorker(request, workerRegistry, appContext)
             worker.run(payload = request.payload, context = RuntimeContext(attemptCount))
         } catch (error: Throwable) {
             when (error) {
@@ -69,7 +91,7 @@ internal class BGTaskCoroutineWorker(
 
         taskLogQueries.insertLog(
             taskId = taskEntity.id,
-            created = now,
+            created = Timestamp.now(),
             result = result.type,
             attempt = attemptCount.toLong(),
             message = null
@@ -139,9 +161,20 @@ internal class BGTaskCoroutineWorker(
         }
     }
 
-    private fun getWorker(request: TaskRequest): Worker<TaskPayload> {
+    private fun getWorker(request: TaskRequest, workerRegistry: WorkerRegistry, appContext: AppContext): Worker<TaskPayload> {
         val factory = workerRegistry.getFactory(request.payload::class)
         @Suppress("UNCHECKED_CAST")
         return factory.create(appContext) as Worker<TaskPayload>
     }
+
+    private fun MeeseeksDatabase.claimTask(id: Long): TaskEntity? =
+        taskQueries.transactionWithResult {
+            taskQueries.atomicallyClaimAndStartTask(id, Timestamp.now())
+            val rowsAffected = taskQueries.selectChanges().executeAsOne().toInt()
+            if (rowsAffected == 0) {
+                null
+            } else {
+                taskQueries.selectTaskByTaskId(id).executeAsOneOrNull()
+            }
+        }
 }

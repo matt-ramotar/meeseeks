@@ -13,7 +13,7 @@ internal actual class BGTaskManagerFactory {
         json: Json,
         config: BGTaskManagerConfig
     ): BGTaskManager {
-        val database = MeeseeksAppDatabase.require(context, json)
+        val database = MeeseeksDatabaseSingleton.instance
         val scheduler = StdSchedulerFactory("quartz.properties").scheduler
         scheduler.context["meeseeksDatabase"] = database
         scheduler.context["workerRegistry"] = registry
@@ -28,6 +28,7 @@ internal actual class BGTaskManagerFactory {
             workRequestFactory = workRequestFactory,
             taskScheduler = taskScheduler,
             taskRescheduler = taskRescheduler,
+            registry = registry,
             config = config
         )
     }
