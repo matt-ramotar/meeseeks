@@ -4,7 +4,6 @@ package dev.mattramotar.meeseeks.runtime
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.db.TaskEntity
 import dev.mattramotar.meeseeks.runtime.internal.Timestamp
-import dev.mattramotar.meeseeks.runtime.internal.WorkRequestFactory
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import dev.mattramotar.meeseeks.runtime.internal.extensions.TaskEntityExtensions.toTaskRequest
@@ -28,22 +27,13 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
     internal var config: BGTaskManagerConfig? = null
 
     fun run(
-        bgTaskIdentifier: String,
-        taskSchedule: TaskSchedule,
+        id: Long,
         completionCallback: (Boolean) -> Unit
     ) {
-        val taskId = runCatching {
-            WorkRequestFactory.taskIdFromBGTaskIdentifier(bgTaskIdentifier, taskSchedule)
-        }.getOrNull()
-
-        if (taskId == null) {
-            completionCallback(false)
-            return
-        }
 
         launch {
             try {
-                val succeeded = runTask(taskId)
+                val succeeded = runTask(id)
                 completionCallback(succeeded)
             } catch (_: Throwable) {
                 completionCallback(false)
@@ -51,12 +41,12 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         }
     }
 
-    private suspend fun runTask(id: Long): Boolean {
+    internal suspend fun runTask(id: Long): Boolean {
         val timestamp = Timestamp.now()
         val taskQueries = database.taskQueries
         val taskLogQueries = database.taskLogQueries
 
-        val taskEntity = taskQueries.selectTaskByTaskId(id).executeAsOneOrNull() ?: return false
+        val taskEntity = claimTask(id) ?: return false
         if (taskEntity.status !is TaskStatus.Pending) return false
         taskQueries.updateStatus(TaskStatus.Running, timestamp, id)
         val request: TaskRequest = taskEntity.toTaskRequest()
@@ -174,7 +164,12 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
     ) {
         val schedule = request.schedule as? TaskSchedule.Periodic ?: return
 
-        val identifier = WorkRequestFactory.bgTaskIdentifierFor(taskId, schedule)
+        val identifier = if (request.preconditions.requiresNetwork || request.preconditions.requiresCharging) {
+            BGTaskIdentifiers.PROCESSING
+        } else {
+            BGTaskIdentifiers.REFRESH
+        }
+
         val bgTaskRequest = createNextBGTaskRequest(identifier, request, schedule)
         BGTaskScheduler.sharedScheduler.submitTaskRequest(bgTaskRequest, null)
 
@@ -215,5 +210,21 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         }
 
         return bgTaskRequest
+    }
+
+    private fun claimTask(id: Long): TaskEntity? {
+        val timestamp = Timestamp.now()
+
+        val rowsAffected = database.transactionWithResult {
+            database.taskQueries.atomicallyClaimAndStartTask(id, timestamp)
+            database.taskQueries.selectChanges().executeAsOne().toInt()
+        }
+
+
+        if (rowsAffected == 0) {
+            return null
+        }
+
+        return database.taskQueries.selectTaskByTaskId(id).executeAsOne()
     }
 }

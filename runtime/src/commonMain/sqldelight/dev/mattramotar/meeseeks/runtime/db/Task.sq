@@ -118,3 +118,13 @@ SET
   status = ?,
   updatedAt = ?
 WHERE id = ?;
+
+atomicallyClaimAndStartTask:
+UPDATE taskEntity
+SET status = 'RUNNING',
+    updatedAt = :updatedAt,
+    runAttemptCount = runAttemptCount + 1
+WHERE id = :id AND status = 'PENDING';
+
+selectChanges:
+SELECT changes();
