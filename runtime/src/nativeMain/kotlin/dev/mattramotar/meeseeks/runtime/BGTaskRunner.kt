@@ -2,15 +2,11 @@ package dev.mattramotar.meeseeks.runtime
 
 
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.db.TaskSpec
+import dev.mattramotar.meeseeks.runtime.internal.TaskExecutor
 import dev.mattramotar.meeseeks.runtime.internal.Timestamp
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
-import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
 import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
-import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
-import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
-import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -32,7 +28,6 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         id: Long,
         completionCallback: (Boolean) -> Unit
     ) {
-
         launch {
             try {
                 val succeeded = runTask(id)
@@ -44,124 +39,52 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
     }
 
     internal suspend fun runTask(id: Long): Boolean {
-        val timestamp = Timestamp.now()
-        val taskSpecQueries = database.taskSpecQueries
-        val taskLogQueries = database.taskLogQueries
-        val taskSpec = claimTask(id) ?: return false
-        taskSpecQueries.updateState(TaskState.RUNNING, timestamp, id)
-        val request: TaskRequest = TaskMapper.mapToTaskRequest(taskSpec, registry)
-        val attemptCount: Int = taskSpec.run_attempt_count.toInt() + 1
-        val taskId = TaskId(id)
-
-        config?.telemetry?.onEvent(
-            TaskTelemetryEvent.TaskStarted(
-                taskId = taskId,
-                task = request,
-                runAttemptCount = attemptCount
-            )
+        // Use the centralized TaskExecutor for consistent state management
+        val executionResult = TaskExecutor.execute(
+            taskId = id,
+            database = database,
+            registry = registry,
+            appContext = EmptyAppContext(),
+            config = config,
+            attemptCount = 0 // Native platform doesn't track attempts
         )
 
-        val worker = getWorker(taskSpec)
-        val result: TaskResult = try {
-            worker.run(payload = request.payload, context = RuntimeContext(attemptCount))
-        } catch (error: Throwable) {
-            when (error) {
-                is TransientNetworkException -> TaskResult.Failure.Transient(error)
-                is PermanentValidationException -> TaskResult.Failure.Permanent(error)
-                else -> TaskResult.Failure.Permanent(error)
-            }
-        }
-
-        taskLogQueries.insertLog(
-            taskId = taskSpec.id,
-            created = timestamp,
-            result = result.type,
-            attempt = attemptCount.toLong(),
-            message = null
-        )
-
-        return when (result) {
-            is TaskResult.Success -> {
-
-                config?.telemetry?.onEvent(
-                    TaskTelemetryEvent.TaskSucceeded(
-                        taskId = taskId,
-                        task = request,
-                        runAttemptCount = attemptCount
-                    )
-                )
-
-                when (request.schedule) {
-                    is TaskSchedule.OneTime -> {
-                        taskSpecQueries.updateState(TaskState.SUCCEEDED, Timestamp.now(), id)
-                    }
-
-                    is TaskSchedule.Periodic -> {
-                        resubmitPeriodic(id, request, attemptCount)
-                    }
-                }
+        // Handle the execution result for native platform
+        return when (executionResult) {
+            TaskExecutor.ExecutionResult.Success -> {
+                // Task completed successfully
                 true
             }
 
-            is TaskResult.Retry -> {
-                config?.telemetry?.onEvent(
-                    TaskTelemetryEvent.TaskFailed(
-                        taskId = taskId,
-                        task = request,
-                        runAttemptCount = attemptCount,
-                        error = null
-                    )
-                )
-
-                if (request.schedule is TaskSchedule.Periodic) {
-                    resubmitPeriodic(id, request, attemptCount)
-                }
-
+            TaskExecutor.ExecutionResult.PlatformRetry -> {
+                // Native platform will handle retry through OS scheduling
+                // The task state has been reset to ENQUEUED by TaskExecutor
+                // Return false to indicate the task needs retry
                 false
             }
 
-            is TaskResult.Failure.Permanent -> {
-                val updatedNow = Timestamp.now()
-                taskSpecQueries.updateState(TaskState.FAILED, updatedNow, id)
-
-                config?.telemetry?.onEvent(
-                    TaskTelemetryEvent.TaskFailed(
-                        taskId = taskId,
-                        task = request,
-                        runAttemptCount = attemptCount,
-                        error = result.error
-                    )
-                )
+            TaskExecutor.ExecutionResult.Failure -> {
+                // Permanent failure
                 false
             }
 
-            is TaskResult.Failure.Transient -> {
-                config?.telemetry?.onEvent(
-                    TaskTelemetryEvent.TaskFailed(
-                        taskId = taskId,
-                        task = request,
-                        runAttemptCount = attemptCount,
-                        error = result.error
-                    )
+            is TaskExecutor.ExecutionResult.PeriodicReschedule -> {
+                // Handle periodic task rescheduling
+                resubmitPeriodic(
+                    executionResult.taskId,
+                    executionResult.request,
+                    database.taskSpecQueries.selectTaskById(id).executeAsOne().run_attempt_count.toInt()
                 )
-                if (request.schedule is TaskSchedule.Periodic) {
-                    resubmitPeriodic(id, request, attemptCount)
-                }
-                false
+                true
             }
         }
-    }
-
-    private fun getWorker(taskSpec: TaskSpec): Worker<TaskPayload> {
-        val request = TaskMapper.mapToTaskRequest(taskSpec, registry)
-        val factory = registry.getFactory(request.payload::class)
-        @Suppress("UNCHECKED_CAST")
-        return factory.create(EmptyAppContext()) as Worker<TaskPayload>
     }
 
     @OptIn(ExperimentalForeignApi::class)
     private fun resubmitPeriodic(
-        taskId: Long, request: TaskRequest, attemptCount: Int
+        taskId: Long,
+        request: TaskRequest,
+        attemptCount: Int
     ) {
         val schedule = request.schedule as? TaskSchedule.Periodic ?: return
 
@@ -211,21 +134,5 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         }
 
         return bgTaskRequest
-    }
-
-    private fun claimTask(id: Long): TaskSpec? {
-        val timestamp = Timestamp.now()
-
-        val rowsAffected = database.transactionWithResult {
-            database.taskSpecQueries.atomicallyClaimAndStartTask(id, timestamp)
-            database.taskSpecQueries.selectChanges().executeAsOne().toInt()
-        }
-
-
-        if (rowsAffected == 0) {
-            return null
-        }
-
-        return database.taskSpecQueries.selectTaskById(id).executeAsOne()
     }
 }

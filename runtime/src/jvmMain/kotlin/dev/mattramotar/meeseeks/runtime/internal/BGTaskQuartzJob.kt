@@ -1,31 +1,19 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
-import dev.mattramotar.meeseeks.runtime.TaskPayload
+import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.EmptyAppContext
-import dev.mattramotar.meeseeks.runtime.RuntimeContext
-import dev.mattramotar.meeseeks.runtime.TaskTelemetry
-import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
-import dev.mattramotar.meeseeks.runtime.TaskId
-import dev.mattramotar.meeseeks.runtime.TaskRequest
-import dev.mattramotar.meeseeks.runtime.TaskResult
-import dev.mattramotar.meeseeks.runtime.TaskSchedule
-import dev.mattramotar.meeseeks.runtime.Worker
+import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
-import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
-import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
-import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
-import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.coroutines.runBlocking
 import org.quartz.DisallowConcurrentExecution
 import org.quartz.Job
 import org.quartz.JobExecutionContext
-import java.lang.System.currentTimeMillis
+import org.quartz.JobExecutionException
 
 
 @DisallowConcurrentExecution
 internal class BGTaskQuartzJob(
-    private val telemetry: TaskTelemetry? = null
+    private val telemetry: Telemetry? = null
 ) : Job {
 
     override fun execute(context: JobExecutionContext) {
@@ -37,143 +25,45 @@ internal class BGTaskQuartzJob(
             val registry = schedulerContext["workerRegistry"] as? WorkerRegistry
                 ?: error("WorkerRegistry missing from scheduler context")
 
-            val taskSpecQueries = database.taskSpecQueries
-            val taskLogQueries = database.taskLogQueries
-            val taskSpecId = context.jobDetail.jobDataMap.getLong("task_id")
-            val taskSpec = taskSpecQueries.selectTaskById(taskSpecId).executeAsOneOrNull()
-                ?: return@runBlocking
-
-            val currentStatus = taskSpec.state.toPublicStatus()
-            if (currentStatus !is dev.mattramotar.meeseeks.runtime.TaskStatus.Pending) {
-                return@runBlocking
+            val taskIdLong = context.jobDetail.jobDataMap.getLong("task_id")
+            if (taskIdLong <= 0) {
+                throw JobExecutionException("Invalid task_id: $taskIdLong")
             }
 
-            val timestamp = Timestamp.now()
-
-            // Atomically claim and start the task
-            taskSpecQueries.atomicallyClaimAndStartTask(taskSpecId, timestamp)
-            val rowsAffected = taskSpecQueries.selectChanges().executeAsOne().toInt()
-            if (rowsAffected == 0) {
-                // Task was already claimed by another worker
-                return@runBlocking
-            }
-
-            val taskId = TaskId(taskSpec.id)
-            val request = TaskMapper.mapToTaskRequest(taskSpec, registry)
-            val attemptCount = taskSpec.run_attempt_count.toInt() + 1
-
-            telemetry?.onEvent(
-                TaskTelemetryEvent.TaskStarted(
-                    taskId = taskId,
-                    task = request,
-                    runAttemptCount = attemptCount,
-                )
+            // Use the centralized TaskExecutor for consistent state management
+            val executionResult = TaskExecutor.execute(
+                taskId = taskIdLong,
+                database = database,
+                registry = registry,
+                appContext = EmptyAppContext(),
+                config = telemetry?.let { BGTaskManagerConfig(telemetry = it) },
+                attemptCount = 0 // Quartz doesn't provide attempt count
             )
 
-            val result: TaskResult = try {
-                val worker = getWorker(request, registry)
-                worker.run(request.payload, RuntimeContext(attemptCount))
-
-            } catch (error: Throwable) {
-                when (error) {
-                    is TransientNetworkException -> TaskResult.Failure.Transient(error)
-                    is PermanentValidationException -> TaskResult.Failure.Permanent(error)
-                    else -> TaskResult.Failure.Permanent(error)
-                }
-            }
-
-            taskLogQueries.insertLog(
-                taskId = taskSpec.id,
-                created = timestamp,
-                result = result.type,
-                attempt = attemptCount.toLong(),
-                message = null
-            )
-
-            when (result) {
-                is TaskResult.Failure.Permanent -> {
-                    taskSpecQueries.updateState(
-                        TaskState.FAILED,
-                        currentTimeMillis(),
-                        taskSpec.id
-                    )
-
-                    telemetry?.onEvent(
-                        TaskTelemetryEvent.TaskFailed(
-                            taskId = taskId,
-                            task = request,
-                            error = result.error,
-                            runAttemptCount = attemptCount,
-                        )
-                    )
+            // Handle the execution result for Quartz
+            when (executionResult) {
+                TaskExecutor.ExecutionResult.Success -> {
+                    // Task completed successfully
+                    // No exception thrown, job completes normally
                 }
 
-                is TaskResult.Failure.Transient -> {
-                    telemetry?.onEvent(
-                        TaskTelemetryEvent.TaskFailed(
-                            taskId = taskId,
-                            task = request,
-                            error = result.error,
-                            runAttemptCount = attemptCount,
-                        )
-                    )
-
-                    when (request.schedule) {
-                        is TaskSchedule.OneTime -> {
-                            // TODO: Support retry
-                        }
-
-                        is TaskSchedule.Periodic -> {
-                            // Quartz will fire again
-                        }
-                    }
-
+                TaskExecutor.ExecutionResult.PlatformRetry -> {
+                    // Request Quartz to retry the job immediately
+                    // This ensures the task state has been reset to ENQUEUED
+                    throw JobExecutionException("Transient failure, requesting retry", true)
                 }
 
-                TaskResult.Retry -> {
-                    telemetry?.onEvent(
-                        TaskTelemetryEvent.TaskFailed(
-                            taskId = taskId,
-                            task = request,
-                            error = null,
-                            runAttemptCount = attemptCount,
-                        )
-                    )
-
-                    when (request.schedule) {
-                        is TaskSchedule.OneTime -> {
-                            // TODO: Support retry
-                        }
-
-                        is TaskSchedule.Periodic -> {
-                            // Quartz will fire again
-                        }
-                    }
+                TaskExecutor.ExecutionResult.Failure -> {
+                    // Permanent failure, don't request retry
+                    throw JobExecutionException("Permanent task failure", false)
                 }
 
-                TaskResult.Success -> {
-
-                    telemetry?.onEvent(
-                        TaskTelemetryEvent.TaskSucceeded(
-                            taskId = taskId,
-                            task = request,
-                            runAttemptCount = attemptCount,
-                        )
-                    )
-
-                    taskSpecQueries.updateState(
-                        TaskState.SUCCEEDED,
-                        currentTimeMillis(),
-                        taskSpec.id
-                    )
+                is TaskExecutor.ExecutionResult.PeriodicReschedule -> {
+                    // For periodic tasks, Quartz handles the scheduling via triggers
+                    // We just need to complete the job successfully
+                    // The periodic trigger will fire again based on its schedule
                 }
             }
         }
-    }
-
-    private fun getWorker(request: TaskRequest, registry: WorkerRegistry): Worker<TaskPayload> {
-        val factory = registry.getFactory(request.payload::class)
-        @Suppress("UNCHECKED_CAST")
-        return factory.create(EmptyAppContext()) as Worker<TaskPayload>
     }
 }

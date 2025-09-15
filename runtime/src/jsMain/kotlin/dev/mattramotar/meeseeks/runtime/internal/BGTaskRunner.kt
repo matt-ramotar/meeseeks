@@ -1,24 +1,13 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
-import dev.mattramotar.meeseeks.runtime.TaskPayload
 import dev.mattramotar.meeseeks.runtime.EmptyAppContext
-import dev.mattramotar.meeseeks.runtime.RuntimeContext
-import dev.mattramotar.meeseeks.runtime.TaskId
-import dev.mattramotar.meeseeks.runtime.TaskRequest
-import dev.mattramotar.meeseeks.runtime.TaskResult
-import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
-import dev.mattramotar.meeseeks.runtime.Worker
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
-import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
-import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
-import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
-import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
-import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
@@ -26,97 +15,85 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
     internal lateinit var registry: WorkerRegistry
     internal var config: BGTaskManagerConfig? = null
 
-    fun run(
-        tag: String
-    ) {
+    // Retry configuration for JS platform
+    private const val MAX_RETRY_ATTEMPTS = 5
+    private val BASE_RETRY_DELAY = 1.seconds
+
+    fun run(tag: String) {
         val taskId = WorkRequestFactory.taskIdFrom(tag)
-        val taskSpec =
-            database.taskSpecQueries.selectTaskById(taskId).executeAsOneOrNull() ?: return
         launch {
-            runTask(taskSpec)
+            executeTask(taskId, attemptCount = 1)
         }
-
     }
 
-    private suspend fun runTask(taskSpec: TaskSpec) {
-        val taskSpecQueries = database.taskSpecQueries
-        val taskLogQueries = database.taskLogQueries
-
-        val currentStatus = taskSpec.state.toPublicStatus()
-        if (currentStatus !is dev.mattramotar.meeseeks.runtime.TaskStatus.Pending) {
-            console.log("Task id=${taskSpec.id} not pending, skipping")
-            return
-        }
-
-        val taskSpecId = taskSpec.id
-        val taskId = TaskId(taskSpecId)
-        val request = TaskMapper.mapToTaskRequest(taskSpec, registry)
-        val attemptCount = taskSpec.run_attempt_count.toInt() + 1
-
-        val timestamp = Timestamp.now()
-        taskSpecQueries.updateState(TaskState.RUNNING, timestamp, taskSpecId)
-
-        config?.telemetry?.onEvent(
-            TaskTelemetryEvent.TaskStarted(taskId, request, attemptCount)
+    private suspend fun executeTask(taskId: Long, attemptCount: Int) {
+        // Use the centralized TaskExecutor for consistent state management
+        val executionResult = TaskExecutor.execute(
+            taskId = taskId,
+            database = database,
+            registry = registry,
+            appContext = EmptyAppContext(),
+            config = config,
+            attemptCount = attemptCount
         )
 
-        val worker = getWorker(request, registry)
-        val result: TaskResult = try {
-            worker.run(request.payload, RuntimeContext(attemptCount))
-        } catch (error: Throwable) {
-
-            when (error) {
-                is TransientNetworkException -> TaskResult.Failure.Transient(error)
-                is PermanentValidationException -> TaskResult.Failure.Permanent(error)
-                else -> TaskResult.Failure.Permanent(error)
-            }
-        }
-
-        taskLogQueries.insertLog(
-            taskId = taskSpec.id,
-            created = timestamp,
-            result = result.type,
-            attempt = taskSpec.run_attempt_count,
-            message = null
-        )
-
-        when (result) {
-            is TaskResult.Success -> {
-                taskSpecQueries.updateState(TaskState.SUCCEEDED, Timestamp.now(), taskSpecId)
-                config?.telemetry?.onEvent(
-                    TaskTelemetryEvent.TaskSucceeded(taskId, request, attemptCount)
-                )
+        // Handle the execution result for JS platform
+        when (executionResult) {
+            TaskExecutor.ExecutionResult.Success -> {
+                console.log("Task $taskId completed successfully")
             }
 
-            is TaskResult.Failure.Transient,
-            is TaskResult.Retry -> {
-                config?.telemetry?.onEvent(
-                    TaskTelemetryEvent.TaskFailed(
-                        taskId,
-                        request,
-                        (result as? TaskResult.Failure)?.error,
-                        attemptCount
-                    )
-                )
+            TaskExecutor.ExecutionResult.PlatformRetry -> {
+                // JS platform needs to handle retry manually
+                if (attemptCount < MAX_RETRY_ATTEMPTS) {
+                    // Exponential backoff with jitter
+                    val delayMs = (BASE_RETRY_DELAY.inWholeMilliseconds * (1 shl (attemptCount - 1)))
+                        .coerceAtMost(30_000) // Max 30 seconds
+                    val jitter = (0..1000).random()
+                    val totalDelay = delayMs + jitter
+
+                    console.log("Task $taskId will retry after ${totalDelay}ms (attempt ${attemptCount + 1}/$MAX_RETRY_ATTEMPTS)")
+
+                    delay(totalDelay)
+
+                    // Retry the task
+                    executeTask(taskId, attemptCount + 1)
+                } else {
+                    console.error("Task $taskId exceeded max retry attempts ($MAX_RETRY_ATTEMPTS)")
+                    // Mark as failed after max retries
+                    markTaskAsFailed(taskId)
+                }
             }
 
-            is TaskResult.Failure.Permanent -> {
-                taskSpecQueries.updateState(TaskState.FAILED, Timestamp.now(), taskSpecId)
-                config?.telemetry?.onEvent(
-                    TaskTelemetryEvent.TaskFailed(
-                        taskId,
-                        request,
-                        result.error,
-                        attemptCount
-                    )
-                )
+            TaskExecutor.ExecutionResult.Failure -> {
+                console.error("Task $taskId failed permanently")
+            }
+
+            is TaskExecutor.ExecutionResult.PeriodicReschedule -> {
+                // For periodic tasks in JS, we need to schedule the next execution
+                console.log("Periodic task $taskId completed, scheduling next execution")
+                schedulePeriodicTask(executionResult.taskId, executionResult.request)
             }
         }
     }
 
-    private fun getWorker(request: TaskRequest, registry: WorkerRegistry): Worker<TaskPayload> {
-        val factory = registry.getFactory(request.payload::class)
-        @Suppress("UNCHECKED_CAST")
-        return factory.create(EmptyAppContext()) as Worker<TaskPayload>
+    private fun markTaskAsFailed(taskId: Long) {
+        database.taskSpecQueries.updateState(
+            state = dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState.FAILED,
+            updated_at_ms = Timestamp.now(),
+            id = taskId
+        )
+    }
+
+    private fun schedulePeriodicTask(taskId: Long, request: dev.mattramotar.meeseeks.runtime.TaskRequest) {
+        val schedule = request.schedule as? dev.mattramotar.meeseeks.runtime.TaskSchedule.Periodic ?: return
+
+        launch {
+            // Wait for the periodic interval
+            delay(schedule.interval)
+
+            // Execute the task again
+            executeTask(taskId, attemptCount = 1)
+        }
     }
 }

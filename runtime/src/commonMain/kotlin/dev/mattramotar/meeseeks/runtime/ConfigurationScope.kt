@@ -4,11 +4,9 @@ import dev.mattramotar.meeseeks.runtime.internal.BGTaskManagerSingleton
 import dev.mattramotar.meeseeks.runtime.internal.MeeseeksDatabaseSingleton
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistration
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
-import kotlinx.serialization.KSerializer
+import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
+import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.Json.Default.serializersModule
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 import kotlin.time.Duration
@@ -40,12 +38,12 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
     }
 
 
-    fun telemetry(telemetry: TaskTelemetry): ConfigurationScope = apply {
+    fun telemetry(telemetry: Telemetry): ConfigurationScope = apply {
         config = config.copy(telemetry = telemetry)
     }
 
-    fun telemetry(handler: (event: TaskTelemetryEvent) -> Unit): ConfigurationScope = apply {
-        config = config.copy(telemetry = TaskTelemetry(handler))
+    fun telemetry(handler: (event: TelemetryEvent) -> Unit): ConfigurationScope = apply {
+        config = config.copy(telemetry = Telemetry(handler))
     }
 
 

@@ -8,8 +8,8 @@ import dev.mattramotar.meeseeks.runtime.ScheduledTask
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskStatus
-import dev.mattramotar.meeseeks.runtime.TaskTelemetry
-import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
+import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
+import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
@@ -31,7 +31,7 @@ internal class RealBGTaskManager(
     internal val config: BGTaskManagerConfig,
     internal val registry: WorkerRegistry,
     override val coroutineContext: CoroutineContext = SupervisorJob() + MeeseeksDispatchers.IO,
-    private val telemetry: TaskTelemetry? = null,
+    private val telemetry: Telemetry? = null,
 ) : BGTaskManager, CoroutineScope {
 
     private val taskSpecQueries = database.taskSpecQueries
@@ -83,7 +83,7 @@ internal class RealBGTaskManager(
 
         launch {
             telemetry?.onEvent(
-                TaskTelemetryEvent.TaskScheduled(
+                TelemetryEvent.TaskScheduled(
                     taskId = TaskId(taskId),
                     task = request
                 )
@@ -120,7 +120,7 @@ internal class RealBGTaskManager(
 
         launch {
             telemetry?.onEvent(
-                TaskTelemetryEvent.TaskCancelled(
+                TelemetryEvent.TaskCancelled(
                     taskId = id,
                     task = TaskMapper.mapToTaskRequest(taskEntity, registry)
                 )
@@ -137,7 +137,7 @@ internal class RealBGTaskManager(
             taskSpecQueries.cancelTask(Timestamp.now(), entity.id)
             launch {
                 telemetry?.onEvent(
-                    TaskTelemetryEvent.TaskCancelled(
+                    TelemetryEvent.TaskCancelled(
                         taskId = TaskId(entity.id),
                         task = TaskMapper.mapToTaskRequest(entity, registry)
                     )
@@ -227,7 +227,7 @@ internal class RealBGTaskManager(
 
         launch {
             telemetry?.onEvent(
-                TaskTelemetryEvent.TaskScheduled(
+                TelemetryEvent.TaskScheduled(
                     taskId = TaskId(existing.id),
                     task = updatedRequest
                 )

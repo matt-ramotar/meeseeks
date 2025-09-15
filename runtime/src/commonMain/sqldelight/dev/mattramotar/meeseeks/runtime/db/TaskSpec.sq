@@ -126,6 +126,11 @@ UPDATE taskSpec
 SET state = ?, updated_at_ms = ?
 WHERE id = ?;
 
+updateStateAndNextRunTime:
+UPDATE taskSpec
+SET state = ?, updated_at_ms = ?, next_run_time_ms = ?
+WHERE id = ?;
+
 -- Get all tasks regardless of state
 selectAllTasks:
 SELECT * FROM taskSpec
