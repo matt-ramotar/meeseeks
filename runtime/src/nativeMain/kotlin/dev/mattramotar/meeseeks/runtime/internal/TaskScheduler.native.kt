@@ -4,6 +4,7 @@ import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
 import kotlinx.cinterop.ExperimentalForeignApi
 
 /**
@@ -28,11 +29,12 @@ internal actual class TaskScheduler(
      * On iOS, "scheduled" means the task is PENDING/RUNNING in the database, as the OS handles the actual wakeup timing
      */
     actual fun isScheduled(taskId: Long, taskSchedule: TaskSchedule): Boolean {
-        val taskEntity = database.taskQueries
-            .selectTaskByTaskId(taskId)
+        val taskSpec = database.taskSpecQueries
+            .selectTaskById(taskId)
             .executeAsOneOrNull() ?: return false
 
-        return taskEntity.status is TaskStatus.Pending || taskEntity.status is TaskStatus.Running
+        val status = taskSpec.state.toPublicStatus()
+        return status is TaskStatus.Pending || status is TaskStatus.Running
     }
 
     // Cancellation is handled by DB updates in common code

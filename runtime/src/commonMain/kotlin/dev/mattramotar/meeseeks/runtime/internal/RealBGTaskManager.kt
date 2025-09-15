@@ -11,9 +11,10 @@ import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.TaskTelemetry
 import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.db.TaskEntity
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
-import dev.mattramotar.meeseeks.runtime.internal.extensions.TaskEntityExtensions.toTaskRequest
+import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
+import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +34,7 @@ internal class RealBGTaskManager(
     private val telemetry: TaskTelemetry? = null,
 ) : BGTaskManager, CoroutineScope {
 
+    private val taskSpecQueries = database.taskSpecQueries
 
     init {
         launch {
@@ -41,29 +43,41 @@ internal class RealBGTaskManager(
     }
 
     override fun schedule(request: TaskRequest): TaskId {
-        val taskQueries = database.taskQueries
         val timestamp = Timestamp.now()
+        val normalized = TaskMapper.normalizeRequest(request, timestamp, registry)
 
-        taskQueries.insertTask(
-            payload = request.payload,
-            preconditions = request.preconditions,
-            priority = request.priority,
-            schedule = request.schedule,
-            retryPolicy = request.retryPolicy,
-            status = TaskStatus.Pending,
-            workRequestId = null,
-            createdAt = timestamp,
-            updatedAt = timestamp
-        )
+        taskSpecQueries.transaction {
+            taskSpecQueries.insertTask(
+                state = normalized.state,
+                created_at_ms = timestamp,
+                updated_at_ms = timestamp,
+                platform_id = null,
+                payload_type_id = normalized.payloadTypeId,
+                payload_data = normalized.payloadData,
+                priority = normalized.priority,
+                requires_network = normalized.requiresNetwork,
+                requires_charging = normalized.requiresCharging,
+                requires_battery_not_low = normalized.requiresBatteryNotLow,
+                next_run_time_ms = normalized.nextRunTimeMs,
+                schedule_type = normalized.scheduleType,
+                initial_delay_ms = normalized.initialDelayMs,
+                interval_duration_ms = normalized.intervalMs,
+                flex_duration_ms = normalized.flexMs,
+                backoff_policy = normalized.backoffPolicy,
+                backoff_delay_ms = normalized.backoffDelayMs,
+                max_retries = normalized.maxRetries,
+                backoff_multiplier = normalized.backoffMultiplier
+            )
+        }
 
-        val taskId = taskQueries.lastInsertedTaskId().executeAsOne()
+        val taskId = taskSpecQueries.lastInsertedTaskId().executeAsOne()
         val workRequest = workRequestFactory.createWorkRequest(taskId, request, config)
 
         taskScheduler.scheduleTask(taskId, request, workRequest, ExistingWorkPolicy.KEEP)
 
-        taskQueries.updateWorkRequestId(
-            workRequestId = workRequest.id,
-            updatedAt = Timestamp.now(),
+        taskSpecQueries.updatePlatformId(
+            platform_id = workRequest.id,
+            updated_at_ms = Timestamp.now(),
             id = taskId
         )
 
@@ -80,30 +94,35 @@ internal class RealBGTaskManager(
     }
 
     override fun cancel(id: TaskId) {
-        val taskQueries = database.taskQueries
-        val taskEntity =
-            taskQueries.selectTaskByTaskId(id.value).executeAsOneOrNull() ?: return
+        val taskEntity = taskSpecQueries.selectTaskById(id.value).executeAsOneOrNull() ?: return
 
-        val workRequestId = taskEntity.workRequestId
-        if (!workRequestId.isNullOrEmpty()) {
-            taskScheduler.cancelWorkById(workRequestId, taskEntity.schedule)
+        val platformId = taskEntity.platform_id
+        if (!platformId.isNullOrEmpty()) {
+            val scheduleType = taskEntity.schedule_type
+            val schedule = when (scheduleType) {
+                "ONE_TIME" -> TaskMapper.mapToTaskRequest(taskEntity, registry).schedule
+                "PERIODIC" -> TaskMapper.mapToTaskRequest(taskEntity, registry).schedule
+                else -> TaskMapper.mapToTaskRequest(taskEntity, registry).schedule
+            }
+            taskScheduler.cancelWorkById(platformId, schedule)
         } else {
+            val taskRequest = TaskMapper.mapToTaskRequest(taskEntity, registry)
             taskScheduler.cancelUniqueWork(
                 uniqueWorkName = WorkRequestFactory.uniqueWorkNameFor(
                     taskEntity.id,
-                    taskEntity.schedule
+                    taskRequest.schedule
                 ),
-                taskEntity.schedule
+                taskRequest.schedule
             )
         }
 
-        taskQueries.cancelTask(Timestamp.now(), id.value)
+        taskSpecQueries.cancelTask(Timestamp.now(), id.value)
 
         launch {
             telemetry?.onEvent(
                 TaskTelemetryEvent.TaskCancelled(
                     taskId = id,
-                    task = taskEntity.toTaskRequest()
+                    task = TaskMapper.mapToTaskRequest(taskEntity, registry)
                 )
             )
         }
@@ -112,17 +131,15 @@ internal class RealBGTaskManager(
     override fun cancelAll() {
         taskScheduler.cancelAllWorkByTag(WorkRequestFactory.WORK_REQUEST_TAG)
 
-        val taskQueries = database.taskQueries
-
-        val activeTasks = taskQueries.selectAllActive().executeAsList()
+        val activeTasks = taskSpecQueries.selectAllActive().executeAsList()
 
         activeTasks.forEach { entity ->
-            taskQueries.cancelTask(Timestamp.now(), entity.id)
+            taskSpecQueries.cancelTask(Timestamp.now(), entity.id)
             launch {
                 telemetry?.onEvent(
                     TaskTelemetryEvent.TaskCancelled(
                         taskId = TaskId(entity.id),
-                        task = entity.toTaskRequest()
+                        task = TaskMapper.mapToTaskRequest(entity, registry)
                     )
                 )
             }
@@ -130,58 +147,71 @@ internal class RealBGTaskManager(
     }
 
     override fun reschedulePendingTasks() {
-        val activeTasks = database.taskQueries.selectAllActive().executeAsList()
-        activeTasks.forEach { taskEntity ->
-            if (taskEntity.workRequestId.isNullOrBlank()) {
-                taskRescheduler.rescheduleTask(taskEntity)
+        val activeTasks = taskSpecQueries.selectAllActive().executeAsList()
+        activeTasks.forEach { taskSpec ->
+            if (taskSpec.platform_id.isNullOrBlank()) {
+                taskRescheduler.rescheduleTask(taskSpec)
             }
         }
     }
 
     override fun getTaskStatus(id: TaskId): TaskStatus? {
-        val row = database.taskQueries
-            .selectTaskByTaskId(id.value)
+        val row = taskSpecQueries
+            .selectTaskById(id.value)
             .executeAsOneOrNull() ?: return null
-        return row.status
+        return row.state.toPublicStatus()
     }
 
     override fun listTasks(): List<ScheduledTask> {
-        return database.taskQueries.selectAllTasks()
+        return taskSpecQueries.selectAllTasks()
             .executeAsList()
-            .map { it.toScheduledTask() }
+            .map { TaskMapper.mapToScheduledTask(it, registry) }
     }
-
 
     override fun reschedule(
         id: TaskId,
         updatedRequest: TaskRequest
     ): TaskId {
-        val taskQueries = database.taskQueries
-        val existing = taskQueries.selectTaskByTaskId(id.value).executeAsOneOrNull()
+        val existing = taskSpecQueries.selectTaskById(id.value).executeAsOneOrNull()
             ?: error("Update failed: Task $id not found.")
 
-        val existingWorkRequestId = existing.workRequestId
-        if (!existingWorkRequestId.isNullOrEmpty()) {
-            taskScheduler.cancelWorkById(existingWorkRequestId, existing.schedule)
+        val existingPlatformId = existing.platform_id
+        if (!existingPlatformId.isNullOrEmpty()) {
+            val existingRequest = TaskMapper.mapToTaskRequest(existing, registry)
+            taskScheduler.cancelWorkById(existingPlatformId, existingRequest.schedule)
         } else {
+            val existingRequest = TaskMapper.mapToTaskRequest(existing, registry)
             taskScheduler.cancelUniqueWork(
                 uniqueWorkName = WorkRequestFactory.uniqueWorkNameFor(
                     existing.id,
-                    existing.schedule
+                    existingRequest.schedule
                 ),
-                existing.schedule
+                existingRequest.schedule
             )
         }
 
         val timestamp = Timestamp.now()
-        taskQueries.updateTask(
-            payload = updatedRequest.payload,
-            preconditions = updatedRequest.preconditions,
-            priority = updatedRequest.priority,
-            schedule = updatedRequest.schedule,
-            retryPolicy = updatedRequest.retryPolicy,
-            status = TaskStatus.Pending,
-            updatedAt = timestamp,
+        val normalized = TaskMapper.normalizeRequest(updatedRequest, timestamp, registry)
+
+        taskSpecQueries.updateTask(
+            state = TaskState.ENQUEUED,
+            payload_type_id = normalized.payloadTypeId,
+            payload_data = normalized.payloadData,
+            priority = normalized.priority,
+            requires_network = normalized.requiresNetwork,
+            requires_charging = normalized.requiresCharging,
+            requires_battery_not_low = normalized.requiresBatteryNotLow,
+            schedule_type = normalized.scheduleType,
+            next_run_time_ms = normalized.nextRunTimeMs,
+            initial_delay_ms = normalized.initialDelayMs,
+            interval_duration_ms = normalized.intervalMs,
+            flex_duration_ms = normalized.flexMs,
+            backoff_policy = normalized.backoffPolicy,
+            backoff_delay_ms = normalized.backoffDelayMs,
+            max_retries = normalized.maxRetries,
+            backoff_multiplier = normalized.backoffMultiplier,
+            platform_id = null,
+            updated_at_ms = timestamp,
             id = existing.id
         )
 
@@ -193,7 +223,7 @@ internal class RealBGTaskManager(
             ExistingWorkPolicy.KEEP
         )
 
-        taskQueries.updateWorkRequestId(newWorkRequest.id, timestamp, existing.id)
+        taskSpecQueries.updatePlatformId(newWorkRequest.id, timestamp, existing.id)
 
         launch {
             telemetry?.onEvent(
@@ -208,19 +238,10 @@ internal class RealBGTaskManager(
     }
 
     override fun observeStatus(id: TaskId): Flow<TaskStatus?> {
-        return database.taskQueries
-            .selectTaskByTaskId(id.value)
+        return taskSpecQueries
+            .selectTaskById(id.value)
             .asFlow()
             .mapToOneOrNull(context = MeeseeksDispatchers.IO)
-            .map { entity -> entity?.status }
+            .map { entity -> entity?.state?.toPublicStatus() }
     }
-
-    private fun TaskEntity.toScheduledTask() = ScheduledTask(
-        id = TaskId(this.id),
-        status = this.status,
-        task = this.toTaskRequest(),
-        runAttemptCount = this.runAttemptCount.toInt(),
-        createdAt = this.createdAt,
-        updatedAt = this.updatedAt
-    )
 }

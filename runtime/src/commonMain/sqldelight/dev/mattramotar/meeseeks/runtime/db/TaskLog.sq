@@ -7,7 +7,7 @@ CREATE TABLE taskLogEntity (
     result TEXT AS TaskResult.Type NOT NULL,
     attempt INTEGER NOT NULL,
     message TEXT,
-    FOREIGN KEY (taskId) REFERENCES taskEntity(id)
+    FOREIGN KEY (taskId) REFERENCES taskSpec(id)
 );
 
 insertLog:

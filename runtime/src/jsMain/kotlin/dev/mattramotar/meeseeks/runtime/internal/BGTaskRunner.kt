@@ -7,13 +7,14 @@ import dev.mattramotar.meeseeks.runtime.RuntimeContext
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskResult
-import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.TaskTelemetryEvent
 import dev.mattramotar.meeseeks.runtime.Worker
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.db.TaskEntity
+import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
-import dev.mattramotar.meeseeks.runtime.internal.extensions.TaskEntityExtensions.toTaskRequest
+import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
+import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
 import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
 import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.coroutines.CoroutineScope
@@ -29,30 +30,31 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         tag: String
     ) {
         val taskId = WorkRequestFactory.taskIdFrom(tag)
-        val taskEntity =
-            database.taskQueries.selectTaskByTaskId(taskId).executeAsOneOrNull() ?: return
+        val taskSpec =
+            database.taskSpecQueries.selectTaskById(taskId).executeAsOneOrNull() ?: return
         launch {
-            runTask(taskEntity)
+            runTask(taskSpec)
         }
 
     }
 
-    private suspend fun runTask(taskEntity: TaskEntity) {
-        val taskQueries = database.taskQueries
+    private suspend fun runTask(taskSpec: TaskSpec) {
+        val taskSpecQueries = database.taskSpecQueries
         val taskLogQueries = database.taskLogQueries
 
-        if (taskEntity.status !is TaskStatus.Pending) {
-            console.log("Task id=${taskEntity.id} not pending, skipping")
+        val currentStatus = taskSpec.state.toPublicStatus()
+        if (currentStatus !is dev.mattramotar.meeseeks.runtime.TaskStatus.Pending) {
+            console.log("Task id=${taskSpec.id} not pending, skipping")
             return
         }
 
-        val taskEntityId = taskEntity.id
-        val taskId = TaskId(taskEntityId)
-        val request = taskEntity.toTaskRequest()
-        val attemptCount = taskEntity.runAttemptCount.toInt() + 1
+        val taskSpecId = taskSpec.id
+        val taskId = TaskId(taskSpecId)
+        val request = TaskMapper.mapToTaskRequest(taskSpec, registry)
+        val attemptCount = taskSpec.run_attempt_count.toInt() + 1
 
         val timestamp = Timestamp.now()
-        taskQueries.updateStatus(TaskStatus.Running, timestamp, taskEntityId)
+        taskSpecQueries.updateState(TaskState.RUNNING, timestamp, taskSpecId)
 
         config?.telemetry?.onEvent(
             TaskTelemetryEvent.TaskStarted(taskId, request, attemptCount)
@@ -71,16 +73,16 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         }
 
         taskLogQueries.insertLog(
-            taskId = taskEntity.id,
+            taskId = taskSpec.id,
             created = timestamp,
             result = result.type,
-            attempt = taskEntity.runAttemptCount,
+            attempt = taskSpec.run_attempt_count,
             message = null
         )
 
         when (result) {
             is TaskResult.Success -> {
-                taskQueries.updateStatus(TaskStatus.Finished.Completed, Timestamp.now(), taskEntityId)
+                taskSpecQueries.updateState(TaskState.SUCCEEDED, Timestamp.now(), taskSpecId)
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskSucceeded(taskId, request, attemptCount)
                 )
@@ -99,7 +101,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             }
 
             is TaskResult.Failure.Permanent -> {
-                taskQueries.updateStatus(TaskStatus.Finished.Failed, Timestamp.now(), taskEntityId)
+                taskSpecQueries.updateState(TaskState.FAILED, Timestamp.now(), taskSpecId)
                 config?.telemetry?.onEvent(
                     TaskTelemetryEvent.TaskFailed(
                         taskId,

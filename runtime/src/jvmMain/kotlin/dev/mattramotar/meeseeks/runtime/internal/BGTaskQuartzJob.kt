@@ -9,10 +9,11 @@ import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
-import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.Worker
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.internal.extensions.TaskEntityExtensions.toTaskRequest
+import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
+import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
 import dev.mattramotar.meeseeks.runtime.types.PermanentValidationException
 import dev.mattramotar.meeseeks.runtime.types.TransientNetworkException
 import kotlinx.coroutines.runBlocking
@@ -36,23 +37,30 @@ internal class BGTaskQuartzJob(
             val registry = schedulerContext["workerRegistry"] as? WorkerRegistry
                 ?: error("WorkerRegistry missing from scheduler context")
 
-            val taskQueries = database.taskQueries
+            val taskSpecQueries = database.taskSpecQueries
             val taskLogQueries = database.taskLogQueries
-            val taskEntityId = context.jobDetail.jobDataMap.getLong("task_id")
-            val taskEntity = taskQueries.selectTaskByTaskId(taskEntityId).executeAsOneOrNull()
+            val taskSpecId = context.jobDetail.jobDataMap.getLong("task_id")
+            val taskSpec = taskSpecQueries.selectTaskById(taskSpecId).executeAsOneOrNull()
                 ?: return@runBlocking
 
-            if (taskEntity.status !is TaskStatus.Pending) {
+            val currentStatus = taskSpec.state.toPublicStatus()
+            if (currentStatus !is dev.mattramotar.meeseeks.runtime.TaskStatus.Pending) {
                 return@runBlocking
             }
 
             val timestamp = Timestamp.now()
-            taskQueries.incrementRunAttemptCount(taskEntity.id)
-            taskQueries.updateStatus(TaskStatus.Running, timestamp, taskEntity.id)
 
-            val taskId = TaskId(taskEntity.id)
-            val request = taskEntity.toTaskRequest()
-            val attemptCount = taskEntity.runAttemptCount.toInt() + 1
+            // Atomically claim and start the task
+            taskSpecQueries.atomicallyClaimAndStartTask(taskSpecId, timestamp)
+            val rowsAffected = taskSpecQueries.selectChanges().executeAsOne().toInt()
+            if (rowsAffected == 0) {
+                // Task was already claimed by another worker
+                return@runBlocking
+            }
+
+            val taskId = TaskId(taskSpec.id)
+            val request = TaskMapper.mapToTaskRequest(taskSpec, registry)
+            val attemptCount = taskSpec.run_attempt_count.toInt() + 1
 
             telemetry?.onEvent(
                 TaskTelemetryEvent.TaskStarted(
@@ -75,7 +83,7 @@ internal class BGTaskQuartzJob(
             }
 
             taskLogQueries.insertLog(
-                taskId = taskEntity.id,
+                taskId = taskSpec.id,
                 created = timestamp,
                 result = result.type,
                 attempt = attemptCount.toLong(),
@@ -84,10 +92,10 @@ internal class BGTaskQuartzJob(
 
             when (result) {
                 is TaskResult.Failure.Permanent -> {
-                    taskQueries.updateStatus(
-                        TaskStatus.Finished.Failed,
+                    taskSpecQueries.updateState(
+                        TaskState.FAILED,
                         currentTimeMillis(),
-                        taskEntity.id
+                        taskSpec.id
                     )
 
                     telemetry?.onEvent(
@@ -153,10 +161,10 @@ internal class BGTaskQuartzJob(
                         )
                     )
 
-                    taskQueries.updateStatus(
-                        TaskStatus.Finished.Completed,
+                    taskSpecQueries.updateState(
+                        TaskState.SUCCEEDED,
                         currentTimeMillis(),
-                        taskEntity.id
+                        taskSpec.id
                     )
                 }
             }

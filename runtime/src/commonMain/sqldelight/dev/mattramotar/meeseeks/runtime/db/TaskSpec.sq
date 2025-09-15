@@ -1,0 +1,144 @@
+import dev.mattramotar.meeseeks.runtime.internal.db.model.BackoffPolicy;
+import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState;
+import kotlin.Boolean;
+
+CREATE TABLE taskSpec (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+
+    -- State and Metadata
+    state TEXT AS TaskState NOT NULL,
+    created_at_ms INTEGER NOT NULL,
+    updated_at_ms INTEGER NOT NULL,
+    run_attempt_count INTEGER NOT NULL DEFAULT 0,
+    platform_id TEXT,
+
+    -- Payload
+    payload_type_id TEXT NOT NULL,
+    payload_data TEXT NOT NULL, -- Serialization is handled externally by WorkerRegistry
+
+    -- Priority
+    priority INTEGER NOT NULL, -- Normalized integer (Low=10, Medium=50, High=100)
+
+    -- Constraints
+    requires_network INTEGER AS Boolean NOT NULL DEFAULT 0, -- Normalized boolean (0/1)
+    requires_charging INTEGER AS Boolean NOT NULL DEFAULT 0, -- Normalized boolean (0/1)
+    requires_battery_not_low INTEGER AS Boolean NOT NULL DEFAULT 0, -- Normalized boolean (0/1)
+
+    -- Schedule
+    schedule_type TEXT NOT NULL, -- 'ONE_TIME', 'PERIODIC'
+    next_run_time_ms INTEGER NOT NULL, -- The next time the task is eligible
+    initial_delay_ms INTEGER NOT NULL,
+    interval_duration_ms INTEGER NOT NULL, -- 0 if ONE_TIME
+    flex_duration_ms INTEGER NOT NULL,
+
+    -- Retry Policy
+    backoff_policy TEXT AS BackoffPolicy NOT NULL,
+    backoff_delay_ms INTEGER NOT NULL,
+    max_retries INTEGER NOT NULL,
+    backoff_multiplier REAL
+);
+
+
+-- Finds ENQUEUED tasks, ordered by time eligibility (ASC), then priority (DESC)
+CREATE INDEX idx_taskSpec_scheduler ON taskSpec (state, next_run_time_ms ASC, priority DESC);
+
+CREATE INDEX idx_taskSpec_platform_id ON taskSpec (platform_id);
+
+insertTask:
+INSERT INTO taskSpec(
+    state, created_at_ms, updated_at_ms, platform_id,
+    payload_type_id, payload_data, priority,
+    requires_network, requires_charging, requires_battery_not_low,
+    next_run_time_ms, schedule_type, initial_delay_ms, interval_duration_ms, flex_duration_ms,
+    backoff_policy, backoff_delay_ms, max_retries, backoff_multiplier
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+lastInsertedTaskId:
+SELECT last_insert_rowid();
+
+selectTaskById:
+SELECT * FROM taskSpec WHERE id = ?;
+
+-- Optimized query for schedulers (Filters time, priority, and constraints)
+-- Significantly improves platform efficiency (e.g., iOS REFRESH vs PROCESSING)
+selectNextEligibleTasks:
+SELECT * FROM taskSpec
+WHERE state = 'ENQUEUED'
+  AND next_run_time_ms <= :currentTimeMs
+  AND (
+    -- Filter based on platform capabilities provided to the query (1=true, 0=false)
+    (requires_network = 0 OR :supportsNetwork = 1) AND
+    (requires_charging = 0 OR :supportsCharging = 1)
+  )
+ORDER BY priority DESC, next_run_time_ms ASC
+LIMIT :limit;
+
+-- Finds the earliest future run time for rescheduling OS wakeups
+selectEarliestNextRunTime:
+SELECT MIN(next_run_time_ms) FROM taskSpec WHERE state = 'ENQUEUED';
+
+atomicallyClaimAndStartTask:
+UPDATE taskSpec
+SET state = 'RUNNING',
+    updated_at_ms = :updatedAtMs,
+    run_attempt_count = run_attempt_count + 1
+WHERE id = :id AND state = 'ENQUEUED';
+
+selectChanges:
+SELECT changes();
+
+updateTask:
+UPDATE taskSpec
+SET
+  state = ?,
+  payload_type_id = ?,
+  payload_data = ?,
+  priority = ?,
+  requires_network = ?,
+  requires_charging = ?,
+  requires_battery_not_low = ?,
+  schedule_type = ?,
+  next_run_time_ms = ?,
+  initial_delay_ms = ?,
+  interval_duration_ms = ?,
+  flex_duration_ms = ?,
+  backoff_policy = ?,
+  backoff_delay_ms = ?,
+  max_retries = ?,
+  backoff_multiplier = ?,
+  platform_id = ?,
+  updated_at_ms = ?
+WHERE id = ?;
+
+updatePlatformId:
+UPDATE taskSpec
+SET platform_id = ?, updated_at_ms = ?
+WHERE id = ?;
+
+cancelTask:
+UPDATE taskSpec
+SET state = 'CANCELLED', updated_at_ms = ?
+WHERE id = ?;
+
+updateState:
+UPDATE taskSpec
+SET state = ?, updated_at_ms = ?
+WHERE id = ?;
+
+-- Get all tasks regardless of state
+selectAllTasks:
+SELECT * FROM taskSpec
+ORDER BY created_at_ms DESC;
+
+-- Get all active (ENQUEUED) tasks
+selectAllActive:
+SELECT * FROM taskSpec
+WHERE state = 'ENQUEUED'
+ORDER BY priority DESC, next_run_time_ms ASC;
+
+-- Get all ENQUEUED tasks for rescheduling
+selectAllPending:
+SELECT * FROM taskSpec
+WHERE state = 'ENQUEUED'
+ORDER BY next_run_time_ms ASC;
