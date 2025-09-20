@@ -147,3 +147,9 @@ selectAllPending:
 SELECT * FROM taskSpec
 WHERE state = 'ENQUEUED'
 ORDER BY next_run_time_ms ASC;
+
+resetRunningTasksToEnqueued:
+UPDATE taskSpec
+SET state = 'ENQUEUED',
+    updated_at_ms = :updatedAtMs
+WHERE state = 'RUNNING';
