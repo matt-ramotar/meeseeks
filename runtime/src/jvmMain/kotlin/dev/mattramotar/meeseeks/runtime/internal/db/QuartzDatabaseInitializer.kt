@@ -1,6 +1,5 @@
 package dev.mattramotar.meeseeks.runtime.internal.db
 
-import dev.mattramotar.meeseeks.runtime.internal.Timestamp
 import org.slf4j.LoggerFactory
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
@@ -13,7 +12,6 @@ import java.util.*
 internal object QuartzDatabaseInitializer {
 
     private val logger = LoggerFactory.getLogger(QuartzDatabaseInitializer::class.java)
-    private const val DEFAULT_DB_URL = "jdbc:sqlite:quartz-scheduler.db"
     private const val DEFAULT_SCHEMA_RESOURCE =
         "/dev/mattramotar/meeseeks/runtime/internal/quartz/tables_sqlite.sql"
 
@@ -33,9 +31,12 @@ internal object QuartzDatabaseInitializer {
 
     @JvmStatic
     fun initialize(
-        jdbcUrl: String = System.getProperty("meeseeks.quartz.jdbc", DEFAULT_DB_URL),
+        jdbcUrl: String,
         schemaResourcePath: String = DEFAULT_SCHEMA_RESOURCE,
     ) {
+        require(jdbcUrl.startsWith("jdbc:")) {
+            "Invalid JDBC URL for Quartz: '$jdbcUrl'"
+        }
         createDatabaseIfNotExists(jdbcUrl)
         initializeQuartzSchema(jdbcUrl, schemaResourcePath)
     }
@@ -66,7 +67,7 @@ internal object QuartzDatabaseInitializer {
         jdbcUrl: String,
         schemaResourcePath: String
     ) {
-        val started = Timestamp.now()
+        val startedNanos = System.nanoTime()
         val stream = this::class.java.getResourceAsStream(schemaResourcePath)
             ?: throw IllegalArgumentException("Could not find Quartz schema at $schemaResourcePath.")
 
@@ -74,13 +75,15 @@ internal object QuartzDatabaseInitializer {
         val statements = SqlScriptParser.parse(script)
         DriverManager.getConnection(jdbcUrl).use { connection ->
             applyRecommendedPragmas(connection)
-            connection.autoCommit = false
-            try {
-                if (allExpectedQuartzTablesExist(connection)) {
-                    logger.info("Quartz tables already exist. Skipping schema initialization.")
-                    return
-                }
 
+            if (allExpectedQuartzTablesExist(connection)) {
+                logger.info("Quartz tables already exist. Skipping schema initialization.")
+                return
+            }
+
+            connection.autoCommit = false
+
+            try {
                 logger.info(
                     "Initializing Quartz schema (${statements.size} statements parsed).",
                 )
@@ -99,9 +102,11 @@ internal object QuartzDatabaseInitializer {
                     }
                 }
                 connection.commit()
-                val finished = Timestamp.now()
-                val elapsed = finished - started
-                logger.info("Quartz schema initialization complete in $elapsed ms.")
+                val finishedNanos = System.nanoTime()
+                val elapsedNanos = finishedNanos - startedNanos
+                val nanosInMs = 1_000_000
+                val elapsedMs = elapsedNanos / nanosInMs
+                logger.info("Quartz schema initialization complete in $elapsedMs ms.")
             } catch (e: Exception) {
                 connection.rollback()
                 throw IllegalStateException("Failed to initialize Quartz schema at $schemaResourcePath", e)
@@ -111,8 +116,10 @@ internal object QuartzDatabaseInitializer {
 
     private fun isBenignIdempotencyError(e: SQLException): Boolean {
         val msg = (e.message ?: "").lowercase(Locale.ROOT)
-        // SQLite error messages for existing objects tend to contain these phrases.
-        return msg.contains("already exists") || msg.contains("duplicate column name")
+        return msg.contains("already exists") ||
+            msg.contains("duplicate column name") ||
+            msg.contains("index") && msg.contains("exists") ||
+            msg.contains("table") && msg.contains("exists")
     }
 
     private fun firstLine(sql: String): String {
