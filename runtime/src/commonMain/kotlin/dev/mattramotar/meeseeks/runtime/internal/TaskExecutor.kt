@@ -26,6 +26,8 @@ import dev.mattramotar.meeseeks.runtime.types.RetryErrorCategory.CIRCUIT_BREAKER
 import dev.mattramotar.meeseeks.runtime.types.RetryErrorCategory.RATE_LIMIT
 import dev.mattramotar.meeseeks.runtime.types.RetryErrorClassifier
 import kotlin.math.pow
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.DurationUnit
 
@@ -38,10 +40,16 @@ internal object TaskExecutor {
      * Result of task execution that platforms can use to determine their specific behavior.
      */
     sealed class ExecutionResult {
-        object Success : ExecutionResult()
-        object PlatformRetry : ExecutionResult()
-        object Failure : ExecutionResult()
-        data class PeriodicReschedule(val taskId: Long, val request: TaskRequest) : ExecutionResult()
+        sealed class Terminal : ExecutionResult() {
+            data object Success : Terminal()
+            data object Failure : Terminal()
+        }
+
+        data class ScheduleNextActivation(
+            val taskId: Long,
+            val request: TaskRequest,
+            val delay: Duration = Duration.ZERO,
+        ) : ExecutionResult()
     }
 
     /**
@@ -63,7 +71,7 @@ internal object TaskExecutor {
         config: BGTaskManagerConfig? = null,
         attemptCount: Int = 0
     ): ExecutionResult {
-        val claimed = claimTask(taskId, database) ?: return ExecutionResult.Failure
+        val claimed = claimTask(taskId, database) ?: return ExecutionResult.Terminal.Failure
 
         val taskIdObj = TaskId(taskId)
         val request = TaskMapper.mapToTaskRequest(claimed, registry)
@@ -109,7 +117,7 @@ internal object TaskExecutor {
 
             is TaskResult.Failure.Permanent -> {
                 handlePermanentFailure(taskId, taskIdObj, request, result, effectiveAttemptCount, database, config)
-                ExecutionResult.Failure
+                ExecutionResult.Terminal.Failure
             }
 
             is TaskResult.Failure.Transient, TaskResult.Retry -> {
@@ -201,7 +209,7 @@ internal object TaskExecutor {
                     )
                 )
 
-                ExecutionResult.Success
+                ExecutionResult.Terminal.Success
             }
 
             is TaskSchedule.Periodic -> {
@@ -219,7 +227,7 @@ internal object TaskExecutor {
                     )
                 )
 
-                ExecutionResult.PeriodicReschedule(taskId, request)
+                ExecutionResult.ScheduleNextActivation(taskId, request)
             }
         }
     }
@@ -284,16 +292,16 @@ internal object TaskExecutor {
                 database,
                 config
             )
-            return ExecutionResult.Failure
+            return ExecutionResult.Terminal.Failure
         }
 
-        val nextRetryDelay = calculateRetryDelay(taskSpec, result, attemptCount)
+        val nextRetryDelayMs = calculateRetryDelay(taskSpec, result, attemptCount)
 
         database.taskSpecQueries.transaction {
             database.taskSpecQueries.updateStateAndNextRunTime(
                 state = TaskState.ENQUEUED,
                 updated_at_ms = Timestamp.now(),
-                next_run_time_ms = nextRetryDelay,
+                next_run_time_ms = nextRetryDelayMs,
                 id = taskId
             )
         }
@@ -314,7 +322,7 @@ internal object TaskExecutor {
                     taskId = taskIdObj,
                     task = request,
                     attemptCount = attemptCount,
-                    nextRetryDelayMs = nextRetryDelay,
+                    nextRetryDelayMs = nextRetryDelayMs,
                     remainingRetries = maxRetries - attemptCount,
                     errorCategory = errorCategory,
                     errorMessage = result?.error?.message,
@@ -341,11 +349,7 @@ internal object TaskExecutor {
             )
         }
 
-        return if (request.schedule is TaskSchedule.Periodic) {
-            ExecutionResult.PeriodicReschedule(taskId, request)
-        } else {
-            ExecutionResult.PlatformRetry
-        }
+        return ExecutionResult.ScheduleNextActivation(taskId, request, nextRetryDelayMs.milliseconds)
     }
 
     /**
@@ -358,7 +362,7 @@ internal object TaskExecutor {
     ): Long {
         val backoffPolicy = taskSpec?.backoff_policy
             ?: BackoffPolicy.EXPONENTIAL
-        val baseDelay = taskSpec?.backoff_delay_ms ?: 1000L
+        val baseDelayMs = taskSpec?.backoff_delay_ms ?: 1000L
         val multiplier = taskSpec?.backoff_multiplier ?: 2.0
 
         val error = when (result) {
@@ -367,8 +371,8 @@ internal object TaskExecutor {
         }
 
         val suggestedDelay = error?.let {
-            RetryErrorClassifier.suggestedRetryDelay(it, baseDelay)
-        } ?: baseDelay
+            RetryErrorClassifier.suggestedRetryDelay(it, baseDelayMs)
+        } ?: baseDelayMs
 
         return when (backoffPolicy) {
             BackoffPolicy.LINEAR -> {

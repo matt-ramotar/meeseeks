@@ -14,8 +14,5 @@ internal actual fun initializePlatformDependencies(
     json: Json,
     config: BGTaskManagerConfig
 ) {
-    val database: MeeseeksDatabase = MeeseeksDatabaseSingleton.instance
-    BGTaskRunner.database = database
-    BGTaskRunner.registry = registry
-    BGTaskRunner.config = config
+    // Initialization is handled within BGTaskManagerFactory.js.kt
 }

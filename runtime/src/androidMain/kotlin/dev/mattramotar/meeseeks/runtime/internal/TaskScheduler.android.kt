@@ -1,8 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequest
-import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
@@ -11,33 +9,21 @@ import java.util.*
 internal actual class TaskScheduler(
     private val workManager: WorkManager
 ) {
+
+    /**
+     * All work is [OneTimeWorkRequest]. See: [#21](https://github.com/matt-ramotar/meeseeks/issues/21).
+     */
     actual fun scheduleTask(
         taskId: Long,
         task: TaskRequest,
         workRequest: WorkRequest,
         existingWorkPolicy: ExistingWorkPolicy
     ) {
-        when (task.schedule) {
-            is TaskSchedule.OneTime -> {
-                workManager.enqueueUniqueWork(
-                    WorkRequestFactory.uniqueWorkNameFor(taskId, task.schedule),
-                    existingWorkPolicy.asAndroidExistingWorkPolicy(),
-                    workRequest.delegate as OneTimeWorkRequest
-                )
-            }
-
-            is TaskSchedule.Periodic -> {
-                val periodicPolicy = when (existingWorkPolicy) {
-                    ExistingWorkPolicy.KEEP -> ExistingPeriodicWorkPolicy.KEEP
-                    else -> ExistingPeriodicWorkPolicy.UPDATE
-                }
-                workManager.enqueueUniquePeriodicWork(
-                    WorkRequestFactory.uniqueWorkNameFor(taskId, task.schedule),
-                    periodicPolicy,
-                    workRequest.delegate as PeriodicWorkRequest
-                )
-            }
-        }
+        workManager.enqueueUniqueWork(
+            WorkRequestFactory.uniqueWorkNameFor(taskId, task.schedule),
+            existingWorkPolicy.asAndroidExistingWorkPolicy(),
+            workRequest.delegate as OneTimeWorkRequest
+        )
     }
 
     actual fun isScheduled(taskId: Long, taskSchedule: TaskSchedule): Boolean {
