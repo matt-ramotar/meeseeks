@@ -3,7 +3,6 @@ package dev.mattramotar.meeseeks.runtime.internal
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.EmptyAppContext
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
 import kotlinx.coroutines.runBlocking
 import org.quartz.DisallowConcurrentExecution
 import org.quartz.Job
@@ -12,9 +11,7 @@ import org.quartz.JobExecutionException
 
 
 @DisallowConcurrentExecution
-internal class BGTaskQuartzJob(
-    private val telemetry: Telemetry? = null
-) : Job {
+internal class BGTaskQuartzJob : Job {
 
     override fun execute(context: JobExecutionContext) {
         runBlocking {
@@ -38,15 +35,16 @@ internal class BGTaskQuartzJob(
                 database = database,
                 registry = registry,
                 appContext = EmptyAppContext(),
-                config = telemetry?.let { BGTaskManagerConfig(telemetry = it) },
+                config = config,
                 attemptCount = 0 // Quartz doesn't provide attempt count
             )
 
             // Handle the execution result for Quartz
             when (executionResult) {
                 is TaskExecutor.ExecutionResult.ScheduleNextActivation -> {
-                    scheduleNextActivation(context.scheduler, executionResult, config, database)
+                    scheduleNextActivation(context.scheduler, executionResult, database)
                 }
+
                 TaskExecutor.ExecutionResult.Terminal.Failure,
                 TaskExecutor.ExecutionResult.Terminal.Success -> {
                     // Job completes normally.
@@ -61,7 +59,6 @@ internal class BGTaskQuartzJob(
     private fun scheduleNextActivation(
         scheduler: org.quartz.Scheduler,
         result: TaskExecutor.ExecutionResult.ScheduleNextActivation,
-        config: BGTaskManagerConfig,
         database: MeeseeksDatabase
     ) {
         val factory = WorkRequestFactory()
@@ -70,7 +67,6 @@ internal class BGTaskQuartzJob(
         val nextWorkRequest = factory.createWorkRequest(
             result.taskId,
             result.request,
-            config,
             delayOverrideMs = result.delay.inWholeMilliseconds
         )
 

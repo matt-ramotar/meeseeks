@@ -18,7 +18,7 @@ internal actual class WorkRequestFactory {
         taskRequest: TaskRequest,
         config: BGTaskManagerConfig
     ): WorkRequest {
-        return createWorkRequest(taskId, taskRequest, config, null)
+        return createWorkRequest(taskId, taskRequest, null)
     }
 
     /**
@@ -27,7 +27,6 @@ internal actual class WorkRequestFactory {
     internal fun createWorkRequest(
         taskId: Long,
         taskRequest: TaskRequest,
-        config: BGTaskManagerConfig,
         delayOverrideMs: Long?,
     ): WorkRequest {
         val jobKey = JobKey(uniqueWorkNameFor(taskId, taskRequest.schedule), JOB_GROUP)
