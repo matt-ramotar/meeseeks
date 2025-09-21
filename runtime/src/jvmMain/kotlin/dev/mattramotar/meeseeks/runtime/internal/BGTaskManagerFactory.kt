@@ -3,6 +3,7 @@ package dev.mattramotar.meeseeks.runtime.internal
 import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
+import dev.mattramotar.meeseeks.runtime.internal.db.QuartzDatabaseInitializer
 import kotlinx.serialization.json.Json
 import org.quartz.impl.StdSchedulerFactory
 
