@@ -7,7 +7,8 @@ import dev.mattramotar.meeseeks.runtime.internal.db.QuartzDatabaseInitializer
 import dev.mattramotar.meeseeks.runtime.internal.db.QuartzProps
 import kotlinx.serialization.json.Json
 import org.quartz.impl.StdSchedulerFactory
-import java.util.Properties
+import java.nio.file.Paths
+import java.util.*
 
 internal actual class BGTaskManagerFactory {
     actual fun create(
@@ -24,7 +25,7 @@ internal actual class BGTaskManagerFactory {
             inStream.use { load(it) }
         }
 
-        val jdbcUrl = QuartzProps.jdbcUrlFromQuartzProps(props)
+        val jdbcUrl = normalizeSqliteUrl(QuartzProps.jdbcUrlFromQuartzProps(props))
 
         QuartzProps.setJdbcUrl(props, jdbcUrl)
         QuartzProps.assertNoMismatchedSystemProperty(jdbcUrl)
@@ -48,5 +49,14 @@ internal actual class BGTaskManagerFactory {
             registry = registry,
             config = config
         )
+    }
+
+    private fun normalizeSqliteUrl(url: String): String {
+        val prefix = "jdbc:sqlite:"
+        if (!url.startsWith(prefix)) return url
+        val pathPart = url.removePrefix(prefix)
+        if (pathPart == ":memory:" || Paths.get(pathPart).isAbsolute) return url
+        val abs = Paths.get(pathPart).toAbsolutePath().toString()
+        return prefix + abs
     }
 }
