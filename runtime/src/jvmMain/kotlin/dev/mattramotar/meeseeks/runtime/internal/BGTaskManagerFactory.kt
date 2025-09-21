@@ -55,8 +55,15 @@ internal actual class BGTaskManagerFactory {
         val prefix = "jdbc:sqlite:"
         if (!url.startsWith(prefix)) return url
         val pathPart = url.removePrefix(prefix)
-        if (pathPart == ":memory:" || Paths.get(pathPart).isAbsolute) return url
-        val abs = Paths.get(pathPart).toAbsolutePath().toString()
-        return prefix + abs
+        if (pathPart == ":memory:") return url
+        val questionMarkIndex = pathPart.indexOf('?')
+        val (path, queryParams) = if (questionMarkIndex != -1) {
+            pathPart.take(questionMarkIndex) to pathPart.substring(questionMarkIndex)
+        } else {
+            pathPart to ""
+        }
+        if (Paths.get(path).isAbsolute) return url
+        val absolutePath = Paths.get(path).toAbsolutePath().toString()
+        return prefix + absolutePath + queryParams
     }
 }
