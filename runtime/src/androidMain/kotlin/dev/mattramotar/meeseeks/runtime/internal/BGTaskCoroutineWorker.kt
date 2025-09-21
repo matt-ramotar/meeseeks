@@ -13,9 +13,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-internal class BGTaskCoroutineWorker(
+internal class BGTaskCoroutineWorker @JvmOverloads constructor(
     context: Context,
     workerParameters: WorkerParameters,
+    private val dependencies: MeeseeksDependencies? = null
 ) : CoroutineWorker(context, workerParameters) {
 
     companion object {
@@ -23,27 +24,15 @@ internal class BGTaskCoroutineWorker(
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-
-        if (!BGTaskManagerSingleton.isInitialized()) {
+        if (dependencies == null) {
             Log.w(TAG, "Worker attempting to run before Meeseeks initialization. Retrying later.")
             return@withContext Result.retry()
         }
 
-        val database: MeeseeksDatabase = try {
-            MeeseeksDatabaseSingleton.instance
-        } catch (e: IllegalStateException) {
-            Log.e(TAG, "Database unavailable.", e)
-            return@withContext Result.retry()
-        }
-
-        val manager = BGTaskManagerSingleton.instance as? RealBGTaskManager
-        if (manager == null) {
-            Log.w(TAG, "BGTaskManager instance unavailable or wrong type.")
-            return@withContext Result.retry()
-        }
-
-        val workerRegistry = manager.registry
-        val telemetry = manager.config.telemetry
+        val database = dependencies.database
+        val workerRegistry = dependencies.registry
+        val config = dependencies.config
+        val telemetry = config.telemetry
 
         val taskIdLong = inputData.getLong(WorkRequestFactory.KEY_TASK_ID, -1)
         if (taskIdLong == -1L) {
@@ -65,7 +54,7 @@ internal class BGTaskCoroutineWorker(
         when (executionResult) {
             is TaskExecutor.ExecutionResult.ScheduleNextActivation -> {
                 Log.d(TAG, "Task $taskIdLong requires next activation in ${executionResult.delay.inWholeMilliseconds}ms.")
-                scheduleNextActivation(executionResult, manager.config, database)
+                scheduleNextActivation(executionResult, config, database)
             }
 
             TaskExecutor.ExecutionResult.Terminal.Failure -> {

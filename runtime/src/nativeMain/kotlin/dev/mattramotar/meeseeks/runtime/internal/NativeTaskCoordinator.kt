@@ -2,13 +2,18 @@ package dev.mattramotar.meeseeks.runtime.internal
 
 import dev.mattramotar.meeseeks.runtime.BGTaskIdentifiers
 import dev.mattramotar.meeseeks.runtime.BGTaskRunner
-import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.TaskPreconditions
+import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import platform.BackgroundTasks.BGTask
@@ -21,7 +26,8 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalForeignApi::class)
 internal class NativeTaskCoordinator(
     private val database: MeeseeksDatabase,
-    private val scheduler: NativeTaskScheduler
+    private val scheduler: NativeTaskScheduler,
+    private val runner: BGTaskRunner
 ) {
     private val coordinatorScope = CoroutineScope(SupervisorJob() + MeeseeksDispatchers.IO)
 
@@ -71,7 +77,7 @@ internal class NativeTaskCoordinator(
                 val executionJob = windowScope.launch {
 
                     // TaskRunner handles the actual execution, atomic claiming, and result processing
-                    val success = BGTaskRunner.runTask(taskSpec.id)
+                    val success = runner.runTask(taskSpec.id)
 
                     if (!success) {
                         // If a task fails transiently or cannot be claimed, mark the overall window as incomplete

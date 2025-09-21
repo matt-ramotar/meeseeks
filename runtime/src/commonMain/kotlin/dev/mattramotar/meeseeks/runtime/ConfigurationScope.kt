@@ -1,9 +1,12 @@
 package dev.mattramotar.meeseeks.runtime
 
-import dev.mattramotar.meeseeks.runtime.internal.BGTaskManagerSingleton
-import dev.mattramotar.meeseeks.runtime.internal.MeeseeksDatabaseSingleton
+import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
+import dev.mattramotar.meeseeks.runtime.internal.MeeseeksDatabaseFactory
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistration
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
+import dev.mattramotar.meeseeks.runtime.internal.createBGTaskManager
+import dev.mattramotar.meeseeks.runtime.internal.db.adapters.TaskSpecAdapter
+import dev.mattramotar.meeseeks.runtime.internal.db.adapters.taskLogEntityAdapter
 import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
 import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
 import kotlinx.serialization.json.Json
@@ -57,7 +60,7 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
         val type = T::class
         val serializer = serializer<T>()
 
-        if (getRegistrations().values.any { it.typeId == stableId}) {
+        if (getRegistrations().values.any { it.typeId == stableId }) {
             throw IllegalStateException("Duplicate stableId registered: $stableId.")
         }
 
@@ -72,10 +75,8 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
 
     internal fun build(): BGTaskManager {
         val registry = WorkerRegistry(getRegistrations(), json)
-        MeeseeksDatabaseSingleton.init(appContext, json)
-        val manager = BGTaskManagerSingleton.getOrCreate(appContext, registry, json, config)
-        initializePlatformDependencies(appContext, manager, registry, json, config)
-        return manager
+        val database = createDatabaseInstance(appContext, json)
+        return createBGTaskManager(appContext, database, registry, json, config)
     }
 
 
@@ -86,5 +87,14 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
     @PublishedApi
     internal fun addRegistration(type: KClass<out TaskPayload>, registration: WorkerRegistration) {
         registrations[type] = registration
+    }
+
+    private fun createDatabaseInstance(context: AppContext, json: Json): MeeseeksDatabase {
+        val factory = MeeseeksDatabaseFactory()
+        return factory.create(
+            context = context,
+            taskLogAdapter = taskLogEntityAdapter(json),
+            taskSpecAdapter = TaskSpecAdapter
+        )
     }
 }

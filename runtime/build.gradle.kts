@@ -35,8 +35,8 @@ kotlin {
 
         androidMain {
             dependencies {
+                api(libs.androidx.work.runtime.ktx)
                 implementation(libs.android.driver)
-                implementation(libs.androidx.work.runtime.ktx)
             }
         }
 

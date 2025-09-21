@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
+import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
-import dev.mattramotar.meeseeks.runtime.EmptyAppContext
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import kotlinx.coroutines.CoroutineScope
@@ -9,24 +9,36 @@ import kotlinx.coroutines.launch
 
 object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
-    internal lateinit var database: MeeseeksDatabase
-    internal lateinit var registry: WorkerRegistry
-    internal var config: BGTaskManagerConfig? = null
+    private lateinit var database: MeeseeksDatabase
+    private lateinit var registry: WorkerRegistry
+    private var config: BGTaskManagerConfig? = null
     private lateinit var scheduler: TaskScheduler
+    private lateinit var appContext: AppContext
+
+    private var initialized = false
 
     internal fun initialize(
-        db: MeeseeksDatabase,
+        database: MeeseeksDatabase,
         registry: WorkerRegistry,
         config: BGTaskManagerConfig?,
-        scheduler: TaskScheduler
+        scheduler: TaskScheduler,
+        context: AppContext,
     ) {
-        this.database = db
+        if (initialized) return
+        this.database = database
         this.registry = registry
         this.config = config
         this.scheduler = scheduler
+        this.appContext = context
+        initialized = true
     }
 
     fun run(tag: String) {
+        if (!initialized) {
+            console.error("BGTaskRunner called before initialization!")
+            return
+        }
+
         val taskId = WorkRequestFactory.taskIdFrom(tag)
         launch {
             executeAndChain(taskId)
@@ -51,7 +63,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             taskId = taskId,
             database = database,
             registry = registry,
-            appContext = EmptyAppContext(),
+            appContext = appContext,
             config = config,
             attemptCount = attemptCount
         )

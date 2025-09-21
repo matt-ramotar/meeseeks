@@ -4,17 +4,17 @@ import androidx.work.WorkManager
 import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
+import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import kotlinx.serialization.json.Json
 
 internal actual class BGTaskManagerFactory {
     actual fun create(
         context: AppContext,
+        database: MeeseeksDatabase,
         registry: WorkerRegistry,
         json: Json,
         config: BGTaskManagerConfig
     ): BGTaskManager {
-        val database = MeeseeksDatabaseSingleton.instance
-
         val workRequestFactory = WorkRequestFactory(config.minBackoff.inWholeMilliseconds)
 
         val workManager = try {
@@ -37,6 +37,7 @@ internal actual class BGTaskManagerFactory {
             config,
             registry = registry,
             telemetry = config.telemetry,
+            appContext = context
         )
     }
 }

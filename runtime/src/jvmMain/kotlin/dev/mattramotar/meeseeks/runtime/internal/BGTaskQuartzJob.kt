@@ -1,7 +1,5 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
-import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
-import dev.mattramotar.meeseeks.runtime.EmptyAppContext
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import kotlinx.coroutines.runBlocking
 import org.quartz.DisallowConcurrentExecution
@@ -17,12 +15,8 @@ internal class BGTaskQuartzJob : Job {
         runBlocking {
             val schedulerContext = context.scheduler.context
 
-            val database = schedulerContext["meeseeksDatabase"] as? MeeseeksDatabase
-                ?: error("MeeseeksDatabase missing from scheduler context")
-            val registry = schedulerContext["workerRegistry"] as? WorkerRegistry
-                ?: error("WorkerRegistry missing from scheduler context")
-            val config = schedulerContext["bgTaskManagerConfig"] as? BGTaskManagerConfig
-                ?: error("BGTaskManagerConfig missing from scheduler context")
+            val dependencies = schedulerContext[CTX_MEESEEKS_DEPS] as? MeeseeksDependencies
+                ?: error("MeeseeksDependencies missing from scheduler context.")
 
             val taskIdLong = context.jobDetail.jobDataMap.getLong("task_id")
             if (taskIdLong <= 0) {
@@ -32,17 +26,17 @@ internal class BGTaskQuartzJob : Job {
             // Use the centralized TaskExecutor for consistent state management
             val executionResult = TaskExecutor.execute(
                 taskId = taskIdLong,
-                database = database,
-                registry = registry,
-                appContext = EmptyAppContext(),
-                config = config,
+                database = dependencies.database,
+                registry = dependencies.registry,
+                appContext = dependencies.appContext,
+                config = dependencies.config,
                 attemptCount = 0 // Quartz doesn't provide attempt count
             )
 
             // Handle the execution result for Quartz
             when (executionResult) {
                 is TaskExecutor.ExecutionResult.ScheduleNextActivation -> {
-                    scheduleNextActivation(context.scheduler, executionResult, database)
+                    scheduleNextActivation(context.scheduler, executionResult, dependencies.database)
                 }
 
                 TaskExecutor.ExecutionResult.Terminal.Failure,
@@ -84,5 +78,9 @@ internal class BGTaskQuartzJob : Job {
             updated_at_ms = Timestamp.now(),
             id = result.taskId
         )
+    }
+
+    companion object {
+        const val CTX_MEESEEKS_DEPS = "meeseeksDependencies"
     }
 }

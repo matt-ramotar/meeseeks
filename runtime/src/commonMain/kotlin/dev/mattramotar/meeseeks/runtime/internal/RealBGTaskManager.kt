@@ -2,19 +2,20 @@ package dev.mattramotar.meeseeks.runtime.internal
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
+import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.ScheduledTask
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskStatus
-import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
-import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
 import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
 import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
+import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
+import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
@@ -30,9 +31,14 @@ internal class RealBGTaskManager(
     private val taskRescheduler: TaskRescheduler,
     internal val config: BGTaskManagerConfig,
     internal val registry: WorkerRegistry,
+    private val appContext: AppContext,
     override val coroutineContext: CoroutineContext = SupervisorJob() + MeeseeksDispatchers.IO,
     private val telemetry: Telemetry? = null,
 ) : BGTaskManager, CoroutineScope {
+
+    val dependencies: MeeseeksDependencies by lazy {
+        MeeseeksDependencies(database, registry, config, appContext)
+    }
 
     private val taskSpecQueries = database.taskSpecQueries
 
