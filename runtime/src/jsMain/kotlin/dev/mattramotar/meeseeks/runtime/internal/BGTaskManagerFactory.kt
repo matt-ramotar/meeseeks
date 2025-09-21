@@ -15,6 +15,9 @@ internal actual class BGTaskManagerFactory actual constructor() {
         val database = MeeseeksDatabaseSingleton.instance
         val workRequestFactory = WorkRequestFactory()
         val taskScheduler = TaskScheduler()
+
+        BGTaskRunner.initialize(database, registry, config, taskScheduler)
+
         val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory, config, registry)
         return RealBGTaskManager(
             database = database,

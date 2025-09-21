@@ -2,6 +2,7 @@
 
 package dev.mattramotar.meeseeks.runtime.internal
 
+import dev.mattramotar.meeseeks.runtime.TaskPreconditions
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
@@ -10,12 +11,6 @@ private external fun jsSetTimeout(handler: dynamic, timeout: Int): Int
 
 @JsName("clearTimeout")
 private external fun jsClearTimeout(handle: Int)
-
-@JsName("setInterval")
-private external fun jsSetInterval(handler: dynamic, interval: Int): Int
-
-@JsName("clearInterval")
-private external fun jsClearInterval(handle: Int)
 
 internal actual class TaskScheduler {
 
@@ -29,92 +24,67 @@ internal actual class TaskScheduler {
         existingWorkPolicy: ExistingWorkPolicy
     ) {
         val uniqueName = WorkRequestFactory.uniqueWorkNameFor(taskId, task.schedule)
-        val tagForRunner = WorkRequestFactory.createTag(taskId)
         val alreadyScheduled = scheduledTasks.containsKey(taskId)
 
-        when (existingWorkPolicy) {
-            ExistingWorkPolicy.KEEP -> {
-                if (alreadyScheduled) return
-            }
-
-            ExistingWorkPolicy.REPLACE -> {
-                if (alreadyScheduled) {
-                    cancelUniqueWork(uniqueName, task.schedule)
-                }
-            }
+        if (alreadyScheduled) {
+            if (existingWorkPolicy == ExistingWorkPolicy.KEEP) return
+            doCancel(taskId) // Cancel before rescheduling (REPLACE)
         }
 
-        try {
-            scheduleWithServiceWorker(task, taskId, tagForRunner)
-        } catch (e: Throwable) {
-            console.warn("scheduleWithServiceWorker failed: ${e.message}, using fallback")
-            fallbackSchedule(task, taskId)
+        // Determine the initial delay for the very first activation
+        val initialDelayMs = when (task.schedule) {
+            is TaskSchedule.OneTime -> task.schedule.initialDelay.inWholeMilliseconds
+            is TaskSchedule.Periodic -> task.schedule.initialDelay.inWholeMilliseconds
         }
 
+        // Schedule only the first activation
+        scheduleActivation(taskId, task.preconditions, initialDelayMs)
         scheduledTasks[taskId] = uniqueName
     }
 
+    internal fun scheduleActivation(taskId: Long, preconditions: TaskPreconditions, delayMs: Long) {
+        clearFallbackTimer(taskId)
+        val tagForRunner = WorkRequestFactory.createTag(taskId)
 
-    private fun scheduleWithServiceWorker(
-        task: TaskRequest,
-        taskId: Long,
-        tagForRunner: String
-    ) {
-        val container = navigatorServiceWorker()
-            ?: throw IllegalStateException("ServiceWorker not available")
-
-        val readyPromise = container.ready
-        readyPromise.then { registration: ServiceWorkerRegistration ->
-            when (val schedule = task.schedule) {
-                is TaskSchedule.OneTime -> {
-                    val syncManager = registration.sync
-                        ?: throw IllegalStateException("SyncManager not supported")
-                    syncManager.register(tagForRunner).catch { err: dynamic ->
-                        console.warn("SyncManager registration failed: ${err?.message}")
-                        fallbackSchedule(task, taskId)
-                    }
-                }
-
-                is TaskSchedule.Periodic -> {
-                    val periodicSync = registration.periodicSync
-                        ?: throw IllegalStateException("PeriodicSyncManager not supported")
-                    val intervalMs = schedule.interval.inWholeMilliseconds
-
-                    val options: dynamic = {}
-                    options.minInterval = intervalMs
-                    periodicSync.register(tagForRunner, options).catch { err: dynamic ->
-                        console.warn("PeriodicSync registration failed: ${err?.message}")
-                        fallbackSchedule(task, taskId)
-                    }
-                }
+        if (delayMs <= 0L && preconditions.requiresNetwork) {
+            // Use SyncManager if immediate execution and network are required
+            try {
+                scheduleWithSyncManager(tagForRunner, taskId)
+            } catch (e: Throwable) {
+                console.warn("SyncManager unavailable for task $taskId: ${e.message}. Falling back to setTimeout(0).")
+                // Fallback to immediate timeout if SyncManager fails to register
+                scheduleWithTimeout(tagForRunner, 0L, taskId)
             }
-        }.catch { err: dynamic ->
-            console.warn("ServiceWorker registration.ready promise failed: ${err?.message}")
-            fallbackSchedule(task, taskId)
+        } else {
+            // Use setTimeout if immediate execution or network is not required
+            scheduleWithTimeout(tagForRunner, delayMs, taskId)
         }
     }
 
-    private fun fallbackSchedule(task: TaskRequest, taskId: Long) {
-        clearFallbackTimer(taskId)
-        val tag = WorkRequestFactory.createTag(taskId)
+    private fun scheduleWithSyncManager(tag: String, taskId: Long) {
+        val container = navigatorServiceWorker()
+            ?: throw IllegalStateException("ServiceWorker not available")
 
-        when (val schedule = task.schedule) {
-            is TaskSchedule.OneTime -> {
-                val delay = coerceTimeout(schedule.initialDelay.inWholeMilliseconds)
-                val handle = jsSetTimeout({
-                    BGTaskRunner.run(tag)
-                }, delay)
-                fallbackTimers[taskId] = handle
-            }
+        container.ready.then { registration: ServiceWorkerRegistration ->
+            val syncManager = registration.sync
+                ?: throw IllegalStateException("SyncManager not supported")
 
-            is TaskSchedule.Periodic -> {
-                val interval = coerceTimeout(schedule.interval.inWholeMilliseconds)
-                val handle = jsSetInterval({
-                    BGTaskRunner.run(tag)
-                }, interval)
-                fallbackTimers[taskId] = handle
+            syncManager.register(tag).then { }.catch { err: dynamic ->
+                console.warn("SyncManager registration failed: ${err?.message}. Falling back to timeout.")
+                scheduleWithTimeout(tag, 0L, taskId)
             }
+        }.catch { err: dynamic ->
+            console.warn("ServiceWorker ready failed: ${err?.message}. Falling back to timeout.")
+            scheduleWithTimeout(tag, 0L, taskId)
         }
+    }
+
+    private fun scheduleWithTimeout(tag: String, delayMs: Long, taskId: Long) {
+        val delay = coerceTimeout(delayMs)
+        val handle = jsSetTimeout({
+            BGTaskRunner.run(tag)
+        }, delay)
+        fallbackTimers[taskId] = handle
     }
 
     private fun coerceTimeout(ms: Long): Int {
@@ -177,11 +147,14 @@ internal actual class TaskScheduler {
         }
     }
 
-    private fun clearFallbackTimer(taskId: Long) {
+    internal fun clearFallbackTimer(taskId: Long) {
         fallbackTimers.remove(taskId)?.let { handle ->
             jsClearTimeout(handle)
-            jsClearInterval(handle)
         }
+    }
+
+    internal fun removeScheduledTask(taskId: Long) {
+        scheduledTasks.remove(taskId)
     }
 
     private fun navigatorServiceWorker(): ServiceWorkerContainer? {
