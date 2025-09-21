@@ -298,10 +298,11 @@ internal object TaskExecutor {
         val nextRetryDelayMs = calculateRetryDelay(taskSpec, result, attemptCount)
 
         database.taskSpecQueries.transaction {
+            val now = Timestamp.now()
             database.taskSpecQueries.updateStateAndNextRunTime(
                 state = TaskState.ENQUEUED,
-                updated_at_ms = Timestamp.now(),
-                next_run_time_ms = nextRetryDelayMs,
+                updated_at_ms = now,
+                next_run_time_ms = now + nextRetryDelayMs,
                 id = taskId
             )
         }
