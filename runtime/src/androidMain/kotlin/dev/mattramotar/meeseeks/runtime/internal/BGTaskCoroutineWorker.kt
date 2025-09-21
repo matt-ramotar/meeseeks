@@ -13,10 +13,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-internal class BGTaskCoroutineWorker(
+internal class BGTaskCoroutineWorker @JvmOverloads constructor(
     context: Context,
     workerParameters: WorkerParameters,
-    private val dependencies: MeeseeksDependencies
+    private val dependencies: MeeseeksDependencies? = null
 ) : CoroutineWorker(context, workerParameters) {
 
     companion object {
@@ -24,6 +24,10 @@ internal class BGTaskCoroutineWorker(
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        if (dependencies == null) {
+            Log.w(TAG, "Worker attempting to run before Meeseeks initialization. Retrying later.")
+            return@withContext Result.retry()
+        }
 
         val database = dependencies.database
         val workerRegistry = dependencies.registry
