@@ -87,7 +87,7 @@ internal object QuartzDatabaseInitializer {
 
                 for ((index, sql) in statements.withIndex()) {
                     try {
-                        connection.prepareStatement(sql).use { statement -> statement.execute(sql) }
+                        connection.createStatement().use { statement -> statement.execute(sql) }
                     } catch (e: SQLException) {
                         if (isBenignIdempotencyError(e)) {
                             logger.debug("Idempotent skip at statement $index: ${firstLine(sql)}")
