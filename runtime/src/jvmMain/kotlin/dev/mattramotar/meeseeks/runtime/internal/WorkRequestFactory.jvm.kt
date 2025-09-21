@@ -18,24 +18,33 @@ internal actual class WorkRequestFactory {
         taskRequest: TaskRequest,
         config: BGTaskManagerConfig
     ): WorkRequest {
+        return createWorkRequest(taskId, taskRequest, config, null)
+    }
+
+    /**
+     * Always uses [buildOneTimeTrigger]. See: [#21](https://github.com/matt-ramotar/meeseeks/issues/21).
+     */
+    internal fun createWorkRequest(
+        taskId: Long,
+        taskRequest: TaskRequest,
+        config: BGTaskManagerConfig,
+        delayOverrideMs: Long?,
+    ): WorkRequest {
         val jobKey = JobKey(uniqueWorkNameFor(taskId, taskRequest.schedule), JOB_GROUP)
 
         val jobDetail = JobBuilder.newJob(BGTaskQuartzJob::class.java)
             .withIdentity(jobKey)
             .usingJobData(KEY_TASK_ID, taskId)
+            .storeDurably(true)
             .build()
 
-        val triggers: List<Trigger> = when (val schedule = taskRequest.schedule) {
-            is TaskSchedule.OneTime -> {
-                listOf(buildOneTimeTrigger(schedule.initialDelay.inWholeMilliseconds))
-            }
-
-            is TaskSchedule.Periodic -> {
-                listOf(buildPeriodicTrigger(schedule.interval.inWholeMilliseconds))
-            }
+        val initialDelayMs = delayOverrideMs ?: when (taskRequest.schedule) {
+            is TaskSchedule.OneTime -> taskRequest.schedule.initialDelay.inWholeMilliseconds
+            is TaskSchedule.Periodic -> taskRequest.schedule.initialDelay.inWholeMilliseconds
         }
 
-        return WorkRequest(jobDetail, triggers)
+        val trigger = buildOneTimeTrigger(initialDelayMs)
+        return WorkRequest(jobDetail, listOf(trigger))
     }
 
     private fun buildOneTimeTrigger(delayMillis: Long): Trigger {
@@ -43,17 +52,6 @@ internal actual class WorkRequestFactory {
         return TriggerBuilder.newTrigger()
             .startAt(startAt)
             .withSchedule(simpleSchedule().withRepeatCount(0))
-            .build()
-    }
-
-    private fun buildPeriodicTrigger(intervalMillis: Long): Trigger {
-        return TriggerBuilder.newTrigger()
-            .startNow()
-            .withSchedule(
-                simpleSchedule()
-                    .withIntervalInMilliseconds(intervalMillis)
-                    .repeatForever()
-            )
             .build()
     }
 
