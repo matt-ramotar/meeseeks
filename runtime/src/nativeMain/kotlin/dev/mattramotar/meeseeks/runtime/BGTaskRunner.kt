@@ -1,10 +1,9 @@
 package dev.mattramotar.meeseeks.runtime
 
 
-import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
+import dev.mattramotar.meeseeks.runtime.internal.MeeseeksDependencies
 import dev.mattramotar.meeseeks.runtime.internal.TaskExecutor
 import dev.mattramotar.meeseeks.runtime.internal.Timestamp
-import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -19,11 +18,14 @@ import platform.Foundation.dateWithTimeIntervalSinceNow
 import kotlin.time.Duration
 
 
-object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
+internal class BGTaskRunner(
+    dependencies: MeeseeksDependencies
+) : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
-    internal lateinit var database: MeeseeksDatabase
-    internal lateinit var registry: WorkerRegistry
-    internal var config: BGTaskManagerConfig? = null
+    private val database = dependencies.database
+    private val registry = dependencies.registry
+    private val appContext = dependencies.appContext
+    private val config = dependencies.config
 
     fun run(
         id: Long,
@@ -45,7 +47,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             taskId = id,
             database = database,
             registry = registry,
-            appContext = EmptyAppContext(),
+            appContext = appContext,
             config = config,
             attemptCount = 0 // Native platform doesn't track attempts
         )
