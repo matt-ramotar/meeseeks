@@ -37,6 +37,8 @@ internal class RealBGTaskManager(
     private val taskSpecQueries = database.taskSpecQueries
 
     init {
+        recoverStuckTasks()
+
         launch {
             taskRescheduler.rescheduleTasks()
         }
@@ -243,5 +245,9 @@ internal class RealBGTaskManager(
             .asFlow()
             .mapToOneOrNull(context = MeeseeksDispatchers.IO)
             .map { entity -> entity?.state?.toPublicStatus() }
+    }
+
+    private fun recoverStuckTasks() {
+        database.taskSpecQueries.resetRunningTasksToEnqueued(Timestamp.now())
     }
 }
