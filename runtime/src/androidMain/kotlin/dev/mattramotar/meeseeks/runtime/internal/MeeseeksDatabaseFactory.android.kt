@@ -18,7 +18,7 @@ internal actual class MeeseeksDatabaseFactory actual constructor() {
             name = "meeseeks.db"
         )
 
-        return MeeseeksDatabase.Companion(
+        return MeeseeksDatabase(
             driver,
             taskLogAdapter,
             taskSpecAdapter
