@@ -16,6 +16,7 @@ import platform.BackgroundTasks.BGTaskRequest
 import platform.BackgroundTasks.BGTaskScheduler
 import platform.Foundation.NSDate
 import platform.Foundation.dateWithTimeIntervalSinceNow
+import kotlin.time.Duration
 
 
 object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
@@ -51,40 +52,27 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
         // Handle the execution result for native platform
         return when (executionResult) {
-            TaskExecutor.ExecutionResult.Success -> {
-                // Task completed successfully
-                true
-            }
-
-            TaskExecutor.ExecutionResult.PlatformRetry -> {
-                // Native platform will handle retry through OS scheduling
-                // The task state has been reset to ENQUEUED by TaskExecutor
-                // Return false to indicate the task needs retry
-                false
-            }
-
-            TaskExecutor.ExecutionResult.Failure -> {
-                // Permanent failure
-                false
-            }
-
-            is TaskExecutor.ExecutionResult.PeriodicReschedule -> {
-                // Handle periodic task rescheduling
-                resubmitPeriodic(
+            is TaskExecutor.ExecutionResult.ScheduleNextActivation -> {
+                // This now handles both retries AND periodic tasks.
+                resubmitTask(
                     executionResult.taskId,
                     executionResult.request,
-                    database.taskSpecQueries.selectTaskById(id).executeAsOne().run_attempt_count.toInt()
+                    executionResult.delay
                 )
                 true
             }
+
+            TaskExecutor.ExecutionResult.Terminal.Failure,
+            TaskExecutor.ExecutionResult.Terminal.Success -> true // Meeseeks is the single SOT for scheduling
         }
     }
 
+
     @OptIn(ExperimentalForeignApi::class)
-    private fun resubmitPeriodic(
+    private fun resubmitTask(
         taskId: Long,
         request: TaskRequest,
-        attemptCount: Int
+        delay: Duration
     ) {
         val schedule = request.schedule as? TaskSchedule.Periodic ?: return
 
@@ -94,7 +82,9 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             BGTaskIdentifiers.REFRESH
         }
 
-        val bgTaskRequest = createNextBGTaskRequest(identifier, request, schedule)
+        val attemptCount = database.taskSpecQueries.selectTaskById(taskId).executeAsOne().run_attempt_count.toInt()
+
+        val bgTaskRequest = createNextBGTaskRequest(identifier, request, delay)
         BGTaskScheduler.sharedScheduler.submitTaskRequest(bgTaskRequest, null)
 
         val now = Timestamp.now()
@@ -114,7 +104,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
     private fun createNextBGTaskRequest(
         identifier: String,
         request: TaskRequest,
-        periodic: TaskSchedule.Periodic
+        delay: Duration
     ): BGTaskRequest {
         val requiresNetwork = request.preconditions.requiresNetwork
         val requiresCharging = request.preconditions.requiresCharging
@@ -128,7 +118,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
             BGAppRefreshTaskRequest(identifier)
         }
 
-        val earliestSeconds = periodic.interval.inWholeSeconds.toDouble()
+        val earliestSeconds = delay.inWholeSeconds.toDouble()
         if (earliestSeconds > 0.0) {
             bgTaskRequest.earliestBeginDate = NSDate.dateWithTimeIntervalSinceNow(earliestSeconds)
         }
