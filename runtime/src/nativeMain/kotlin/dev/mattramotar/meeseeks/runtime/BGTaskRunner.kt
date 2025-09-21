@@ -74,8 +74,6 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         request: TaskRequest,
         delay: Duration
     ) {
-        val schedule = request.schedule as? TaskSchedule.Periodic ?: return
-
         val identifier = if (request.preconditions.requiresNetwork || request.preconditions.requiresCharging) {
             BGTaskIdentifiers.PROCESSING
         } else {
