@@ -193,7 +193,7 @@ internal object TaskExecutor {
         database: MeeseeksDatabase,
         config: BGTaskManagerConfig?
     ): ExecutionResult {
-        return when (request.schedule) {
+        return when (val schedule = request.schedule) {
             is TaskSchedule.OneTime -> {
                 database.taskSpecQueries.updateState(
                     state = TaskState.SUCCEEDED,
@@ -213,9 +213,16 @@ internal object TaskExecutor {
             }
 
             is TaskSchedule.Periodic -> {
-                database.taskSpecQueries.updateState(
+                val now = Timestamp.now()
+                val base = schedule.interval
+                val flex = schedule.flexWindow
+                val jitter = if (flex.isPositive()) (0..flex.inWholeMilliseconds).random().milliseconds else Duration.ZERO
+                val delay = (base - flex + jitter).coerceAtLeast(Duration.ZERO)
+
+                database.taskSpecQueries.updateStateAndNextRunTime(
                     state = TaskState.ENQUEUED,
-                    updated_at_ms = Timestamp.now(),
+                    updated_at_ms = now,
+                    next_run_time_ms = now + delay.inWholeMilliseconds,
                     id = taskId
                 )
 
@@ -227,7 +234,7 @@ internal object TaskExecutor {
                     )
                 )
 
-                ExecutionResult.ScheduleNextActivation(taskId, request)
+                ExecutionResult.ScheduleNextActivation(taskId, request, delay)
             }
         }
     }
