@@ -1,6 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.vanniktech.maven.publish.SonatypeHost.Companion.CENTRAL_PORTAL
 import dev.mattramotar.meeseeks.tooling.extensions.android
 
 plugins {
@@ -74,6 +73,6 @@ sqldelight {
 }
 
 mavenPublishing {
-    publishToMavenCentral(CENTRAL_PORTAL, automaticRelease = true)
+    publishToMavenCentral(automaticRelease = true)
     signAllPublications()
 }
