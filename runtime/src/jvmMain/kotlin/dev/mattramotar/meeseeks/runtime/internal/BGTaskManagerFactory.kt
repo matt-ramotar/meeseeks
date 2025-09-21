@@ -14,6 +14,7 @@ internal actual class BGTaskManagerFactory {
         config: BGTaskManagerConfig
     ): BGTaskManager {
         val database = MeeseeksDatabaseSingleton.instance
+        QuartzDatabaseInitializer.initialize()
         val scheduler = StdSchedulerFactory("quartz.properties").scheduler
         scheduler.context["meeseeksDatabase"] = database
         scheduler.context["workerRegistry"] = registry
