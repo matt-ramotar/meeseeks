@@ -105,6 +105,34 @@ sealed class TelemetryEvent {
         }
     }
 
+    /**
+     * Emitted when a platform task submission fails.
+     */
+    data class TaskSubmitFailed(
+        val taskIdentifier: String,
+        val errorCode: Int,
+        val errorDescription: String?,
+        val isRetriable: Boolean
+    ) : TelemetryEvent() {
+        override fun structured(): String {
+            val log = mapOf(
+                "event" to "TASK_SUBMIT_FAILED",
+                "timestamp" to Timestamp.now(),
+                "taskIdentifier" to taskIdentifier,
+                "errorCode" to errorCode,
+                "errorDescription" to errorDescription,
+                "isRetriable" to isRetriable,
+                "errorType" to when (errorCode) {
+                    1 -> "BGTaskSchedulerErrorUnavailable"
+                    2 -> "BGTaskSchedulerErrorTooManyPendingTaskRequests"
+                    3 -> "BGTaskSchedulerErrorNotPermitted"
+                    else -> "Unknown"
+                }
+            )
+            return Json.encodeToString(log)
+        }
+    }
+
     data class TaskRetryScheduled(
         val taskId: TaskId,
         val task: TaskRequest,

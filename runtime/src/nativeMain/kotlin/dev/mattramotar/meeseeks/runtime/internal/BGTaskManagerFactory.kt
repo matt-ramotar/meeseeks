@@ -19,14 +19,20 @@ internal actual class BGTaskManagerFactory {
         config: BGTaskManagerConfig
     ): BGTaskManager {
         val bgTaskScheduler = BGTaskScheduler.sharedScheduler
-        val nativeTaskScheduler = NativeTaskScheduler(bgTaskScheduler)
+        val nativeTaskScheduler = NativeTaskScheduler(
+            bgTaskScheduler = bgTaskScheduler,
+            telemetry = config.telemetry
+        )
         val dependencies = MeeseeksDependencies(
             database = database,
             registry = registry,
             appContext = context,
             config = config,
         )
-        val runner = BGTaskRunner(dependencies)
+        val runner = BGTaskRunner(
+            dependencies = dependencies,
+            nativeTaskScheduler = nativeTaskScheduler
+        )
         val nativeCoordinator = NativeTaskCoordinator(database, nativeTaskScheduler, runner)
         val bgTaskRegistry = BGTaskRegistry(bgTaskScheduler, nativeCoordinator)
 

@@ -355,6 +355,9 @@ class StructuredTelemetry(
 
             is TelemetryEvent.TaskCancelled -> LogLevel.WARN
             is TelemetryEvent.TaskStatistics -> LogLevel.DEBUG
+            is TelemetryEvent.TaskSubmitFailed -> {
+                if (event.isRetriable) LogLevel.WARN else LogLevel.ERROR
+            }
         }
     }
 
