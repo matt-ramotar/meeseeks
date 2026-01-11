@@ -65,10 +65,16 @@ internal class OrphanedTaskWatchdog(
 
             var recoveredCount = 0
             for (taskSpec in overdueTasks) {
-                val taskRequest = TaskMapper.mapToTaskRequest(taskSpec, registry)
-                if (!taskScheduler.isScheduled(taskSpec.id, taskRequest.schedule)) {
-                    taskRescheduler.rescheduleTask(taskSpec)
-                    recoveredCount++
+                try {
+                    val taskRequest = TaskMapper.mapToTaskRequest(taskSpec, registry)
+                    if (!taskScheduler.isScheduled(taskSpec.id, taskRequest.schedule)) {
+                        taskRescheduler.rescheduleTask(taskSpec)
+                        recoveredCount++
+                    }
+                } catch (e: Throwable) {
+                    if (e is CancellationException) throw e
+                    // Individual task failed.
+                    // Continue processing remaining tasks.
                 }
             }
 
