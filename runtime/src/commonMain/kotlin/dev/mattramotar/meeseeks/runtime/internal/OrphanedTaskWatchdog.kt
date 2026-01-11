@@ -1,15 +1,12 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
+import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
 import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
 import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
-import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -20,8 +17,11 @@ import kotlin.time.Duration
  *
  * An orphaned task is a task that is enqueued in DB but not scheduled with the platform. This can occur when the process dies
  * after [TaskExecutor] updates the DB but before the platform worker schedules the next execution.
+ *
+ * @param scope The coroutine scope to use for the watchdog. When the scope is canceled, the watchdog stops automatically.
  */
 internal class OrphanedTaskWatchdog(
+    private val scope: CoroutineScope,
     private val taskRescheduler: TaskRescheduler,
     private val taskScheduler: TaskScheduler,
     private val registry: WorkerRegistry,
@@ -29,12 +29,12 @@ internal class OrphanedTaskWatchdog(
     private val interval: Duration,
     private val telemetry: Telemetry? = null
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + MeeseeksDispatchers.IO)
     private var watchdogJob: Job? = null
 
     /**
      * Start the watchdog.
      * This is a no-op if the [interval] is zero or the watchdog is already active.
+     * The watchdog will automatically stop when the provided [scope] is canceled.
      */
     fun start() {
         if (interval == Duration.ZERO || watchdogJob?.isActive == true) {
@@ -47,13 +47,6 @@ internal class OrphanedTaskWatchdog(
                 checkForOrphanedTasks()
             }
         }
-    }
-
-    /**
-     * Stop the watchdog and cancel its coroutine scope.
-     */
-    fun stop() {
-        scope.cancel()
     }
 
     /**
@@ -82,9 +75,9 @@ internal class OrphanedTaskWatchdog(
                 telemetry?.onEvent(TelemetryEvent.OrphanedTasksRecovered(count = recoveredCount))
             }
         } catch (_: Throwable) {
-            // Silently catch errors to keep the watchdog alive
-            // Avoid platform-specific logging from common main
-            // Extend telemetry with a custom Watchdog error event for platform-specific monitoring
+            // Silently catch errors to keep the watchdog alive.
+            // Avoid platform-specific logging from the common source set.
+            // Extend telemetry with a custom watchdog error event for monitoring if needed.
         }
     }
 }

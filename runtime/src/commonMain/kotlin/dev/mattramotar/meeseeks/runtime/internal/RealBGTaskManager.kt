@@ -37,6 +37,7 @@ internal class RealBGTaskManager(
 ) : BGTaskManager, CoroutineScope {
 
     private val orphanedTaskWatchdog = OrphanedTaskWatchdog(
+        scope = this,
         taskRescheduler = taskRescheduler,
         taskScheduler = taskScheduler,
         registry = registry,
