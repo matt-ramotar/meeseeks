@@ -19,10 +19,9 @@ class App : Application(), Configuration.Provider {
             maxRetryCount(3)
             maxParallelTasks(5)
             allowExpedited()
-            register<SyncPayload>(SyncPayload.stableId) { SyncWorker(applicationContext) }
-            register<RefreshPayload>(RefreshPayload.stableId) { RefreshWorker(applicationContext) }
+            register<SyncPayload> { SyncWorker(applicationContext) }
+            register<RefreshPayload> { RefreshWorker(applicationContext) }
         }
-
     }
 
     override val workManagerConfiguration: Configuration by lazy {
