@@ -104,17 +104,22 @@ internal class NativeTaskScheduler(
     }
 
     private fun emitTelemetry(identifier: String, result: SubmitRequestResult.Failure) {
-        telemetry?.let { t ->
-            runBlocking {
-                t.onEvent(
-                    TelemetryEvent.TaskSubmitFailed(
-                        taskIdentifier = identifier,
-                        errorCode = result.errorCode,
-                        errorDescription = result.errorDescription,
-                        isRetriable = result is SubmitRequestResult.Failure.Retriable
+        try {
+            telemetry?.let { t ->
+                runBlocking {
+                    t.onEvent(
+                        TelemetryEvent.TaskSubmitFailed(
+                            taskIdentifier = identifier,
+                            errorCode = result.errorCode,
+                            errorDescription = result.errorDescription,
+                            isRetriable = result is SubmitRequestResult.Failure.Retriable
+                        )
                     )
-                )
+                }
             }
+        } catch (e: Throwable) {
+            // Telemetry failure should not affect error classification
+            NSLog("[Meeseeks] Failed to emit telemetry for $identifier: $e")
         }
     }
 
