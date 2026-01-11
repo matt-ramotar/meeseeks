@@ -358,6 +358,8 @@ class StructuredTelemetry(
             is TelemetryEvent.TaskSubmitFailed -> {
                 if (event.isRetriable) LogLevel.WARN else LogLevel.ERROR
             }
+
+            is TelemetryEvent.OrphanedTasksRecovered -> LogLevel.INFO
         }
     }
 

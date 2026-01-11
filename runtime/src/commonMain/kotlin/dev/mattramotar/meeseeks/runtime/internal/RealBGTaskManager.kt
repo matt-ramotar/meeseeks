@@ -36,6 +36,16 @@ internal class RealBGTaskManager(
     private val telemetry: Telemetry? = null,
 ) : BGTaskManager, CoroutineScope {
 
+    private val orphanedTaskWatchdog = OrphanedTaskWatchdog(
+        scope = this,
+        taskRescheduler = taskRescheduler,
+        taskScheduler = taskScheduler,
+        registry = registry,
+        database = database,
+        interval = config.orphanedTaskWatchdogInterval,
+        telemetry = telemetry
+    )
+
     val dependencies: MeeseeksDependencies by lazy {
         MeeseeksDependencies(database, registry, config, appContext)
     }
@@ -48,6 +58,8 @@ internal class RealBGTaskManager(
         launch {
             taskRescheduler.rescheduleTasks()
         }
+
+        orphanedTaskWatchdog.start()
     }
 
     override fun schedule(request: TaskRequest): TaskId {
