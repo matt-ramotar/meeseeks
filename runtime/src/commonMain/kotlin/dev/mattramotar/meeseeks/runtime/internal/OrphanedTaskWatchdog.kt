@@ -5,6 +5,7 @@ import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
 import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
 import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -33,11 +34,11 @@ internal class OrphanedTaskWatchdog(
 
     /**
      * Start the watchdog.
-     * This is a no-op if the [interval] is zero or the watchdog is already active.
+     * This is a no-op if the [interval] is not positive or the watchdog is already active.
      * The watchdog will automatically stop when the provided [scope] is canceled.
      */
     fun start() {
-        if (interval == Duration.ZERO || watchdogJob?.isActive == true) {
+        if (!interval.isPositive() || watchdogJob?.isActive == true) {
             return
         }
 
@@ -74,8 +75,10 @@ internal class OrphanedTaskWatchdog(
             if (recoveredCount > 0) {
                 telemetry?.onEvent(TelemetryEvent.OrphanedTasksRecovered(count = recoveredCount))
             }
-        } catch (_: Throwable) {
-            // Silently catch errors to keep the watchdog alive.
+        } catch (e: Throwable) {
+            // Preserve cooperative cancellation
+            if (e is CancellationException) throw e
+            // Silently catch other errors to keep the watchdog alive.
             // Avoid platform-specific logging from the common source set.
             // Extend telemetry with a custom watchdog error event for monitoring if needed.
         }
