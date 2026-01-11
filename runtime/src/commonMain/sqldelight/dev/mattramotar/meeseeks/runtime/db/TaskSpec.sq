@@ -153,3 +153,10 @@ UPDATE taskSpec
 SET state = 'ENQUEUED',
     updated_at_ms = :updatedAtMs
 WHERE state = 'RUNNING';
+
+-- Get all ENQUEUED tasks that are overdue (for watchdog recovery)
+selectOverdueTasks:
+SELECT * FROM taskSpec
+WHERE state = 'ENQUEUED'
+  AND next_run_time_ms <= :currentTimeMs
+ORDER BY next_run_time_ms ASC;

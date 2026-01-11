@@ -224,4 +224,20 @@ sealed class TelemetryEvent {
             )
         }
     }
+
+    /**
+     * Emitted when the orphaned task watchdog recovers tasks that were left in enqueued state but not scheduled with the platform.
+     */
+    data class OrphanedTasksRecovered(
+        val count: Int
+    ) : TelemetryEvent() {
+        override fun structured(): String {
+            val log = mapOf(
+                "event" to "ORPHANED_TASKS_RECOVERED",
+                "timestamp" to Timestamp.now(),
+                "count" to count
+            )
+            return Json.encodeToString(log)
+        }
+    }
 }
