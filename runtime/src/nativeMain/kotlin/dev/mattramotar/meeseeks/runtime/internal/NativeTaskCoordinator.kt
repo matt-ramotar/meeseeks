@@ -121,7 +121,7 @@ internal class NativeTaskCoordinator(
     }
 
     /**
-     * Checks the database for remaining work and schedules the appropriate platform wakeup
+     * Checks the database for remaining work and schedules the appropriate platform wakeup.
      */
     private fun rescheduleIfPendingWorkRemains() {
         val remainingTasks = database.taskSpecQueries.selectAllPending().executeAsList()
@@ -142,8 +142,14 @@ internal class NativeTaskCoordinator(
             }
         }
 
+
         // Submit requests for the necessary identifiers
         // Using a placeholder schedule to request execution ASAP, relying on OS backoff
+        // **Note**: [NativeTaskScheduler.submitRequest] results are intentionally not captured here because:
+        // 1. This is a best-effort rescheduling at the end of an execution window
+        // 2. Failures are logged via telemetry and NSLog in NativeTaskScheduler
+        // 3. Tasks remain in the database and will be picked up in the next execution window
+        // 4. No recovery action is possible at this point in the lifecycle
         val immediateSchedule = TaskSchedule.OneTime(0.seconds)
 
         if (needsProcessing) {

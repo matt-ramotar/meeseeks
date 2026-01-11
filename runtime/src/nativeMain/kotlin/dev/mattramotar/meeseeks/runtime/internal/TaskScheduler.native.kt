@@ -22,6 +22,11 @@ internal actual class TaskScheduler(
         workRequest: WorkRequest,
         existingWorkPolicy: ExistingWorkPolicy
     ) {
+        // The result is not acted upon because:
+        // 1. Failures are logged via telemetry and NSLog in NativeTaskScheduler
+        // 2. NonRetriable failures (NotPermitted, Unavailable) indicate app misconfiguration
+        // 3. Retriable failures (TooManyPendingTaskRequests) are transient, meaning the task remains in the DB and will be scheduled in the next execution window
+        // 4. The DB is the source of truth, meaning platform requests are hints to iOS
         nativeScheduler.schedule(task.preconditions, task.schedule)
     }
 
