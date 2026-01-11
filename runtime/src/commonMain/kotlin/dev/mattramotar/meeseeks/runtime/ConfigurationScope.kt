@@ -9,10 +9,12 @@ import dev.mattramotar.meeseeks.runtime.internal.db.adapters.TaskSpecAdapter
 import dev.mattramotar.meeseeks.runtime.internal.db.adapters.taskLogEntityAdapter
 import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
 import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 import kotlin.time.Duration
+import kotlinx.serialization.descriptors.SerialDescriptor
 
 
 class ConfigurationScope internal constructor(private val appContext: AppContext) {
@@ -51,14 +53,28 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
 
 
     /**
-     * @param stableId Stable [TaskPayload] type identifier. Used for serialization.
+     * Registers a [Worker] for the given [TaskPayload] type.
+     *
+     * The stable identifier for serialization is automatically derived from [SerialDescriptor.serialName] (`descriptor.serialName`).
+     * By default, this is the fully qualified class name (e.g., `com.example.model.ExamplePayload`).
+     *
+     * To customize the identifier, use the [kotlinx.serialization.SerialName] annotation on your [TaskPayload] class:
+     *
+     * ```kotlin
+     * @Serializable
+     * @SerialName("custom")
+     * data class ExamplePayload(...) : TaskPayload
+     * ```
+     *
+     * @param factory Factory function to create the [Worker] instance.
      */
+    @OptIn(ExperimentalSerializationApi::class)
     inline fun <reified T : TaskPayload> register(
-        stableId: String,
         noinline factory: (appContext: AppContext) -> Worker<T>
     ): ConfigurationScope = apply {
         val type = T::class
         val serializer = serializer<T>()
+        val stableId = serializer.descriptor.serialName
 
         if (getRegistrations().values.any { it.typeId == stableId }) {
             throw IllegalStateException("Duplicate stableId registered: $stableId.")
