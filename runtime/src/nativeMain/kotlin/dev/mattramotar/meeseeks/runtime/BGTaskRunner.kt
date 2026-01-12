@@ -17,6 +17,7 @@ import platform.BackgroundTasks.BGTaskRequest
 import platform.Foundation.NSDate
 import platform.Foundation.dateWithTimeIntervalSinceNow
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
 
 internal class BGTaskRunner(
@@ -151,7 +152,7 @@ internal class BGTaskRunner(
             BGAppRefreshTaskRequest(identifier)
         }
 
-        val earliestSeconds = delay.inWholeSeconds.toDouble()
+        val earliestSeconds = delay.toDouble(DurationUnit.SECONDS)
         if (earliestSeconds > 0.0) {
             bgTaskRequest.earliestBeginDate = NSDate.dateWithTimeIntervalSinceNow(earliestSeconds)
         }
