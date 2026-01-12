@@ -14,7 +14,7 @@ CREATE TABLE taskSpec (
 
     -- Payload
     payload_type_id TEXT NOT NULL,
-    payload_data TEXT NOT NULL, -- Serialization is handled externally by WorkerRegistry
+    payload_data TEXT NOT NULL, -- Serialized payload (encrypted if PayloadCipher is configured)
 
     -- Priority
     priority INTEGER NOT NULL, -- Normalized integer (Low=10, Medium=50, High=100)

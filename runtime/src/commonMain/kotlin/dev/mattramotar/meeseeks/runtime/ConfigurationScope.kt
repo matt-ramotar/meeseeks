@@ -51,6 +51,13 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
         config = config.copy(telemetry = Telemetry(handler))
     }
 
+    /**
+     * Enables encryption for task payloads stored in the database.
+     */
+    fun payloadCipher(cipher: PayloadCipher): ConfigurationScope = apply {
+        config = config.copy(payloadCipher = cipher)
+    }
+
 
     /**
      * Registers a [Worker] for the given [TaskPayload] type.
@@ -90,7 +97,7 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
     }
 
     internal fun build(): BGTaskManager {
-        val registry = WorkerRegistry(getRegistrations(), json)
+        val registry = WorkerRegistry(getRegistrations(), json, config.payloadCipher)
         val database = createDatabaseInstance(appContext, json)
         return createBGTaskManager(appContext, database, registry, json, config)
     }
