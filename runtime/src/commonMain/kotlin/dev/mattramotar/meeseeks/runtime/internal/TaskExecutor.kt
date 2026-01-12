@@ -73,7 +73,9 @@ internal object TaskExecutor {
         config: BGTaskManagerConfig? = null,
         attemptCount: Int = 0
     ): ExecutionResult {
-        val claimed = claimTask(taskId, database) ?: return ExecutionResult.Terminal.Failure
+        val maxParallelTasks = config?.maxParallelTasks?.takeIf { it > 0 }
+        val claimed = claimTask(taskId, database, maxParallelTasks)
+            ?: return handleParallelLimit(taskId, database, registry, config, maxParallelTasks)
 
         val taskIdObj = TaskId(taskId)
         val request = TaskMapper.mapToTaskRequest(claimed, registry)
@@ -140,12 +142,24 @@ internal object TaskExecutor {
      * Atomically claim a task by transitioning it from ENQUEUED to RUNNING.
      * This ensures only one worker can execute the task at a time.
      */
-    private fun claimTask(taskId: String, database: MeeseeksDatabase): TaskSpec? {
+    private fun claimTask(
+        taskId: String,
+        database: MeeseeksDatabase,
+        maxParallelTasks: Int?
+    ): TaskSpec? {
         return database.taskSpecQueries.transactionWithResult {
-            database.taskSpecQueries.atomicallyClaimAndStartTask(
-                updatedAtMs = Timestamp.now(),
-                id = taskId
-            )
+            if (maxParallelTasks != null) {
+                database.taskSpecQueries.atomicallyClaimAndStartTaskWithLimit(
+                    updatedAtMs = Timestamp.now(),
+                    id = taskId,
+                    maxParallelTasks = maxParallelTasks.toLong()
+                )
+            } else {
+                database.taskSpecQueries.atomicallyClaimAndStartTask(
+                    updatedAtMs = Timestamp.now(),
+                    id = taskId
+                )
+            }
             val rowsAffected = database.taskSpecQueries.selectChanges().executeAsOne().toInt()
             if (rowsAffected == 0) {
                 null
@@ -153,6 +167,41 @@ internal object TaskExecutor {
                 database.taskSpecQueries.selectTaskById(taskId).executeAsOneOrNull()
             }
         }
+    }
+
+    private fun handleParallelLimit(
+        taskId: String,
+        database: MeeseeksDatabase,
+        registry: WorkerRegistry,
+        config: BGTaskManagerConfig?,
+        maxParallelTasks: Int?
+    ): ExecutionResult {
+        if (maxParallelTasks == null || config == null) {
+            return ExecutionResult.Terminal.Failure
+        }
+
+        val taskSpec = database.taskSpecQueries.selectTaskById(taskId).executeAsOneOrNull()
+            ?: return ExecutionResult.Terminal.Failure
+        if (taskSpec.state != TaskState.ENQUEUED) {
+            return ExecutionResult.Terminal.Failure
+        }
+
+        val runningCount = database.taskSpecQueries.selectRunningCount().executeAsOne().toInt()
+        if (runningCount < maxParallelTasks) {
+            return ExecutionResult.Terminal.Failure
+        }
+
+        val delay = config.minBackoff
+        val now = Timestamp.now()
+        database.taskSpecQueries.updateStateAndNextRunTime(
+            state = TaskState.ENQUEUED,
+            updated_at_ms = now,
+            next_run_time_ms = now + delay.inWholeMilliseconds,
+            id = taskId
+        )
+
+        val request = TaskMapper.mapToTaskRequest(taskSpec, registry)
+        return ExecutionResult.ScheduleNextActivation(taskId, request, delay)
     }
 
     /**
@@ -307,7 +356,13 @@ internal object TaskExecutor {
             return ExecutionResult.Terminal.Failure
         }
 
-        val nextRetryDelayMs = calculateRetryDelay(taskSpec, result, attemptCount)
+        val minBackoffMs = config?.minBackoff?.inWholeMilliseconds ?: 0L
+        val nextRetryDelayMs = calculateRetryDelay(
+            taskSpec,
+            result,
+            attemptCount,
+            minBackoffMs = minBackoffMs
+        )
 
         database.taskSpecQueries.transaction {
             val now = Timestamp.now()
@@ -372,7 +427,8 @@ internal object TaskExecutor {
         taskSpec: TaskSpec?,
         result: TaskResult?,
         attemptCount: Int,
-        random: Random = Random.Default
+        random: Random = Random.Default,
+        minBackoffMs: Long = 0L
     ): Long {
         val backoffPolicy = taskSpec?.backoff_policy
             ?: BackoffPolicy.EXPONENTIAL
@@ -389,10 +445,8 @@ internal object TaskExecutor {
             RetryErrorClassifier.suggestedRetryDelay(it, baseDelayMs)
         } ?: baseDelayMs
 
-        return when (backoffPolicy) {
-            BackoffPolicy.LINEAR -> {
-                suggestedDelay * attemptCount
-            }
+        val delayMs = when (backoffPolicy) {
+            BackoffPolicy.LINEAR -> suggestedDelay * attemptCount
 
             BackoffPolicy.EXPONENTIAL -> {
                 val maxDelayMs = 5.minutes.toLong(DurationUnit.MILLISECONDS)
@@ -402,6 +456,8 @@ internal object TaskExecutor {
                 applyJitter(baseDelay, jitterFactor, maxDelayMs, random)
             }
         }
+
+        return delayMs.coerceAtLeast(minBackoffMs)
     }
 
     private fun applyJitter(

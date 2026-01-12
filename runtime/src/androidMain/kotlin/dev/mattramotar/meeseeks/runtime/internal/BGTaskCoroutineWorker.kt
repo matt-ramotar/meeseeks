@@ -7,7 +7,6 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,7 +31,6 @@ internal class BGTaskCoroutineWorker @JvmOverloads constructor(
         val database = dependencies.database
         val workerRegistry = dependencies.registry
         val config = dependencies.config
-        val telemetry = config.telemetry
 
         val taskIdFromString = inputData.getString(WorkRequestFactory.KEY_TASK_ID)
         val taskId = taskIdFromString
@@ -53,7 +51,7 @@ internal class BGTaskCoroutineWorker @JvmOverloads constructor(
             database = database,
             registry = workerRegistry,
             appContext = applicationContext,
-            config = BGTaskManagerConfig(telemetry = telemetry),
+            config = config,
             attemptCount = runAttemptCount
         )
 

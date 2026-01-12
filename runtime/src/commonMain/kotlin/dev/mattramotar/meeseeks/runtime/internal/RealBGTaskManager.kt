@@ -64,7 +64,7 @@ internal class RealBGTaskManager(
 
     override fun schedule(request: TaskRequest): TaskId {
         val timestamp = Timestamp.now()
-        val normalized = TaskMapper.normalizeRequest(request, timestamp, registry)
+        val normalized = TaskMapper.normalizeRequest(request, timestamp, registry, config)
         val taskId = newTaskId()
 
         taskSpecQueries.transaction {
@@ -213,7 +213,7 @@ internal class RealBGTaskManager(
         }
 
         val timestamp = Timestamp.now()
-        val normalized = TaskMapper.normalizeRequest(updatedRequest, timestamp, registry)
+        val normalized = TaskMapper.normalizeRequest(updatedRequest, timestamp, registry, config)
 
         taskSpecQueries.updateTask(
             state = TaskState.ENQUEUED,

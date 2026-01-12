@@ -58,6 +58,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 selectTaskById:
 SELECT * FROM taskSpec WHERE id = ?;
 
+selectRunningCount:
+SELECT COUNT(*) FROM taskSpec WHERE state = 'RUNNING';
+
 -- Optimized query for schedulers (Filters time, priority, and constraints)
 -- Significantly improves platform efficiency (e.g., iOS REFRESH vs PROCESSING)
 selectNextEligibleTasks:
@@ -82,6 +85,15 @@ SET state = 'RUNNING',
     updated_at_ms = :updatedAtMs,
     run_attempt_count = run_attempt_count + 1
 WHERE id = :id AND state = 'ENQUEUED';
+
+atomicallyClaimAndStartTaskWithLimit:
+UPDATE taskSpec
+SET state = 'RUNNING',
+    updated_at_ms = :updatedAtMs,
+    run_attempt_count = run_attempt_count + 1
+WHERE id = :id
+  AND state = 'ENQUEUED'
+  AND (SELECT COUNT(*) FROM taskSpec WHERE state = 'RUNNING') < :maxParallelTasks;
 
 selectChanges:
 SELECT changes();
