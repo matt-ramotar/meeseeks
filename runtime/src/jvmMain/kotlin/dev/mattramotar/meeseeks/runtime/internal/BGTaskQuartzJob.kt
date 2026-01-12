@@ -18,14 +18,14 @@ internal class BGTaskQuartzJob : Job {
             val dependencies = schedulerContext[CTX_MEESEEKS_DEPS] as? MeeseeksDependencies
                 ?: error("MeeseeksDependencies missing from scheduler context.")
 
-            val taskIdLong = context.jobDetail.jobDataMap.getLong("task_id")
-            if (taskIdLong <= 0) {
-                throw JobExecutionException("Invalid task_id: $taskIdLong")
+            val taskId = context.jobDetail.jobDataMap.getString("task_id")
+            if (taskId.isNullOrBlank()) {
+                throw JobExecutionException("Invalid task_id: $taskId")
             }
 
             // Use the centralized TaskExecutor for consistent state management
             val executionResult = TaskExecutor.execute(
-                taskId = taskIdLong,
+                taskId = taskId,
                 database = dependencies.database,
                 registry = dependencies.registry,
                 appContext = dependencies.appContext,

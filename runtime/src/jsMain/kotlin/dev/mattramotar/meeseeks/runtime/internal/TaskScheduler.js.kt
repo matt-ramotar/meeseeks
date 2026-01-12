@@ -14,11 +14,11 @@ private external fun jsClearTimeout(handle: Int)
 
 internal actual class TaskScheduler {
 
-    private val scheduledTasks = mutableMapOf<Long, String>()
-    private val fallbackTimers = mutableMapOf<Long, Int>()
+    private val scheduledTasks = mutableMapOf<String, String>()
+    private val fallbackTimers = mutableMapOf<String, Int>()
 
     actual fun scheduleTask(
-        taskId: Long,
+        taskId: String,
         task: TaskRequest,
         workRequest: WorkRequest,
         existingWorkPolicy: ExistingWorkPolicy
@@ -42,7 +42,7 @@ internal actual class TaskScheduler {
         scheduledTasks[taskId] = uniqueName
     }
 
-    internal fun scheduleActivation(taskId: Long, preconditions: TaskPreconditions, delayMs: Long) {
+    internal fun scheduleActivation(taskId: String, preconditions: TaskPreconditions, delayMs: Long) {
         clearFallbackTimer(taskId)
         val tagForRunner = WorkRequestFactory.createTag(taskId)
 
@@ -61,7 +61,7 @@ internal actual class TaskScheduler {
         }
     }
 
-    private fun scheduleWithSyncManager(tag: String, taskId: Long) {
+    private fun scheduleWithSyncManager(tag: String, taskId: String) {
         val container = navigatorServiceWorker()
             ?: throw IllegalStateException("ServiceWorker not available")
 
@@ -79,7 +79,7 @@ internal actual class TaskScheduler {
         }
     }
 
-    private fun scheduleWithTimeout(tag: String, delayMs: Long, taskId: Long) {
+    private fun scheduleWithTimeout(tag: String, delayMs: Long, taskId: String) {
         val delay = coerceTimeout(delayMs)
         val handle = jsSetTimeout({
             BGTaskRunner.run(tag)
@@ -91,7 +91,7 @@ internal actual class TaskScheduler {
         return ms.coerceIn(0, Int.MAX_VALUE.toLong()).toInt()
     }
 
-    actual fun isScheduled(taskId: Long, taskSchedule: TaskSchedule): Boolean {
+    actual fun isScheduled(taskId: String, taskSchedule: TaskSchedule): Boolean {
         return scheduledTasks.containsKey(taskId)
     }
 
@@ -110,7 +110,7 @@ internal actual class TaskScheduler {
         matchingIds.forEach { doCancel(it) }
     }
 
-    private fun doCancel(taskId: Long) {
+    private fun doCancel(taskId: String) {
         scheduledTasks.remove(taskId)
         clearFallbackTimer(taskId)
 
@@ -121,7 +121,7 @@ internal actual class TaskScheduler {
         }
     }
 
-    private fun removeServiceWorkerSync(taskId: Long) {
+    private fun removeServiceWorkerSync(taskId: String) {
         val container = navigatorServiceWorker() ?: return
         container.ready.then { registration ->
             val tag = WorkRequestFactory.createTag(taskId)
@@ -147,13 +147,13 @@ internal actual class TaskScheduler {
         }
     }
 
-    internal fun clearFallbackTimer(taskId: Long) {
+    internal fun clearFallbackTimer(taskId: String) {
         fallbackTimers.remove(taskId)?.let { handle ->
             jsClearTimeout(handle)
         }
     }
 
-    internal fun removeScheduledTask(taskId: Long) {
+    internal fun removeScheduledTask(taskId: String) {
         scheduledTasks.remove(taskId)
     }
 
@@ -166,4 +166,3 @@ internal actual class TaskScheduler {
         }
     }
 }
-

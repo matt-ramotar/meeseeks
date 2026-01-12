@@ -14,7 +14,7 @@ internal actual class TaskScheduler(
      * All work is [OneTimeWorkRequest]. See: [#21](https://github.com/matt-ramotar/meeseeks/issues/21).
      */
     actual fun scheduleTask(
-        taskId: Long,
+        taskId: String,
         task: TaskRequest,
         workRequest: WorkRequest,
         existingWorkPolicy: ExistingWorkPolicy
@@ -26,7 +26,7 @@ internal actual class TaskScheduler(
         )
     }
 
-    actual fun isScheduled(taskId: Long, taskSchedule: TaskSchedule): Boolean {
+    actual fun isScheduled(taskId: String, taskSchedule: TaskSchedule): Boolean {
         val infos = workManager
             .getWorkInfosForUniqueWork(WorkRequestFactory.uniqueWorkNameFor(taskId, taskSchedule))
             .get()

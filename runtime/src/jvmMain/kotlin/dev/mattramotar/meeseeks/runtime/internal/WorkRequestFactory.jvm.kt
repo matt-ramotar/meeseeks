@@ -14,7 +14,7 @@ import java.util.*
 internal actual class WorkRequestFactory {
 
     actual fun createWorkRequest(
-        taskId: Long,
+        taskId: String,
         taskRequest: TaskRequest,
         config: BGTaskManagerConfig
     ): WorkRequest {
@@ -25,7 +25,7 @@ internal actual class WorkRequestFactory {
      * Always uses [buildOneTimeTrigger]. See: [#21](https://github.com/matt-ramotar/meeseeks/issues/21).
      */
     internal fun createWorkRequest(
-        taskId: Long,
+        taskId: String,
         taskRequest: TaskRequest,
         delayOverrideMs: Long?,
     ): WorkRequest {
@@ -57,12 +57,12 @@ internal actual class WorkRequestFactory {
     actual companion object {
         private const val KEY_TASK_ID = "task_id"
 
-        actual fun uniqueWorkNameFor(taskId: Long, taskSchedule: TaskSchedule): String {
+        actual fun uniqueWorkNameFor(taskId: String, taskSchedule: TaskSchedule): String {
             return "meeseeks_work_$taskId"
         }
 
-        actual fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): Long {
-            return uniqueWorkName.removePrefix("meeseeks_work_").toLong()
+        actual fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): String {
+            return uniqueWorkName.removePrefix("meeseeks_work_")
         }
 
         actual val WORK_REQUEST_TAG: String = JOB_GROUP

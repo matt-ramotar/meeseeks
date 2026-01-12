@@ -30,7 +30,7 @@ internal class BGTaskRunner(
     private val config = dependencies.config
 
     fun run(
-        id: Long,
+        id: String,
         completionCallback: (Boolean) -> Unit
     ) {
         launch {
@@ -43,7 +43,7 @@ internal class BGTaskRunner(
         }
     }
 
-    internal suspend fun runTask(id: Long): Boolean {
+    internal suspend fun runTask(id: String): Boolean {
         // Use the centralized TaskExecutor for consistent state management
         val executionResult = TaskExecutor.execute(
             taskId = id,
@@ -74,7 +74,7 @@ internal class BGTaskRunner(
 
     @OptIn(ExperimentalForeignApi::class)
     private fun resubmitTask(
-        taskId: Long,
+        taskId: String,
         request: TaskRequest,
         delay: Duration
     ) {

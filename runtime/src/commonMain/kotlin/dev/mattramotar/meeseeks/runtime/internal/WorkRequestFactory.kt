@@ -6,14 +6,14 @@ import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
 internal expect class WorkRequestFactory {
     fun createWorkRequest(
-        taskId: Long,
+        taskId: String,
         taskRequest: TaskRequest,
         config: BGTaskManagerConfig
     ): WorkRequest
 
     companion object {
-        fun uniqueWorkNameFor(taskId: Long, taskSchedule: TaskSchedule): String
-        fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): Long
+        fun uniqueWorkNameFor(taskId: String, taskSchedule: TaskSchedule): String
+        fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): String
         val WORK_REQUEST_TAG: String
     }
 }

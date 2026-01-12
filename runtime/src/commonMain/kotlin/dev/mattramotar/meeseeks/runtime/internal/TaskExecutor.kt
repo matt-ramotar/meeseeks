@@ -46,7 +46,7 @@ internal object TaskExecutor {
         }
 
         data class ScheduleNextActivation(
-            val taskId: Long,
+            val taskId: String,
             val request: TaskRequest,
             val delay: Duration = Duration.ZERO,
         ) : ExecutionResult()
@@ -64,7 +64,7 @@ internal object TaskExecutor {
      * @return [ExecutionResult] indicating how the platform should proceed.
      */
     suspend fun execute(
-        taskId: Long,
+        taskId: String,
         database: MeeseeksDatabase,
         registry: WorkerRegistry,
         appContext: AppContext,
@@ -138,9 +138,12 @@ internal object TaskExecutor {
      * Atomically claim a task by transitioning it from ENQUEUED to RUNNING.
      * This ensures only one worker can execute the task at a time.
      */
-    private fun claimTask(taskId: Long, database: MeeseeksDatabase): TaskSpec? {
+    private fun claimTask(taskId: String, database: MeeseeksDatabase): TaskSpec? {
         return database.taskSpecQueries.transactionWithResult {
-            database.taskSpecQueries.atomicallyClaimAndStartTask(taskId, Timestamp.now())
+            database.taskSpecQueries.atomicallyClaimAndStartTask(
+                updatedAtMs = Timestamp.now(),
+                id = taskId
+            )
             val rowsAffected = database.taskSpecQueries.selectChanges().executeAsOne().toInt()
             if (rowsAffected == 0) {
                 null
@@ -186,7 +189,7 @@ internal object TaskExecutor {
      * Handle successful task execution.
      */
     private suspend fun handleSuccess(
-        taskId: Long,
+        taskId: String,
         taskIdObj: TaskId,
         request: TaskRequest,
         attemptCount: Int,
@@ -243,7 +246,7 @@ internal object TaskExecutor {
      * Handle permanent task failure.
      */
     private suspend fun handlePermanentFailure(
-        taskId: Long,
+        taskId: String,
         taskIdObj: TaskId,
         request: TaskRequest,
         result: TaskResult.Failure.Permanent,
@@ -271,7 +274,7 @@ internal object TaskExecutor {
      * Handle transient failure or retry request.
      */
     private suspend fun handleTransientFailure(
-        taskId: Long,
+        taskId: String,
         taskIdObj: TaskId,
         request: TaskRequest,
         result: TaskResult.Failure?,

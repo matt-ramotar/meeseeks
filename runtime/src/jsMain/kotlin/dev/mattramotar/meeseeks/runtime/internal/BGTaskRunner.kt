@@ -45,7 +45,7 @@ object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
         }
     }
 
-    private suspend fun executeAndChain(taskId: Long) {
+    private suspend fun executeAndChain(taskId: String) {
         scheduler.clearFallbackTimer(taskId)
 
         // Fetch attempt count from DB (JS platform doesn't reliably track it).

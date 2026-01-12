@@ -6,16 +6,15 @@ import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
 internal expect class TaskScheduler {
     fun scheduleTask(
-        taskId: Long,
+        taskId: String,
         task: TaskRequest,
         workRequest: WorkRequest,
         existingWorkPolicy: ExistingWorkPolicy
     )
 
-    fun isScheduled(taskId: Long, taskSchedule: TaskSchedule): Boolean
+    fun isScheduled(taskId: String, taskSchedule: TaskSchedule): Boolean
 
     fun cancelWorkById(schedulerId: String, taskSchedule: TaskSchedule)
     fun cancelUniqueWork(uniqueWorkName: String, taskSchedule: TaskSchedule)
     fun cancelAllWorkByTag(tag: String)
 }
-

@@ -34,15 +34,15 @@ internal class BGTaskCoroutineWorker @JvmOverloads constructor(
         val config = dependencies.config
         val telemetry = config.telemetry
 
-        val taskIdLong = inputData.getLong(WorkRequestFactory.KEY_TASK_ID, -1)
-        if (taskIdLong == -1L) {
+        val taskId = inputData.getString(WorkRequestFactory.KEY_TASK_ID)
+        if (taskId.isNullOrBlank()) {
             Log.e(TAG, "Worker started without KEY_TASK_ID.")
             return@withContext Result.failure()
         }
 
         // Use the centralized TaskExecutor for consistent state management
         val executionResult = TaskExecutor.execute(
-            taskId = taskIdLong,
+            taskId = taskId,
             database = database,
             registry = workerRegistry,
             appContext = applicationContext,
@@ -53,16 +53,16 @@ internal class BGTaskCoroutineWorker @JvmOverloads constructor(
         // Convert TaskExecutor result to WorkManager result
         when (executionResult) {
             is TaskExecutor.ExecutionResult.ScheduleNextActivation -> {
-                Log.d(TAG, "Task $taskIdLong requires next activation in ${executionResult.delay.inWholeMilliseconds}ms.")
+                Log.d(TAG, "Task $taskId requires next activation in ${executionResult.delay.inWholeMilliseconds}ms.")
                 scheduleNextActivation(executionResult, config, database)
             }
 
             TaskExecutor.ExecutionResult.Terminal.Failure -> {
-                Log.d(TAG, "Task $taskIdLong is terminal failure.")
+                Log.d(TAG, "Task $taskId is terminal failure.")
             }
 
             TaskExecutor.ExecutionResult.Terminal.Success -> {
-                Log.d(TAG, "Task $taskIdLong is terminal success.")
+                Log.d(TAG, "Task $taskId is terminal success.")
             }
         }
 

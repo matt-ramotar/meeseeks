@@ -2,7 +2,7 @@ import dev.mattramotar.meeseeks.runtime.TaskResult;
 
 CREATE TABLE taskLogEntity (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    taskId INTEGER NOT NULL,
+    taskId TEXT NOT NULL,
     created INTEGER NOT NULL,
     result TEXT AS TaskResult.Type NOT NULL,
     attempt INTEGER NOT NULL,
