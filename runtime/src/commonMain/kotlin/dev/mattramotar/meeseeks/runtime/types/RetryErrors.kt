@@ -21,7 +21,7 @@ abstract class TaskRetryException(
  * Thrown when a task has exceeded its maximum retry attempts
  */
 class MaxRetriesExceededException(
-    taskId: Long,
+    taskId: String,
     attemptNumber: Int,
     maxRetries: Int,
     cause: Throwable? = null

@@ -38,7 +38,7 @@ class StructuredTelemetry(
      */
     @Serializable
     data class TaskStats(
-        val taskId: Long,
+        val taskId: String,
         var totalAttempts: Int = 0,
         var successfulAttempts: Int = 0,
         var failedAttempts: Int = 0,
@@ -70,7 +70,7 @@ class StructuredTelemetry(
         }
     }
 
-    private val taskStats = mutableMapOf<Long, TaskStats>()
+    private val taskStats = mutableMapOf<String, TaskStats>()
     private val eventLog = mutableListOf<String>()
 
     override suspend fun onEvent(event: TelemetryEvent) {

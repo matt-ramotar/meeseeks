@@ -12,7 +12,7 @@ internal actual class TaskScheduler(
 ) {
 
     actual fun scheduleTask(
-        taskId: Long,
+        taskId: String,
         task: TaskRequest,
         workRequest: WorkRequest,
         existingWorkPolicy: ExistingWorkPolicy
@@ -39,7 +39,7 @@ internal actual class TaskScheduler(
         }
     }
 
-    actual fun isScheduled(taskId: Long, taskSchedule: TaskSchedule): Boolean {
+    actual fun isScheduled(taskId: String, taskSchedule: TaskSchedule): Boolean {
         val jobKey = JobKey(
             WorkRequestFactory.uniqueWorkNameFor(taskId, taskSchedule),
             JOB_GROUP

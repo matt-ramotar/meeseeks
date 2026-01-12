@@ -17,7 +17,7 @@ internal actual class TaskScheduler(
 ) {
 
     actual fun scheduleTask(
-        taskId: Long,
+        taskId: String,
         task: TaskRequest,
         workRequest: WorkRequest,
         existingWorkPolicy: ExistingWorkPolicy
@@ -33,7 +33,7 @@ internal actual class TaskScheduler(
     /**
      * On iOS, "scheduled" means the task is PENDING/RUNNING in the database, as the OS handles the actual wakeup timing
      */
-    actual fun isScheduled(taskId: Long, taskSchedule: TaskSchedule): Boolean {
+    actual fun isScheduled(taskId: String, taskSchedule: TaskSchedule): Boolean {
         val taskSpec = database.taskSpecQueries
             .selectTaskById(taskId)
             .executeAsOneOrNull() ?: return false

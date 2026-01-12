@@ -6,21 +6,21 @@ import dev.mattramotar.meeseeks.runtime.TaskSchedule
 
 internal actual class WorkRequestFactory {
     actual fun createWorkRequest(
-        taskId: Long,
+        taskId: String,
         taskRequest: TaskRequest,
         config: BGTaskManagerConfig
     ): WorkRequest {
-        return WorkRequest(taskId.toString())
+        return WorkRequest(taskId)
     }
 
     actual companion object {
 
-        actual fun uniqueWorkNameFor(taskId: Long, taskSchedule: TaskSchedule): String {
+        actual fun uniqueWorkNameFor(taskId: String, taskSchedule: TaskSchedule): String {
             return "$INTERNAL_PREFIX$taskId"
         }
 
-        actual fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): Long {
-            return uniqueWorkName.removePrefix(INTERNAL_PREFIX).toLongOrNull() ?: -1
+        actual fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): String {
+            return uniqueWorkName.removePrefix(INTERNAL_PREFIX)
         }
 
         actual val WORK_REQUEST_TAG: String = "meeseeks"

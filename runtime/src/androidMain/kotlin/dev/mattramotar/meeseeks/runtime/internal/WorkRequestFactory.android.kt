@@ -18,7 +18,7 @@ internal actual class WorkRequestFactory(
      * Always uses [OneTimeWorkRequestBuilder]. See: [#21](https://github.com/matt-ramotar/meeseeks/issues/21).
      */
     actual fun createWorkRequest(
-        taskId: Long,
+        taskId: String,
         taskRequest: TaskRequest,
         config: BGTaskManagerConfig
     ): WorkRequest {
@@ -26,7 +26,7 @@ internal actual class WorkRequestFactory(
     }
 
     internal fun createWorkRequest(
-        taskId: Long,
+        taskId: String,
         taskRequest: TaskRequest,
         config: BGTaskManagerConfig,
         delayOverrideMs: Long?
@@ -76,12 +76,12 @@ internal actual class WorkRequestFactory(
         const val KEY_TASK_ID = "task_id"
         private const val UNIQUE_WORK_NAME_PREFIX = "meeseeks_work_"
 
-        actual fun uniqueWorkNameFor(taskId: Long, taskSchedule: TaskSchedule): String {
+        actual fun uniqueWorkNameFor(taskId: String, taskSchedule: TaskSchedule): String {
             return UNIQUE_WORK_NAME_PREFIX + taskId
         }
 
-        actual fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): Long {
-            return uniqueWorkName.removePrefix(UNIQUE_WORK_NAME_PREFIX).toLong()
+        actual fun taskIdFrom(uniqueWorkName: String, taskSchedule: TaskSchedule): String {
+            return uniqueWorkName.removePrefix(UNIQUE_WORK_NAME_PREFIX)
         }
 
         actual val WORK_REQUEST_TAG: String = "meeseeks"

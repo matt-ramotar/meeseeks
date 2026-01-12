@@ -3,7 +3,7 @@ import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState;
 import kotlin.Boolean;
 
 CREATE TABLE taskSpec (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id TEXT NOT NULL PRIMARY KEY,
 
     -- State and Metadata
     state TEXT AS TaskState NOT NULL,
@@ -46,16 +46,13 @@ CREATE INDEX idx_taskSpec_platform_id ON taskSpec (platform_id);
 
 insertTask:
 INSERT INTO taskSpec(
-    state, created_at_ms, updated_at_ms, platform_id,
+    id, state, created_at_ms, updated_at_ms, platform_id,
     payload_type_id, payload_data, priority,
     requires_network, requires_charging, requires_battery_not_low,
     next_run_time_ms, schedule_type, initial_delay_ms, interval_duration_ms, flex_duration_ms,
     backoff_policy, backoff_delay_ms, max_retries, backoff_multiplier
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-
-lastInsertedTaskId:
-SELECT last_insert_rowid();
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 selectTaskById:
 SELECT * FROM taskSpec WHERE id = ?;

@@ -65,9 +65,11 @@ internal class RealBGTaskManager(
     override fun schedule(request: TaskRequest): TaskId {
         val timestamp = Timestamp.now()
         val normalized = TaskMapper.normalizeRequest(request, timestamp, registry)
+        val taskId = newTaskId()
 
         taskSpecQueries.transaction {
             taskSpecQueries.insertTask(
+                id = taskId.value,
                 state = normalized.state,
                 created_at_ms = timestamp,
                 updated_at_ms = timestamp,
@@ -90,27 +92,26 @@ internal class RealBGTaskManager(
             )
         }
 
-        val taskId = taskSpecQueries.lastInsertedTaskId().executeAsOne()
-        val workRequest = workRequestFactory.createWorkRequest(taskId, request, config)
+        val workRequest = workRequestFactory.createWorkRequest(taskId.value, request, config)
 
-        taskScheduler.scheduleTask(taskId, request, workRequest, ExistingWorkPolicy.KEEP)
+        taskScheduler.scheduleTask(taskId.value, request, workRequest, ExistingWorkPolicy.KEEP)
 
         taskSpecQueries.updatePlatformId(
             platform_id = workRequest.id,
             updated_at_ms = Timestamp.now(),
-            id = taskId
+            id = taskId.value
         )
 
         launch {
             telemetry?.onEvent(
                 TelemetryEvent.TaskScheduled(
-                    taskId = TaskId(taskId),
+                    taskId = taskId,
                     task = request
                 )
             )
         }
 
-        return TaskId(taskId)
+        return taskId
     }
 
     override fun cancel(id: TaskId) {

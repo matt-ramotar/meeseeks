@@ -1,7 +1,7 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
 internal actual class WorkRequest(
-    taskId: Long
+    taskId: String
 ) {
-    actual val id: String = taskId.toString()
+    actual val id: String = taskId
 }
