@@ -33,6 +33,12 @@ kotlin {
             }
         }
 
+        commonTest {
+            dependencies {
+                implementation(libs.kotlin.test)
+            }
+        }
+
         androidMain {
             dependencies {
                 api(libs.androidx.work.runtime.ktx)
