@@ -33,7 +33,8 @@ internal object TaskMapper {
         val backoffPolicy: BackoffPolicy,
         val backoffDelayMs: Long,
         val maxRetries: Long,
-        val backoffMultiplier: Double?
+        val backoffMultiplier: Double?,
+        val backoffJitterFactor: Double
     )
 
     fun normalizeRequest(request: TaskRequest, currentTimeMs: Long, registry: WorkerRegistry): NormalizedRequest {
@@ -58,7 +59,8 @@ internal object TaskMapper {
             backoffPolicy = retryParams.backoffPolicy,
             backoffDelayMs = retryParams.backoffDelayMs,
             maxRetries = retryParams.maxRetries,
-            backoffMultiplier = retryParams.backoffMultiplier
+            backoffMultiplier = retryParams.backoffMultiplier,
+            backoffJitterFactor = retryParams.backoffJitterFactor
         )
     }
 
@@ -73,7 +75,8 @@ internal object TaskMapper {
         val backoffPolicy: BackoffPolicy,
         val backoffDelayMs: Long,
         val maxRetries: Long,
-        val backoffMultiplier: Double?
+        val backoffMultiplier: Double?,
+        val backoffJitterFactor: Double
     )
 
     private fun mapApiPriorityToDb(priority: TaskPriority): Long = when (priority) {
@@ -112,13 +115,15 @@ internal object TaskMapper {
                 backoffPolicy = BackoffPolicy.LINEAR,
                 backoffDelayMs = retryPolicy.retryInterval.inWholeMilliseconds,
                 maxRetries = retryPolicy.maxRetries?.toLong() ?: Long.MAX_VALUE,
-                backoffMultiplier = null
+                backoffMultiplier = null,
+                backoffJitterFactor = 0.0
             )
             is TaskRetryPolicy.ExponentialBackoff -> RetryParams(
                 backoffPolicy = BackoffPolicy.EXPONENTIAL,
                 backoffDelayMs = retryPolicy.initialInterval.inWholeMilliseconds,
                 maxRetries = retryPolicy.maxRetries.toLong(),
-                backoffMultiplier = retryPolicy.multiplier
+                backoffMultiplier = retryPolicy.multiplier,
+                backoffJitterFactor = retryPolicy.jitterFactor
             )
         }
     }
@@ -161,7 +166,8 @@ internal object TaskMapper {
             BackoffPolicy.EXPONENTIAL -> TaskRetryPolicy.ExponentialBackoff(
                 initialInterval = entity.backoff_delay_ms.milliseconds,
                 maxRetries = entity.max_retries.toInt(),
-                multiplier = entity.backoff_multiplier ?: 2.0
+                multiplier = entity.backoff_multiplier ?: 2.0,
+                jitterFactor = entity.backoff_jitter_factor
             )
         }
 

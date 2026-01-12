@@ -35,7 +35,8 @@ CREATE TABLE taskSpec (
     backoff_policy TEXT AS BackoffPolicy NOT NULL,
     backoff_delay_ms INTEGER NOT NULL,
     max_retries INTEGER NOT NULL,
-    backoff_multiplier REAL
+    backoff_multiplier REAL,
+    backoff_jitter_factor REAL NOT NULL
 );
 
 
@@ -50,9 +51,9 @@ INSERT INTO taskSpec(
     payload_type_id, payload_data, priority,
     requires_network, requires_charging, requires_battery_not_low,
     next_run_time_ms, schedule_type, initial_delay_ms, interval_duration_ms, flex_duration_ms,
-    backoff_policy, backoff_delay_ms, max_retries, backoff_multiplier
+    backoff_policy, backoff_delay_ms, max_retries, backoff_multiplier, backoff_jitter_factor
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 selectTaskById:
 SELECT * FROM taskSpec WHERE id = ?;
@@ -104,6 +105,7 @@ SET
   backoff_delay_ms = ?,
   max_retries = ?,
   backoff_multiplier = ?,
+  backoff_jitter_factor = ?,
   platform_id = ?,
   updated_at_ms = ?
 WHERE id = ?;

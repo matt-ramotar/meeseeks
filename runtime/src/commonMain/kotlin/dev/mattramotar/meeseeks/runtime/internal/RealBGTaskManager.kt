@@ -88,7 +88,8 @@ internal class RealBGTaskManager(
                 backoff_policy = normalized.backoffPolicy,
                 backoff_delay_ms = normalized.backoffDelayMs,
                 max_retries = normalized.maxRetries,
-                backoff_multiplier = normalized.backoffMultiplier
+                backoff_multiplier = normalized.backoffMultiplier,
+                backoff_jitter_factor = normalized.backoffJitterFactor
             )
         }
 
@@ -231,6 +232,7 @@ internal class RealBGTaskManager(
             backoff_delay_ms = normalized.backoffDelayMs,
             max_retries = normalized.maxRetries,
             backoff_multiplier = normalized.backoffMultiplier,
+            backoff_jitter_factor = normalized.backoffJitterFactor,
             platform_id = null,
             updated_at_ms = timestamp,
             id = existing.id
