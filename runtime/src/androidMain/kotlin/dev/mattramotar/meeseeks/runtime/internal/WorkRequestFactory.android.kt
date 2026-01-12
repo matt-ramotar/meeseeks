@@ -2,10 +2,10 @@ package dev.mattramotar.meeseeks.runtime.internal
 
 import android.os.Build
 import androidx.work.Constraints
+import androidx.work.Data
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
-import androidx.work.workDataOf
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
@@ -33,7 +33,7 @@ internal actual class WorkRequestFactory(
     ): WorkRequest {
         val constraints = buildConstraints(taskRequest)
 
-        val inputData = workDataOf(KEY_TASK_ID to taskId)
+        val inputData = buildInputData(taskId)
 
         val builder = OneTimeWorkRequestBuilder<BGTaskCoroutineWorker>()
             .setConstraints(constraints)
@@ -70,6 +70,13 @@ internal actual class WorkRequestFactory(
             builder.setRequiresBatteryNotLow(true)
         }
         return builder.build()
+    }
+
+    private fun buildInputData(taskId: String): Data {
+        // WorkManager Data only supports primitives; payload is stored in the database.
+        return Data.Builder()
+            .putString(KEY_TASK_ID, taskId)
+            .build()
     }
 
     actual companion object {
