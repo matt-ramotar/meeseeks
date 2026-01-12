@@ -24,6 +24,7 @@ import platform.Foundation.NSDate
 import platform.Foundation.NSError
 import platform.Foundation.NSLog
 import platform.Foundation.dateWithTimeIntervalSinceNow
+import kotlin.time.DurationUnit
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 internal class NativeTaskScheduler(
@@ -140,8 +141,8 @@ internal class NativeTaskScheduler(
         }
 
         val earliestDelaySeconds = when (schedule) {
-            is TaskSchedule.OneTime -> schedule.initialDelay.inWholeSeconds.toDouble()
-            is TaskSchedule.Periodic -> schedule.initialDelay.inWholeSeconds.toDouble()
+            is TaskSchedule.OneTime -> schedule.initialDelay.toDouble(DurationUnit.SECONDS)
+            is TaskSchedule.Periodic -> schedule.initialDelay.toDouble(DurationUnit.SECONDS)
         }
 
         if (earliestDelaySeconds > 0) {
