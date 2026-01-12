@@ -414,13 +414,20 @@ internal object TaskExecutor {
             return baseDelayMs
         }
 
-        val jitterRange = (baseDelayMs.toDouble() * jitterFactor).toLong()
+        val jitterRange = (baseDelayMs.toDouble() * jitterFactor)
+            .coerceAtMost(Long.MAX_VALUE.toDouble())
+            .toLong()
         if (jitterRange <= 0L) {
             return baseDelayMs
         }
 
         val minDelay = (baseDelayMs - jitterRange).coerceAtLeast(0L)
-        val maxDelay = (baseDelayMs + jitterRange).coerceAtMost(maxDelayMs)
+        val maxHeadroom = maxDelayMs - baseDelayMs
+        val maxDelay = if (maxHeadroom <= 0L || jitterRange > maxHeadroom) {
+            maxDelayMs
+        } else {
+            baseDelayMs + jitterRange
+        }
         if (minDelay == maxDelay) {
             return minDelay
         }

@@ -98,6 +98,22 @@ class TaskExecutorBackoffJitterTest {
     }
 
     @Test
+    fun exponentialBackoffHandlesHugeJitterFactor() {
+        val maxDelayMs = 5.minutes.inWholeMilliseconds
+        val spec = taskSpec(
+            backoffPolicy = BackoffPolicy.EXPONENTIAL,
+            backoffDelayMs = 1000L,
+            backoffMultiplier = 2.0,
+            backoffJitterFactor = Double.MAX_VALUE
+        )
+        val random = FixedRandom { _, until -> until - 1 }
+
+        val delay = TaskExecutor.calculateRetryDelay(spec, TaskResult.Retry, 1, random)
+
+        assertEquals(maxDelayMs, delay)
+    }
+
+    @Test
     fun linearBackoffIgnoresJitter() {
         val spec = taskSpec(
             backoffPolicy = BackoffPolicy.LINEAR,
