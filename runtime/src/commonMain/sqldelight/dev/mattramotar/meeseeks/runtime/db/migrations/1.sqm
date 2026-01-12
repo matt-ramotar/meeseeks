@@ -1,4 +1,4 @@
-PRAGMA foreign_keys=OFF;
+PRAGMA foreign_keys=0;
 
 CREATE TABLE taskSpec_new (
     id TEXT NOT NULL PRIMARY KEY,
@@ -74,4 +74,4 @@ ALTER TABLE taskLogEntity_new RENAME TO taskLogEntity;
 CREATE INDEX idx_taskSpec_scheduler ON taskSpec (state, next_run_time_ms ASC, priority DESC);
 CREATE INDEX idx_taskSpec_platform_id ON taskSpec (platform_id);
 
-PRAGMA foreign_keys=ON;
+PRAGMA foreign_keys=1;
