@@ -34,10 +34,17 @@ internal class BGTaskCoroutineWorker @JvmOverloads constructor(
         val config = dependencies.config
         val telemetry = config.telemetry
 
-        val taskId = inputData.getString(WorkRequestFactory.KEY_TASK_ID)
+        val taskIdFromString = inputData.getString(WorkRequestFactory.KEY_TASK_ID)
+        val taskId = taskIdFromString
+            ?: inputData.getLong(WorkRequestFactory.KEY_TASK_ID, -1L)
+                .takeIf { it != -1L }
+                ?.toString()
         if (taskId.isNullOrBlank()) {
             Log.e(TAG, "Worker started without KEY_TASK_ID.")
             return@withContext Result.failure()
+        }
+        if (taskIdFromString == null) {
+            Log.d(TAG, "Recovered legacy task_id from WorkManager input data.")
         }
 
         // Use the centralized TaskExecutor for consistent state management
