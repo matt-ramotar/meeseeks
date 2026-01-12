@@ -26,6 +26,7 @@ import dev.mattramotar.meeseeks.runtime.types.RetryErrorCategory.CIRCUIT_BREAKER
 import dev.mattramotar.meeseeks.runtime.types.RetryErrorCategory.RATE_LIMIT
 import dev.mattramotar.meeseeks.runtime.types.RetryErrorClassifier
 import kotlin.math.pow
+import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -35,6 +36,7 @@ import kotlin.time.DurationUnit
  * Centralized task executor that handles state management consistently across all platforms.
  */
 internal object TaskExecutor {
+    private const val DEFAULT_JITTER_FACTOR = 0.1
 
     /**
      * Result of task execution that platforms can use to determine their specific behavior.
@@ -366,15 +368,17 @@ internal object TaskExecutor {
     /**
      * Calculate retry delay based on backoff policy and error type.
      */
-    private fun calculateRetryDelay(
+    internal fun calculateRetryDelay(
         taskSpec: TaskSpec?,
         result: TaskResult?,
-        attemptCount: Int
+        attemptCount: Int,
+        random: Random = Random.Default
     ): Long {
         val backoffPolicy = taskSpec?.backoff_policy
             ?: BackoffPolicy.EXPONENTIAL
         val baseDelayMs = taskSpec?.backoff_delay_ms ?: 1000L
         val multiplier = taskSpec?.backoff_multiplier ?: 2.0
+        val jitterFactor = taskSpec?.backoff_jitter_factor ?: DEFAULT_JITTER_FACTOR
 
         val error = when (result) {
             is TaskResult.Failure -> result.error
@@ -391,9 +395,43 @@ internal object TaskExecutor {
             }
 
             BackoffPolicy.EXPONENTIAL -> {
-                (suggestedDelay * multiplier.pow((attemptCount - 1).toDouble())).toLong()
-                    .coerceAtMost(5.minutes.toLong(DurationUnit.MILLISECONDS))
+                val maxDelayMs = 5.minutes.toLong(DurationUnit.MILLISECONDS)
+                val baseDelay = (suggestedDelay * multiplier.pow((attemptCount - 1).toDouble()))
+                    .toLong()
+                    .coerceAtMost(maxDelayMs)
+                applyJitter(baseDelay, jitterFactor, maxDelayMs, random)
             }
         }
+    }
+
+    private fun applyJitter(
+        baseDelayMs: Long,
+        jitterFactor: Double,
+        maxDelayMs: Long,
+        random: Random
+    ): Long {
+        if (!jitterFactor.isFinite() || jitterFactor <= 0.0 || baseDelayMs <= 0L) {
+            return baseDelayMs
+        }
+
+        val jitterRange = (baseDelayMs.toDouble() * jitterFactor)
+            .coerceAtMost(Long.MAX_VALUE.toDouble())
+            .toLong()
+        if (jitterRange <= 0L) {
+            return baseDelayMs
+        }
+
+        val minDelay = (baseDelayMs - jitterRange).coerceAtLeast(0L)
+        val maxHeadroom = maxDelayMs - baseDelayMs
+        val maxDelay = if (maxHeadroom <= 0L || jitterRange > maxHeadroom) {
+            maxDelayMs
+        } else {
+            baseDelayMs + jitterRange
+        }
+        if (minDelay == maxDelay) {
+            return minDelay
+        }
+
+        return random.nextLong(minDelay, maxDelay + 1)
     }
 }
