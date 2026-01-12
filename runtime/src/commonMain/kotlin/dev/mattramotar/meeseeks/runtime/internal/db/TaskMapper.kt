@@ -37,11 +37,16 @@ internal object TaskMapper {
         val backoffJitterFactor: Double
     )
 
-    fun normalizeRequest(request: TaskRequest, currentTimeMs: Long, registry: WorkerRegistry): NormalizedRequest {
+    fun normalizeRequest(
+        request: TaskRequest,
+        currentTimeMs: Long,
+        registry: WorkerRegistry,
+        config: BGTaskManagerConfig
+    ): NormalizedRequest {
         val serializedPayload = registry.serializePayload(request.payload)
         val scheduleParams = calculateScheduleParams(request.schedule)
         val nextRunTimeMs = currentTimeMs + scheduleParams.initialDelayMs
-        val retryParams = calculateRetryParams(request.retryPolicy)
+        val retryParams = calculateRetryParams(request.retryPolicy, config)
 
         return NormalizedRequest(
             state = TaskState.ENQUEUED,
@@ -109,19 +114,26 @@ internal object TaskMapper {
     }
 
     // Retry policy parameters calculation
-    private fun calculateRetryParams(retryPolicy: TaskRetryPolicy): RetryParams {
+    private fun calculateRetryParams(
+        retryPolicy: TaskRetryPolicy,
+        config: BGTaskManagerConfig
+    ): RetryParams {
+        val configMaxRetries = config.maxRetryCount
         return when (retryPolicy) {
             is TaskRetryPolicy.FixedInterval -> RetryParams(
                 backoffPolicy = BackoffPolicy.LINEAR,
                 backoffDelayMs = retryPolicy.retryInterval.inWholeMilliseconds,
-                maxRetries = retryPolicy.maxRetries?.toLong() ?: Long.MAX_VALUE,
+                maxRetries = minOf(
+                    retryPolicy.maxRetries ?: configMaxRetries,
+                    configMaxRetries
+                ).toLong(),
                 backoffMultiplier = null,
                 backoffJitterFactor = 0.0
             )
             is TaskRetryPolicy.ExponentialBackoff -> RetryParams(
                 backoffPolicy = BackoffPolicy.EXPONENTIAL,
                 backoffDelayMs = retryPolicy.initialInterval.inWholeMilliseconds,
-                maxRetries = retryPolicy.maxRetries.toLong(),
+                maxRetries = minOf(retryPolicy.maxRetries, configMaxRetries).toLong(),
                 backoffMultiplier = retryPolicy.multiplier,
                 backoffJitterFactor = retryPolicy.jitterFactor
             )

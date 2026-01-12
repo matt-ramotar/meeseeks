@@ -127,4 +127,23 @@ class TaskExecutorBackoffJitterTest {
 
         assertEquals(3000L, delay)
     }
+
+    @Test
+    fun respectsMinBackoffFloor() {
+        val spec = taskSpec(
+            backoffPolicy = BackoffPolicy.EXPONENTIAL,
+            backoffDelayMs = 500L,
+            backoffMultiplier = 2.0,
+            backoffJitterFactor = 0.0
+        )
+
+        val delay = TaskExecutor.calculateRetryDelay(
+            spec,
+            TaskResult.Retry,
+            1,
+            minBackoffMs = 2000L
+        )
+
+        assertEquals(2000L, delay)
+    }
 }

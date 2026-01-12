@@ -83,6 +83,15 @@ SET state = 'RUNNING',
     run_attempt_count = run_attempt_count + 1
 WHERE id = :id AND state = 'ENQUEUED';
 
+atomicallyClaimAndStartTaskWithLimit:
+UPDATE taskSpec
+SET state = 'RUNNING',
+    updated_at_ms = :updatedAtMs,
+    run_attempt_count = run_attempt_count + 1
+WHERE id = :id
+  AND state = 'ENQUEUED'
+  AND (SELECT COUNT(*) FROM taskSpec WHERE state = 'RUNNING') < :maxParallelTasks;
+
 selectChanges:
 SELECT changes();
 
@@ -129,6 +138,11 @@ updateStateAndNextRunTime:
 UPDATE taskSpec
 SET state = ?, updated_at_ms = ?, next_run_time_ms = ?
 WHERE id = ?;
+
+updateStateAndNextRunTimeIfEnqueued:
+UPDATE taskSpec
+SET state = ?, updated_at_ms = ?, next_run_time_ms = ?
+WHERE id = ? AND state = 'ENQUEUED';
 
 -- Get all tasks regardless of state
 selectAllTasks:

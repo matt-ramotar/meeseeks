@@ -32,7 +32,6 @@ internal class BGTaskCoroutineWorker @JvmOverloads constructor(
         val database = dependencies.database
         val workerRegistry = dependencies.registry
         val config = dependencies.config
-        val telemetry = config.telemetry
 
         val taskIdFromString = inputData.getString(WorkRequestFactory.KEY_TASK_ID)
         val taskId = taskIdFromString
@@ -53,7 +52,7 @@ internal class BGTaskCoroutineWorker @JvmOverloads constructor(
             database = database,
             registry = workerRegistry,
             appContext = applicationContext,
-            config = BGTaskManagerConfig(telemetry = telemetry),
+            config = config,
             attemptCount = runAttemptCount
         )
 
