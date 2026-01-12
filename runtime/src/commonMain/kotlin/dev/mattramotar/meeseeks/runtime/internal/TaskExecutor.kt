@@ -186,19 +186,20 @@ internal object TaskExecutor {
             return ExecutionResult.Terminal.Failure
         }
 
-        val runningCount = database.taskSpecQueries.selectRunningCount().executeAsOne().toInt()
-        if (runningCount < maxParallelTasks) {
-            return ExecutionResult.Terminal.Failure
-        }
-
         val delay = config.minBackoff
         val now = Timestamp.now()
-        database.taskSpecQueries.updateStateAndNextRunTime(
-            state = TaskState.ENQUEUED,
-            updated_at_ms = now,
-            next_run_time_ms = now + delay.inWholeMilliseconds,
-            id = taskId
-        )
+        val updated = database.taskSpecQueries.transactionWithResult {
+            database.taskSpecQueries.updateStateAndNextRunTimeIfEnqueued(
+                state = TaskState.ENQUEUED,
+                updated_at_ms = now,
+                next_run_time_ms = now + delay.inWholeMilliseconds,
+                id = taskId
+            )
+            database.taskSpecQueries.selectChanges().executeAsOne().toInt()
+        }
+        if (updated == 0) {
+            return ExecutionResult.Terminal.Failure
+        }
 
         val request = TaskMapper.mapToTaskRequest(taskSpec, registry)
         return ExecutionResult.ScheduleNextActivation(taskId, request, delay)

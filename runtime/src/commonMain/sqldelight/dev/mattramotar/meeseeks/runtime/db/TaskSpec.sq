@@ -58,9 +58,6 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 selectTaskById:
 SELECT * FROM taskSpec WHERE id = ?;
 
-selectRunningCount:
-SELECT COUNT(*) FROM taskSpec WHERE state = 'RUNNING';
-
 -- Optimized query for schedulers (Filters time, priority, and constraints)
 -- Significantly improves platform efficiency (e.g., iOS REFRESH vs PROCESSING)
 selectNextEligibleTasks:
@@ -141,6 +138,11 @@ updateStateAndNextRunTime:
 UPDATE taskSpec
 SET state = ?, updated_at_ms = ?, next_run_time_ms = ?
 WHERE id = ?;
+
+updateStateAndNextRunTimeIfEnqueued:
+UPDATE taskSpec
+SET state = ?, updated_at_ms = ?, next_run_time_ms = ?
+WHERE id = ? AND state = 'ENQUEUED';
 
 -- Get all tasks regardless of state
 selectAllTasks:
