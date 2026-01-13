@@ -68,8 +68,9 @@ class WorkerRegistryPayloadCipherTest {
     fun throwsWhenEncryptedPayloadWithoutCipher() {
         val registry = registry(null)
 
-        assertFailsWith<IllegalStateException> {
+        val exception = assertFailsWith<TaskPayloadDeserializationException> {
             registry.deserializePayload(TestPayload.serializer().descriptor.serialName, "enc:v1:ciphertext")
         }
+        assertTrue(exception.cause is IllegalStateException)
     }
 }

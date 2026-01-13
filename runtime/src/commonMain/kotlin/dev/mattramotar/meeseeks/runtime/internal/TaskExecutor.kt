@@ -25,6 +25,7 @@ import dev.mattramotar.meeseeks.runtime.types.RetryErrorCategory
 import dev.mattramotar.meeseeks.runtime.types.RetryErrorCategory.CIRCUIT_BREAKER
 import dev.mattramotar.meeseeks.runtime.types.RetryErrorCategory.RATE_LIMIT
 import dev.mattramotar.meeseeks.runtime.types.RetryErrorClassifier
+import kotlinx.coroutines.CancellationException
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.time.Duration
@@ -78,8 +79,21 @@ internal object TaskExecutor {
             ?: return handleParallelLimit(taskId, database, registry, config, maxParallelTasks)
 
         val taskIdObj = TaskId(taskId)
-        val request = TaskMapper.mapToTaskRequest(claimed, registry)
         val effectiveAttemptCount = maxOf(attemptCount, claimed.run_attempt_count.toInt())
+        val request = try {
+            TaskMapper.mapToTaskRequest(claimed, registry)
+        } catch (error: Throwable) {
+            if (error is CancellationException) throw error
+            return handleRequestMappingFailure(
+                taskId = taskId,
+                taskIdObj = taskIdObj,
+                taskSpec = claimed,
+                error = error,
+                attemptCount = effectiveAttemptCount,
+                database = database,
+                config = config
+            )
+        }
 
         config?.telemetry?.onEvent(
             TelemetryEvent.TaskStarted(
@@ -419,6 +433,45 @@ internal object TaskExecutor {
         }
 
         return ExecutionResult.ScheduleNextActivation(taskId, request, nextRetryDelayMs.milliseconds)
+    }
+
+    private suspend fun handleRequestMappingFailure(
+        taskId: String,
+        taskIdObj: TaskId,
+        taskSpec: TaskSpec,
+        error: Throwable,
+        attemptCount: Int,
+        database: MeeseeksDatabase,
+        config: BGTaskManagerConfig?
+    ): ExecutionResult {
+        val now = Timestamp.now()
+        database.taskSpecQueries.updateState(
+            state = TaskState.FAILED,
+            updated_at_ms = now,
+            id = taskId
+        )
+
+        val logMessage = error.message?.let { "Task $taskId request mapping failed: $it" }
+            ?: "Task $taskId request mapping failed."
+        database.taskLogQueries.insertLog(
+            taskId = taskId,
+            created = now,
+            result = TaskResult.Type.PermanentFailure,
+            attempt = attemptCount.toLong(),
+            message = logMessage
+        )
+
+        val fallbackRequest = TaskMapper.mapToTaskRequestFallback(taskSpec)
+        config?.telemetry?.onEvent(
+            TelemetryEvent.TaskFailed(
+                taskId = taskIdObj,
+                task = fallbackRequest,
+                error = error,
+                runAttemptCount = attemptCount
+            )
+        )
+
+        return ExecutionResult.Terminal.Failure
     }
 
     /**

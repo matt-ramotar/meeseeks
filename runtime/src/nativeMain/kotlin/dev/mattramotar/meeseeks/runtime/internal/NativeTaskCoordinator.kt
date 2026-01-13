@@ -64,10 +64,11 @@ internal class NativeTaskCoordinator(
         try {
             // 3. Find eligible tasks
             val supportsProcessing = identifier == BGTaskIdentifiers.PROCESSING
+            val supportsFlag = if (supportsProcessing) 1L else 0L
             val eligibleTasks = database.taskSpecQueries.selectNextEligibleTasks(
                 currentTimeMs = Timestamp.now(),
-                supportsNetwork = supportsProcessing,
-                supportsCharging = supportsProcessing,
+                supportsNetwork = supportsFlag,
+                supportsCharging = supportsFlag,
                 limit = Long.MAX_VALUE
             ).executeAsList()
 

@@ -5,6 +5,7 @@ import dev.mattramotar.meeseeks.runtime.PayloadCipher
 import dev.mattramotar.meeseeks.runtime.TaskPayload
 import dev.mattramotar.meeseeks.runtime.Worker
 import dev.mattramotar.meeseeks.runtime.WorkerFactory
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlin.reflect.KClass
@@ -46,12 +47,25 @@ internal class WorkerRegistry(
 
     fun deserializePayload(typeId: String, data: String): TaskPayload {
         val registration = registrationsByTypeId[typeId]
-            ?: throw IllegalArgumentException("Unknown payload type id: $typeId. Cannot deserialize task. Ensure worker is registered.")
+            ?: throw TaskPayloadDeserializationException(
+                typeId = typeId,
+                message = "Unknown payload type id: $typeId. Cannot deserialize task. Ensure worker is registered."
+            )
 
         @Suppress("UNCHECKED_CAST")
         val serializer = registration.serializer as KSerializer<TaskPayload>
-        val decrypted = decryptPayload(data)
-        return json.decodeFromString(serializer, decrypted)
+        return try {
+            val decrypted = decryptPayload(data)
+            json.decodeFromString(serializer, decrypted)
+        } catch (error: Throwable) {
+            if (error is CancellationException) throw error
+            val detail = error.message?.let { " $it" } ?: ""
+            throw TaskPayloadDeserializationException(
+                typeId = typeId,
+                message = "Failed to deserialize payload type id: $typeId.$detail",
+                cause = error
+            )
+        }
     }
 
     internal fun getAllRegistrations(): Collection<WorkerRegistration> = registrations.values

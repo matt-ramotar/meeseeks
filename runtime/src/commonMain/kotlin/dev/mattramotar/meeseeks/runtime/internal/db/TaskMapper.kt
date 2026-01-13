@@ -6,7 +6,15 @@ import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.internal.db.model.BackoffPolicy
 import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
 import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
+import kotlinx.coroutines.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
+
+internal class TaskRequestMappingException(
+    val taskId: String,
+    val payloadTypeId: String,
+    message: String,
+    cause: Throwable? = null
+) : RuntimeException(message, cause)
 
 internal object TaskMapper {
 
@@ -16,6 +24,8 @@ internal object TaskMapper {
 
     private const val SCHEDULE_ONE_TIME = "ONE_TIME"
     private const val SCHEDULE_PERIODIC = "PERIODIC"
+
+    private data class UnknownPayload(val typeId: String) : TaskPayload
 
     data class NormalizedRequest(
         val state: TaskState,
@@ -152,7 +162,58 @@ internal object TaskMapper {
     }
 
     fun mapToTaskRequest(entity: TaskSpec, registry: WorkerRegistry): TaskRequest {
-        val payload = registry.deserializePayload(entity.payload_type_id, entity.payload_data)
+        return try {
+            val payload = registry.deserializePayload(entity.payload_type_id, entity.payload_data)
+            val preconditions = TaskPreconditions(
+                requiresNetwork = entity.requires_network,
+                requiresCharging = entity.requires_charging,
+                requiresBatteryNotLow = entity.requires_battery_not_low
+            )
+            val priority = mapDbPriorityToApi(entity.priority)
+            val schedule = when (entity.schedule_type) {
+                SCHEDULE_ONE_TIME -> TaskSchedule.OneTime(
+                    initialDelay = entity.initial_delay_ms.milliseconds
+                )
+                SCHEDULE_PERIODIC -> TaskSchedule.Periodic(
+                    initialDelay = entity.initial_delay_ms.milliseconds,
+                    interval = entity.interval_duration_ms.milliseconds,
+                    flexWindow = entity.flex_duration_ms.milliseconds
+                )
+                else -> error("Unknown schedule type: ${entity.schedule_type}")
+            }
+            val retryPolicy = when (entity.backoff_policy) {
+                BackoffPolicy.LINEAR -> TaskRetryPolicy.FixedInterval(
+                    retryInterval = entity.backoff_delay_ms.milliseconds,
+                    maxRetries = if (entity.max_retries == Long.MAX_VALUE) null else entity.max_retries.toInt()
+                )
+                BackoffPolicy.EXPONENTIAL -> TaskRetryPolicy.ExponentialBackoff(
+                    initialInterval = entity.backoff_delay_ms.milliseconds,
+                    maxRetries = entity.max_retries.toInt(),
+                    multiplier = entity.backoff_multiplier ?: 2.0,
+                    jitterFactor = entity.backoff_jitter_factor
+                )
+            }
+
+            TaskRequest(
+                payload = payload,
+                preconditions = preconditions,
+                priority = priority,
+                schedule = schedule,
+                retryPolicy = retryPolicy
+            )
+        } catch (error: Throwable) {
+            if (error is CancellationException) throw error
+            val detail = error.message?.let { " $it" } ?: ""
+            throw TaskRequestMappingException(
+                taskId = entity.id,
+                payloadTypeId = entity.payload_type_id,
+                message = "Failed to map task request for task ${entity.id} (payload type ${entity.payload_type_id}).$detail",
+                cause = error
+            )
+        }
+    }
+
+    fun mapToTaskRequestFallback(entity: TaskSpec): TaskRequest {
         val preconditions = TaskPreconditions(
             requiresNetwork = entity.requires_network,
             requiresCharging = entity.requires_charging,
@@ -168,7 +229,9 @@ internal object TaskMapper {
                 interval = entity.interval_duration_ms.milliseconds,
                 flexWindow = entity.flex_duration_ms.milliseconds
             )
-            else -> error("Unknown schedule type: ${entity.schedule_type}")
+            else -> TaskSchedule.OneTime(
+                initialDelay = entity.initial_delay_ms.milliseconds
+            )
         }
         val retryPolicy = when (entity.backoff_policy) {
             BackoffPolicy.LINEAR -> TaskRetryPolicy.FixedInterval(
@@ -184,7 +247,7 @@ internal object TaskMapper {
         }
 
         return TaskRequest(
-            payload = payload,
+            payload = UnknownPayload(entity.payload_type_id),
             preconditions = preconditions,
             priority = priority,
             schedule = schedule,
