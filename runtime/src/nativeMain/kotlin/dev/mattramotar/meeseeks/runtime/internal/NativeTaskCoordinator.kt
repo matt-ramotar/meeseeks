@@ -5,8 +5,8 @@ import dev.mattramotar.meeseeks.runtime.BGTaskRunner
 import dev.mattramotar.meeseeks.runtime.TaskPreconditions
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
-import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
+import dev.mattramotar.meeseeks.runtime.internal.Timestamp
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -63,8 +63,13 @@ internal class NativeTaskCoordinator(
 
         try {
             // 3. Find eligible tasks
-            val pendingTasks = database.taskSpecQueries.selectAllPending().executeAsList()
-            val eligibleTasks = filterAndSortEligibleTasks(pendingTasks, identifier)
+            val supportsProcessing = identifier == BGTaskIdentifiers.PROCESSING
+            val eligibleTasks = database.taskSpecQueries.selectNextEligibleTasks(
+                currentTimeMs = Timestamp.now(),
+                supportsNetwork = supportsProcessing,
+                supportsCharging = supportsProcessing,
+                limit = Long.MAX_VALUE
+            ).executeAsList()
 
             // 4. Execute tasks sequentially until the scope is canceled or the list is exhausted
             for (taskSpec in eligibleTasks) {
@@ -103,21 +108,6 @@ internal class NativeTaskCoordinator(
             // 6. Reschedule if necessary
             rescheduleIfPendingWorkRemains()
         }
-    }
-
-    private fun filterAndSortEligibleTasks(tasks: List<TaskSpec>, identifier: String): List<TaskSpec> {
-        val eligible = if (identifier == BGTaskIdentifiers.REFRESH) {
-            // If invoked via REFRESH, only run tasks that don't require Processing constraints
-            tasks.filter {
-                !it.requires_network && !it.requires_charging
-            }
-        } else {
-            // If invoked via PROCESSING, we can run anything
-            tasks
-        }
-
-        // Sort by Priority then CreatedAt
-        return eligible.sortedWith(compareByDescending<TaskSpec> { it.priority }.thenBy { it.created_at_ms })
     }
 
     /**
