@@ -77,18 +77,18 @@ jobs:
         run: chmod +x gradlew
 
       - name: Retrieve Version
+        id: version
         run: |
-          echo "VERSION_NAME=$(grep -w 'VERSION_NAME' gradle.properties | cut -d'=' -f2)" >> $GITHUB_ENV
+          VERSION_NAME=$(grep -w 'VERSION_NAME' gradle.properties | cut -d'=' -f2)
+          echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_ENV
+          echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
 
-      - name: Guard CI publish to SNAPSHOT only
-        run: |
-          if [[ "${VERSION_NAME}" != *-SNAPSHOT ]]; then
-            echo "Refusing GA release from CI on main."
-            echo "Use the manual release workflow (.github/workflows/release.yml) for non-SNAPSHOT versions."
-            exit 1
-          fi
+      - name: Skip snapshot publish for non-SNAPSHOT version
+        if: ${{ !endsWith(steps.version.outputs.version_name, '-SNAPSHOT') }}
+        run: echo "Skipping snapshot publish because VERSION_NAME=${{ steps.version.outputs.version_name }}."
 
       - name: Publish SNAPSHOT to Maven Central (Central Portal)
+        if: ${{ endsWith(steps.version.outputs.version_name, '-SNAPSHOT') }}
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}

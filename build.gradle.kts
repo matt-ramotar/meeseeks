@@ -106,8 +106,15 @@ tasks.register("preflight") {
                   - macOS: export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
                   - Linux: export CHROME_BIN=/usr/bin/google-chrome
             """.trimIndent()
-        } else if (!File(chromeBin).exists()) {
-            errors += "CHROME_BIN points to a missing file: $chromeBin"
+        } else {
+            val chromeBinary = File(chromeBin)
+            if (!chromeBinary.exists()) {
+                errors += "CHROME_BIN points to a missing file: $chromeBin"
+            } else if (!chromeBinary.isFile) {
+                errors += "CHROME_BIN must point to a browser binary file, but found: $chromeBin"
+            } else if (!chromeBinary.canExecute()) {
+                errors += "CHROME_BIN is not executable: $chromeBin"
+            }
         }
 
         if (errors.isNotEmpty()) {
