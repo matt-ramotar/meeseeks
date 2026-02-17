@@ -13,6 +13,12 @@ java {
     }
 }
 
+configurations.configureEach {
+    if (isCanBeResolved) {
+        resolutionStrategy.activateDependencyLocking()
+    }
+}
+
 dependencies {
     compileOnly(libs.android.gradle.plugin)
     compileOnly(libs.kotlin.gradle.plugin)

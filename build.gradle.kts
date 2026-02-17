@@ -28,6 +28,14 @@ plugins {
     alias(libs.plugins.binary.compatibility.validator) apply false
 }
 
+allprojects {
+    configurations.configureEach {
+        if (isCanBeResolved) {
+            resolutionStrategy.activateDependencyLocking()
+        }
+    }
+}
+
 tasks.register("preflight") {
     group = "verification"
     description = "Checks local Android SDK and CHROME_BIN prerequisites."

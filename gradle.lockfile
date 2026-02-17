@@ -1,0 +1,14 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+org.jetbrains.intellij.deps:trove4j:1.0.20200330=kotlinKlibCommonizerClasspath
+org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.0=kotlinKlibCommonizerClasspath
+org.jetbrains.kotlin:kotlin-daemon-embeddable:2.1.0=kotlinKlibCommonizerClasspath
+org.jetbrains.kotlin:kotlin-klib-commonizer-embeddable:2.1.0=kotlinKlibCommonizerClasspath
+org.jetbrains.kotlin:kotlin-native-prebuilt:2.1.0=kotlinNativeBundleConfiguration
+org.jetbrains.kotlin:kotlin-reflect:1.6.10=kotlinKlibCommonizerClasspath
+org.jetbrains.kotlin:kotlin-script-runtime:2.1.0=kotlinKlibCommonizerClasspath
+org.jetbrains.kotlin:kotlin-stdlib:2.1.0=kotlinKlibCommonizerClasspath
+org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4=kotlinKlibCommonizerClasspath
+org.jetbrains:annotations:13.0=kotlinKlibCommonizerClasspath
+empty=

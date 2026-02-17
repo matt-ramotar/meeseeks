@@ -137,6 +137,20 @@ For an all-in-one local validation pass:
 ./gradlew preflight clean build --stacktrace
 ```
 
+## Dependency Integrity (contributors)
+
+Meeseeks uses Gradle dependency locking and verification metadata for reproducibility.
+
+- Lockfiles are committed and should be updated intentionally when dependencies change.
+- Verification metadata is committed to protect against unexpected artifact changes.
+
+Typical update flow:
+
+```bash
+./gradlew :runtime:dependencies :sample:dependencies :tooling:plugins:dependencies --write-locks
+./gradlew --write-verification-metadata sha256 help
+```
+
 ## Troubleshooting (quick)
 
 - `SDK location not found`:
