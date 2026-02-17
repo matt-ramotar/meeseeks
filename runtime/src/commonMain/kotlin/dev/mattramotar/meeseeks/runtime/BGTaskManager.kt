@@ -14,23 +14,23 @@ interface BGTaskManager {
 
 
     /**
-     * Summons a new [Worker], scheduling the [request] for background execution.
+     * Schedules a new [Worker] for background execution.
      *
      * @param request The [TaskRequest] to schedule.
-     * @return [TaskId] identifying the summoned [Worker].
+     * @return [TaskId] identifying the scheduled [Worker].
      * @throws IllegalArgumentException if [request] contains preconditions unsupported by this target.
      */
     fun schedule(request: TaskRequest): TaskId
 
     /**
-     * Sends a specific [Worker] back to the box, canceling its scheduled or ongoing work.
+     * Cancels a specific [Worker], stopping scheduled or ongoing work.
      *
      * @param id A [TaskId] identifying a specific [Worker].
      */
     fun cancel(id: TaskId)
 
     /**
-     * Sends all currently active [Worker] back to the box, removing them from scheduling.
+     * Cancels all currently active [Worker] and removes them from scheduling.
      */
     fun cancelAll()
 
@@ -47,7 +47,7 @@ interface BGTaskManager {
 
     /**
      * Returns a read-only list of all tasks known to Meeseeks, including
-     * their ID, status, and the original [LegacyTask] task.
+     * their ID, status, and original [TaskRequest].
      */
     fun listTasks(): List<ScheduledTask>
 

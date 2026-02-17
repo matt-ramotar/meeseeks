@@ -100,6 +100,7 @@ public final class dev/mattramotar/meeseeks/runtime/ScheduledTask {
 }
 
 public abstract interface class dev/mattramotar/meeseeks/runtime/TaskHandle {
+	public abstract fun await (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun cancel ()V
 	public abstract fun getId-c54K5Xc ()Ljava/lang/String;
 	public abstract fun observe ()Lkotlinx/coroutines/flow/Flow;
@@ -636,6 +637,7 @@ public abstract interface annotation class dev/mattramotar/meeseeks/runtime/dsl/
 
 public final class dev/mattramotar/meeseeks/runtime/internal/RealTaskHandle : dev/mattramotar/meeseeks/runtime/TaskHandle {
 	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/BGTaskManager;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun await (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun cancel ()V
 	public fun getId-c54K5Xc ()Ljava/lang/String;
 	public fun observe ()Lkotlinx/coroutines/flow/Flow;

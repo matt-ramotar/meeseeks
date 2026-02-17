@@ -3,7 +3,7 @@ package dev.mattramotar.meeseeks.runtime
 import kotlinx.serialization.Serializable
 
 /**
- * Preconditions for executing the [LegacyTask].
+ * Preconditions for executing a [TaskRequest].
  */
 @Serializable
 data class TaskPreconditions(
