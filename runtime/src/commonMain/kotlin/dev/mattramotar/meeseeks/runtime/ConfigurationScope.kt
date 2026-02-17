@@ -8,15 +8,14 @@ import dev.mattramotar.meeseeks.runtime.internal.createBGTaskManager
 import dev.mattramotar.meeseeks.runtime.internal.db.adapters.taskLogEntityAdapter
 import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
 import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 import kotlin.time.Duration
-import kotlinx.serialization.descriptors.SerialDescriptor
 
-
-class ConfigurationScope internal constructor(private val appContext: AppContext) {
+public class ConfigurationScope internal constructor(private val appContext: AppContext) {
     private var config: BGTaskManagerConfig = BGTaskManagerConfig()
     private val registrations = mutableMapOf<KClass<out TaskPayload>, WorkerRegistration>()
 
@@ -25,35 +24,34 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
         isLenient = true
     }
 
-    fun minBackoff(duration: Duration): ConfigurationScope = apply {
+    public fun minBackoff(duration: Duration): ConfigurationScope = apply {
         config = config.copy(minBackoff = duration)
     }
 
-    fun maxRetryCount(count: Int): ConfigurationScope = apply {
+    public fun maxRetryCount(count: Int): ConfigurationScope = apply {
         config = config.copy(maxRetryCount = count)
     }
 
-    fun maxParallelTasks(count: Int): ConfigurationScope = apply {
+    public fun maxParallelTasks(count: Int): ConfigurationScope = apply {
         config = config.copy(maxParallelTasks = count)
     }
 
-    fun allowExpedited(allowed: Boolean = true): ConfigurationScope = apply {
+    public fun allowExpedited(allowed: Boolean = true): ConfigurationScope = apply {
         config = config.copy(allowExpedited = allowed)
     }
 
-
-    fun telemetry(telemetry: Telemetry): ConfigurationScope = apply {
+    public fun telemetry(telemetry: Telemetry): ConfigurationScope = apply {
         config = config.copy(telemetry = telemetry)
     }
 
-    fun telemetry(handler: (event: TelemetryEvent) -> Unit): ConfigurationScope = apply {
+    public fun telemetry(handler: (event: TelemetryEvent) -> Unit): ConfigurationScope = apply {
         config = config.copy(telemetry = Telemetry(handler))
     }
 
     /**
      * Enables encryption for task payloads stored in the database.
      */
-    fun payloadCipher(cipher: PayloadCipher): ConfigurationScope = apply {
+    public fun payloadCipher(cipher: PayloadCipher): ConfigurationScope = apply {
         config = config.copy(payloadCipher = cipher)
     }
 
@@ -75,40 +73,39 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
      * @param factory Factory function to create the [Worker] instance.
      */
     @OptIn(ExperimentalSerializationApi::class)
-    inline fun <reified T : TaskPayload> register(
+    public inline fun <reified T : TaskPayload> register(
         noinline factory: (appContext: AppContext) -> Worker<T>
+    ): ConfigurationScope = register(
+        type = T::class,
+        serializer = serializer<T>(),
+        factory = factory,
+    )
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @PublishedApi
+    internal fun <T : TaskPayload> register(
+        type: KClass<T>,
+        serializer: KSerializer<T>,
+        factory: (appContext: AppContext) -> Worker<T>,
     ): ConfigurationScope = apply {
-        val type = T::class
-        val serializer = serializer<T>()
         val stableId = serializer.descriptor.serialName
 
-        if (getRegistrations().values.any { it.typeId == stableId }) {
+        if (registrations.values.any { it.typeId == stableId }) {
             throw IllegalStateException("Duplicate stableId registered: $stableId.")
         }
 
-        val registrations = getRegistrations()
         if (registrations.containsKey(type)) {
             throw IllegalStateException("Worker already registered for Task type: ${type.simpleName}")
         }
 
         val registration = WorkerRegistration(type, stableId, serializer, WorkerFactory(factory))
-        addRegistration(type, registration)
+        registrations[type] = registration
     }
 
     internal fun build(): BGTaskManager {
-        val registry = WorkerRegistry(getRegistrations(), json, config.payloadCipher)
+        val registry = WorkerRegistry(registrations, json, config.payloadCipher)
         val database = createDatabaseInstance(appContext, json)
         return createBGTaskManager(appContext, database, registry, json, config)
-    }
-
-
-    @PublishedApi
-    internal fun getRegistrations(): Map<KClass<out TaskPayload>, WorkerRegistration> =
-        registrations
-
-    @PublishedApi
-    internal fun addRegistration(type: KClass<out TaskPayload>, registration: WorkerRegistration) {
-        registrations[type] = registration
     }
 
     private fun createDatabaseInstance(context: AppContext, json: Json): MeeseeksDatabase {

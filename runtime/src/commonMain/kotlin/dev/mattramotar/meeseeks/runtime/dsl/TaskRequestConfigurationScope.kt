@@ -10,7 +10,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @TaskRequestDsl
-open class TaskRequestConfigurationScope<T : TaskPayload> internal constructor(
+public open class TaskRequestConfigurationScope<T : TaskPayload> internal constructor(
     private val payload: T,
     private var schedule: TaskSchedule,
 ) {
@@ -21,31 +21,31 @@ open class TaskRequestConfigurationScope<T : TaskPayload> internal constructor(
         maxRetries = 5
     )
 
-    fun requireNetwork(required: Boolean = true) {
+    public fun requireNetwork(required: Boolean = true) {
         preconditions = preconditions.copy(requiresNetwork = required)
     }
 
-    fun requireCharging(required: Boolean = true) {
+    public fun requireCharging(required: Boolean = true) {
         preconditions = preconditions.copy(requiresCharging = required)
     }
 
-    fun requireBatteryNotLow(required: Boolean = true) {
+    public fun requireBatteryNotLow(required: Boolean = true) {
         preconditions = preconditions.copy(requiresBatteryNotLow = required)
     }
 
-    fun lowPriority() {
+    public fun lowPriority() {
         priority = TaskPriority.LOW
     }
 
-    fun highPriority() {
+    public fun highPriority() {
         priority = TaskPriority.HIGH
     }
 
-    fun mediumPriority() {
+    public fun mediumPriority() {
         priority = TaskPriority.MEDIUM
     }
 
-    fun retryWithExponentialBackoff(
+    public fun retryWithExponentialBackoff(
         initialDelay: Duration = 30.seconds,
         maxAttempts: Int = 5,
     ) {

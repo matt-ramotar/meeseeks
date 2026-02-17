@@ -5,10 +5,10 @@ import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import kotlin.time.Duration
 
 @TaskRequestDsl
-class OneTimeTaskRequestConfigurationScope<T : TaskPayload> @PublishedApi internal constructor(
+public class OneTimeTaskRequestConfigurationScope<T : TaskPayload> @PublishedApi internal constructor(
     payload: T,
-    initialDelay: Duration
+    initialDelay: Duration,
 ) : TaskRequestConfigurationScope<T>(
     payload,
-    TaskSchedule.OneTime(initialDelay)
+    TaskSchedule.OneTime(initialDelay),
 )

@@ -1,5 +1,5 @@
 package dev.mattramotar.meeseeks.runtime
 
-data class RuntimeContext(
-    val attemptCount: Int = 1
+public data class RuntimeContext(
+    public val attemptCount: Int = 1,
 )

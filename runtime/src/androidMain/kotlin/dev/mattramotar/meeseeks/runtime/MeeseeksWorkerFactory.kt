@@ -7,7 +7,7 @@ import androidx.work.WorkerParameters
 import dev.mattramotar.meeseeks.runtime.internal.BGTaskCoroutineWorker
 import dev.mattramotar.meeseeks.runtime.internal.RealBGTaskManager
 
-class MeeseeksWorkerFactory(
+public class MeeseeksWorkerFactory(
     private val bgTaskManager: BGTaskManager,
 ) : WorkerFactory() {
     override fun createWorker(appContext: Context, workerClassName: String, workerParameters: WorkerParameters): ListenableWorker? {

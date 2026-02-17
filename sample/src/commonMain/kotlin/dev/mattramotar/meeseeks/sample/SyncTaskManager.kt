@@ -47,9 +47,11 @@ class SyncTaskManager(
 
 
 class FeatRepository {
-    // TODO
+    fun currentFeatureFlag(): String = "sync-enabled"
 }
 
-class FeatViewModel {
-    // TODO
+class FeatViewModel(
+    private val repository: FeatRepository = FeatRepository(),
+) {
+    fun featureLabel(): String = repository.currentFeatureFlag()
 }

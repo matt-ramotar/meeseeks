@@ -43,8 +43,11 @@ jobs:
       - name: Warning hygiene gate
         run: bash scripts/ci/check-warning-hygiene.sh
 
+      - name: Preflight
+        run: ./gradlew preflight --stacktrace
+
       - name: Build and Test with Coverage
-        run: ./gradlew clean build :runtime:jvmApiCheck --stacktrace --warning-mode fail
+        run: ./gradlew clean build :runtime:jvmApiCheck :runtime:klibApiCheck :runtime:verifyCommonMainMeeseeksDatabaseMigration --stacktrace --warning-mode fail
 
   publish-snapshot:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'matt-ramotar/meeseeks'

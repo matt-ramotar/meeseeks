@@ -8,7 +8,6 @@ import kotlin.reflect.KClass
 /**
  * @param typeId Stable identifier for persistence
  */
-@PublishedApi
 internal data class WorkerRegistration(
     val type: KClass<out TaskPayload>,
     val typeId: String,

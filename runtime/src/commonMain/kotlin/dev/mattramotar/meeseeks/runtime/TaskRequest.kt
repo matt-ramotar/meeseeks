@@ -4,25 +4,28 @@ import dev.mattramotar.meeseeks.runtime.dsl.TaskRequestConfigurationScope
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-data class TaskRequest(
-    val payload: TaskPayload,
-    val preconditions: TaskPreconditions = TaskPreconditions(),
-    val priority: TaskPriority = TaskPriority.MEDIUM,
-    val schedule: TaskSchedule = TaskSchedule.OneTime(),
-    val retryPolicy: TaskRetryPolicy = TaskRetryPolicy.ExponentialBackoff(
+public data class TaskRequest(
+    public val payload: TaskPayload,
+    public val preconditions: TaskPreconditions = TaskPreconditions(),
+    public val priority: TaskPriority = TaskPriority.MEDIUM,
+    public val schedule: TaskSchedule = TaskSchedule.OneTime(),
+    public val retryPolicy: TaskRetryPolicy = TaskRetryPolicy.ExponentialBackoff(
         initialInterval = 30.seconds,
-        maxRetries = 5
-    )
+        maxRetries = 5,
+    ),
 ) {
-    companion object Companion {
-        fun <T : TaskPayload> oneTime(payload: T, block: TaskRequestConfigurationScope<T>.() -> Unit = {}): TaskRequest {
+    public companion object Companion {
+        public fun <T : TaskPayload> oneTime(
+            payload: T,
+            block: TaskRequestConfigurationScope<T>.() -> Unit = {},
+        ): TaskRequest {
             return builder(payload, TaskSchedule.OneTime(), block)
         }
 
-        fun <T : TaskPayload> periodic(
+        public fun <T : TaskPayload> periodic(
             payload: T,
             interval: Duration,
-            block: TaskRequestConfigurationScope<T>.() -> Unit = {}
+            block: TaskRequestConfigurationScope<T>.() -> Unit = {},
         ): TaskRequest {
             return builder(payload, TaskSchedule.Periodic(interval = interval), block)
         }

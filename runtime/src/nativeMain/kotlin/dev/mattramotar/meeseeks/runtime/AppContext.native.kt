@@ -1,3 +1,3 @@
 package dev.mattramotar.meeseeks.runtime
 
-actual abstract class AppContext
+public actual abstract class AppContext

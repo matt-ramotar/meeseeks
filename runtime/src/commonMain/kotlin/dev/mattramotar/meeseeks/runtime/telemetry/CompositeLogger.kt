@@ -3,7 +3,7 @@ package dev.mattramotar.meeseeks.runtime.telemetry
 /**
  * Composite logger that delegates to multiple loggers.
  */
-class CompositeLogger(private val loggers: List<Logger>) : Logger {
+public class CompositeLogger(private val loggers: List<Logger>) : Logger {
     override fun log(level: LogLevel, message: String) {
         loggers.forEach { it.log(level, message) }
     }

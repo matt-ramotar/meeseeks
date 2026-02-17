@@ -6,7 +6,7 @@ package dev.mattramotar.meeseeks.runtime
  * Implementations must be deterministic and reversible across app launches.
  * Returned ciphertext must be safe to store as TEXT (e.g., Base64-encode binary output).
  */
-interface PayloadCipher {
-    fun encrypt(plaintext: String): String
-    fun decrypt(ciphertext: String): String
+public interface PayloadCipher {
+    public fun encrypt(plaintext: String): String
+    public fun decrypt(ciphertext: String): String
 }

@@ -3,9 +3,9 @@ package dev.mattramotar.meeseeks.runtime.telemetry
 /**
  * Default console logger implementation.
  */
-class ConsoleLogger(
+public class ConsoleLogger(
     private val minLevel: LogLevel = LogLevel.INFO,
-    private val enableColors: Boolean = true
+    private val enableColors: Boolean = true,
 ) : Logger {
 
     override fun log(level: LogLevel, message: String) {

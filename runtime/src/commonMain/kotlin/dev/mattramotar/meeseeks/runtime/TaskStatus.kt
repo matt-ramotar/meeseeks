@@ -3,23 +3,22 @@ package dev.mattramotar.meeseeks.runtime
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class TaskStatus {
+public sealed class TaskStatus {
     @Serializable
-    data object Pending : TaskStatus()
-
-    @Serializable
-    data object Running : TaskStatus()
+    public data object Pending : TaskStatus()
 
     @Serializable
-    sealed class Finished : TaskStatus() {
+    public data object Running : TaskStatus()
+
+    @Serializable
+    public sealed class Finished : TaskStatus() {
         @Serializable
-        data object Cancelled : Finished()
+        public data object Cancelled : Finished()
 
         @Serializable
-        data object Completed : Finished()
+        public data object Completed : Finished()
 
         @Serializable
-        data object Failed : Finished()
+        public data object Failed : Finished()
     }
 }
-

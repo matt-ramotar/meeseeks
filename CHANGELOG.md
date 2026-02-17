@@ -6,27 +6,27 @@ This project follows semantic versioning.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-02-17
+
 ### Added
 
-- Platform-focused scheduler tests for JVM, JS, and Native adapter behavior.
-- Contributor preflight validation for Android SDK and `CHROME_BIN`.
-- Release workflow split: snapshot CI path and manual GA release workflow.
+- Enforced KLib ABI validation in `:runtime` via `klibApiCheck`.
+- Release workflow verification gate before Maven Central publish.
+- Stable API surface and compatibility statement in docs.
 
 ### Changed
 
-- Tooling plugin migrated away from deprecated Kotlin Gradle APIs.
-- Runtime precondition handling is explicit per platform with fail-fast validation.
+- `VERSION_NAME` and published coordinates moved from snapshot to `1.0.0`.
+- Runtime module now uses strict explicit API mode.
+- Preflight checks now validate real Android SDK component availability.
+- `CHROME_BIN` preflight behavior is adaptive: warning when unset, hard failure only for invalid explicit paths.
 
 ### Fixed
 
-- Periodic builder interval mapping correctness.
-- Runtime API/ABI surface hygiene around internal SQLDelight enum leakage.
-
-## [0.6.0-SNAPSHOT]
-
-### Notes
-
-- Active development snapshot toward `1.0.0`.
+- Removed internal `WorkerRegistration` leakage from public inline API signatures.
+- iOS reschedule aggregation no longer forces both network and charging preconditions when only one is required.
+- Removed unstable Kotlin compiler flag `-XXLanguage:+ImplicitSignedToUnsignedIntegerConversion`.
+- Sample placeholder TODOs replaced with minimal working sample types.
 
 ## Release Notes Process
 

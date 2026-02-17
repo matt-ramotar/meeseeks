@@ -1,3 +1,3 @@
 package dev.mattramotar.meeseeks.runtime
 
-interface TaskPayload
+public interface TaskPayload

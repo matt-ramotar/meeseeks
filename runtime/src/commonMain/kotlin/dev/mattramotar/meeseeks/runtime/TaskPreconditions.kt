@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
  * Preconditions for executing a [TaskRequest].
  */
 @Serializable
-data class TaskPreconditions(
-    val requiresNetwork: Boolean = false,
-    val requiresCharging: Boolean = false,
-    val requiresBatteryNotLow: Boolean = false
+public data class TaskPreconditions(
+    public val requiresNetwork: Boolean = false,
+    public val requiresCharging: Boolean = false,
+    public val requiresBatteryNotLow: Boolean = false,
 )

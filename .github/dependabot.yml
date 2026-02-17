@@ -23,3 +23,15 @@ updates:
     labels:
       - "dependencies"
       - "security"
+
+  - package-ecosystem: "npm"
+    directory: "/kotlin-js-store"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:30"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "security"

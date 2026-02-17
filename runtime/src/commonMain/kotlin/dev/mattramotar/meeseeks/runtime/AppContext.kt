@@ -1,3 +1,3 @@
 package dev.mattramotar.meeseeks.runtime
 
-expect abstract class AppContext
+public expect abstract class AppContext

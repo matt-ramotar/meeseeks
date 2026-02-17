@@ -1,13 +1,13 @@
 package dev.mattramotar.meeseeks.runtime.types
 
 
-class TransientNetworkException(
+public class TransientNetworkException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : Exception(message, cause)
 
 
-class PermanentValidationException(
+public class PermanentValidationException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : Exception(message, cause)

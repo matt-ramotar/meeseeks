@@ -78,6 +78,17 @@ oneTime.cancel()
 - Troubleshooting: `docs/troubleshooting.md`
 - Migration notes: `docs/migration-0x-to-1x.md`
 
+## Stable API Surface
+
+The `1.0.0` SemVer contract is intentionally limited to these packages:
+
+- `dev.mattramotar.meeseeks.runtime`
+- `dev.mattramotar.meeseeks.runtime.dsl`
+- `dev.mattramotar.meeseeks.runtime.telemetry`
+- `dev.mattramotar.meeseeks.runtime.types`
+
+Anything under `dev.mattramotar.meeseeks.runtime.internal` is implementation detail and not part of the compatibility promise.
+
 ## Contributor Prerequisites
 
 - JDK 17
@@ -85,8 +96,7 @@ oneTime.cancel()
   - `ANDROID_HOME`
   - `ANDROID_SDK_ROOT`
   - `local.properties` with `sdk.dir=/absolute/path/to/Android/sdk`
-- Chrome/Chromium binary for JS tests:
-  - `CHROME_BIN` must point to an existing browser binary
+- Chrome/Chromium available for JS tests (`CHROME_BIN` optional when auto-discovery succeeds)
 
 ## Local Setup
 
@@ -103,7 +113,7 @@ or create `local.properties` in the project root:
 sdk.dir=/absolute/path/to/Android/sdk
 ```
 
-2. Configure browser binary for JS tests:
+2. Optional: configure browser binary for JS tests when auto-discovery fails:
 
 ```bash
 # macOS example
@@ -137,6 +147,26 @@ For an all-in-one local validation pass:
 ./gradlew preflight clean build --stacktrace
 ```
 
+## Release Verification Matrix
+
+Use this exact release gate before publishing:
+
+```bash
+./gradlew preflight clean build :runtime:jvmApiCheck :runtime:klibApiCheck :runtime:verifyCommonMainMeeseeksDatabaseMigration --stacktrace --warning-mode fail
+```
+
+Expected outcomes:
+
+- `preflight` passes with a valid Android SDK path and required SDK components.
+- `clean build` passes across configured targets in CI/release environment.
+- `:runtime:jvmApiCheck` and `:runtime:klibApiCheck` both execute and pass.
+- `:runtime:verifyCommonMainMeeseeksDatabaseMigration` passes.
+
+## Preflight Caveats
+
+- `preflight` validates SDK component presence (`platform-tools`, `licenses`, and either `build-tools` or `platforms`) and fails if the SDK path is incomplete.
+- `CHROME_BIN` is optional in preflight. If browser auto-discovery fails at runtime, set `CHROME_BIN` explicitly before running `:runtime:jsTest`.
+
 ## Dependency Integrity (contributors)
 
 Meeseeks uses Gradle dependency locking and verification metadata for reproducibility.
@@ -160,6 +190,14 @@ Typical update flow:
   - Export `CHROME_BIN` to a valid Chrome/Chromium binary path.
 - `Cannot schedule task on <target>: unsupported preconditions [...]`:
   - See `docs/capabilities.md` for target support and fail-fast rules.
+
+## Compatibility Promise
+
+`1.x` follows SemVer for the stable API packages listed above:
+
+- Source and binary compatibility are enforced for declared public APIs using JVM and KLib API checks.
+- Behavior is platform-aware; platform-specific capability constraints are documented in `docs/capabilities.md`.
+- Breaking API changes are deferred to `2.0.0`, except for security-critical fixes.
 
 ## License
 

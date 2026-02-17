@@ -54,6 +54,9 @@ jobs:
             exit 1
           fi
 
+      - name: Verification gate
+        run: ./gradlew preflight clean build :runtime:jvmApiCheck :runtime:klibApiCheck :runtime:verifyCommonMainMeeseeksDatabaseMigration --stacktrace --warning-mode fail
+
       - name: Publish and Release to Maven Central (Central Portal)
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}

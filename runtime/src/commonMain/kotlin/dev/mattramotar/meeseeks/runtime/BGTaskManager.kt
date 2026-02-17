@@ -10,7 +10,7 @@ import kotlin.time.Duration
 /**
  * Central task manager.
  */
-interface BGTaskManager {
+public interface BGTaskManager {
 
 
     /**
@@ -20,36 +20,36 @@ interface BGTaskManager {
      * @return [TaskId] identifying the scheduled [Worker].
      * @throws IllegalArgumentException if [request] contains preconditions unsupported by this target.
      */
-    fun schedule(request: TaskRequest): TaskId
+    public fun schedule(request: TaskRequest): TaskId
 
     /**
      * Cancels a specific [Worker], stopping scheduled or ongoing work.
      *
      * @param id A [TaskId] identifying a specific [Worker].
      */
-    fun cancel(id: TaskId)
+    public fun cancel(id: TaskId)
 
     /**
      * Cancels all currently active [Worker] and removes them from scheduling.
      */
-    fun cancelAll()
+    public fun cancelAll()
 
     /**
      * Triggers an immediate scheduling check.
      */
-    fun reschedulePendingTasks()
+    public fun reschedulePendingTasks()
 
     /**
      * Returns the current status of the task with the given [id],
      * or `null` if the task does not exist.
      */
-    fun getTaskStatus(id: TaskId): TaskStatus?
+    public fun getTaskStatus(id: TaskId): TaskStatus?
 
     /**
      * Returns a read-only list of all tasks known to Meeseeks, including
      * their ID, status, and original [TaskRequest].
      */
-    fun listTasks(): List<ScheduledTask>
+    public fun listTasks(): List<ScheduledTask>
 
     /**
      * Convenience to “cancel & reschedule” a task in one call.
@@ -60,15 +60,15 @@ interface BGTaskManager {
      * @throws IllegalStateException if no task with [id] exists
      * @throws IllegalArgumentException if [updatedRequest] contains preconditions unsupported by this target.
      */
-    fun reschedule(id: TaskId, updatedRequest: TaskRequest): TaskId
+    public fun reschedule(id: TaskId, updatedRequest: TaskRequest): TaskId
 
     /**
      * A real-time subscription to status changes via [Flow].
      */
-    fun observeStatus(id: TaskId): Flow<TaskStatus?>
+    public fun observeStatus(id: TaskId): Flow<TaskStatus?>
 }
 
-inline fun <reified T : TaskPayload> BGTaskManager.oneTime(
+public inline fun <reified T : TaskPayload> BGTaskManager.oneTime(
     payload: T,
     initialDelay: Duration = Duration.ZERO,
     noinline configure: OneTimeTaskRequestConfigurationScope<T>.() -> Unit = {}
@@ -80,7 +80,7 @@ inline fun <reified T : TaskPayload> BGTaskManager.oneTime(
     return schedule(this, request)
 }
 
-inline fun <reified T : TaskPayload> BGTaskManager.periodic(
+public inline fun <reified T : TaskPayload> BGTaskManager.periodic(
     payload: T,
     every: Duration,
     initialDelay: Duration = Duration.ZERO,

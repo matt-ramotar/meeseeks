@@ -68,7 +68,6 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
                     compileTaskProvider.configure {
                         compilerOptions {
                             freeCompilerArgs.add("-Xallocator=custom")
-                            freeCompilerArgs.add("-XXLanguage:+ImplicitSignedToUnsignedIntegerConversion")
                             freeCompilerArgs.add("-Xadd-light-debug=enable")
 
                             freeCompilerArgs.addAll(

@@ -3,49 +3,49 @@ package dev.mattramotar.meeseeks.runtime.types
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class Value
+public sealed class Value
 
 @Serializable
-sealed class Primitive : Value()
+public sealed class Primitive : Value()
 
 @Serializable
-data class CharValue(val value: Char) : Primitive()
+public data class CharValue(public val value: Char) : Primitive()
 
 @Serializable
-data class StringValue(val value: String) : Primitive()
+public data class StringValue(public val value: String) : Primitive()
 
 @Serializable
-data class BooleanValue(val value: Boolean) : Primitive()
+public data class BooleanValue(public val value: Boolean) : Primitive()
 
 @Serializable
-data class IntValue(val value: Int) : Primitive()
+public data class IntValue(public val value: Int) : Primitive()
 
 @Serializable
-data class LongValue(val value: Long) : Primitive()
+public data class LongValue(public val value: Long) : Primitive()
 
 @Serializable
-data class FloatValue(val value: Float) : Primitive()
+public data class FloatValue(public val value: Float) : Primitive()
 
 @Serializable
-data class DoubleValue(val value: Double) : Primitive()
+public data class DoubleValue(public val value: Double) : Primitive()
 
 @Serializable
-data class ByteValue(val value: Byte) : Primitive()
+public data class ByteValue(public val value: Byte) : Primitive()
 
 @Serializable
-data class ShortValue(val value: Short) : Primitive()
+public data class ShortValue(public val value: Short) : Primitive()
 
 @Serializable
-data object NullValue : Primitive()
+public data object NullValue : Primitive()
 
 @Serializable
-sealed class Collection : Value()
+public sealed class Collection : Value()
 
 @Serializable
-data class ListValue(val value: List<Value>) : Collection()
+public data class ListValue(public val value: List<Value>) : Collection()
 
 @Serializable
-data class MapValue(val value: Map<String, Value>) : Collection()
+public data class MapValue(public val value: Map<String, Value>) : Collection()
 
 internal fun Any?.wrapped(): Value = when (this) {
     null -> NullValue

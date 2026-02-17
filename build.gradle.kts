@@ -9,7 +9,6 @@ buildscript {
         google()
         mavenCentral()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        maven("https://oss.sonatype.org/content/repositories/snapshots")
     }
 }
 
@@ -38,10 +37,11 @@ allprojects {
 
 tasks.register("preflight") {
     group = "verification"
-    description = "Checks local Android SDK and CHROME_BIN prerequisites."
+    description = "Checks local Android SDK prerequisites and optional CHROME_BIN."
 
     doLast {
         val errors = mutableListOf<String>()
+        val warnings = mutableListOf<String>()
 
         val localPropertiesFile = rootProject.file("local.properties")
         val localProperties = Properties()
@@ -55,11 +55,15 @@ tasks.register("preflight") {
         val androidHome = System.getenv("ANDROID_HOME")?.trim()?.takeIf { it.isNotEmpty() }
         val androidSdkRoot = System.getenv("ANDROID_SDK_ROOT")?.trim()?.takeIf { it.isNotEmpty() }
 
-        fun existingPath(path: String?): String? = path?.takeIf { File(it).exists() }
+        fun existingDirectory(path: String?): String? {
+            val candidate = path?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+            val directory = File(candidate)
+            return if (directory.exists() && directory.isDirectory) directory.absolutePath else null
+        }
 
-        val resolvedAndroidSdk = existingPath(androidHome)
-            ?: existingPath(androidSdkRoot)
-            ?: existingPath(sdkDirFromLocalProperties)
+        val resolvedAndroidSdk = existingDirectory(androidHome)
+            ?: existingDirectory(androidSdkRoot)
+            ?: existingDirectory(sdkDirFromLocalProperties)
 
         if (resolvedAndroidSdk == null) {
             errors += """
@@ -69,13 +73,35 @@ tasks.register("preflight") {
                   - ANDROID_SDK_ROOT
                   - local.properties with sdk.dir=/absolute/path/to/Android/sdk
             """.trimIndent()
+        } else {
+            val sdkRoot = File(resolvedAndroidSdk)
+            val requiredDirs = listOf("platform-tools", "licenses")
+            val missingRequiredDirs = requiredDirs.filterNot { name ->
+                File(sdkRoot, name).exists()
+            }
+            val hasBuildToolsOrPlatforms = listOf("build-tools", "platforms").any { name ->
+                File(sdkRoot, name).exists()
+            }
+
+            if (missingRequiredDirs.isNotEmpty() || !hasBuildToolsOrPlatforms) {
+                val missingParts = buildList {
+                    if (missingRequiredDirs.isNotEmpty()) {
+                        add("missing directories: ${missingRequiredDirs.joinToString(", ")}")
+                    }
+                    if (!hasBuildToolsOrPlatforms) {
+                        add("missing at least one of: build-tools or platforms")
+                    }
+                }
+                errors += "Android SDK path is set but incomplete ($resolvedAndroidSdk): ${missingParts.joinToString("; ")}"
+            }
         }
 
         val chromeBin = System.getenv("CHROME_BIN")?.trim()?.takeIf { it.isNotEmpty() }
         if (chromeBin == null) {
-            errors += """
+            warnings += """
                 CHROME_BIN is not set.
-                Set CHROME_BIN to your Chrome/Chromium binary before running :runtime:jsTest.
+                JS tests can still pass when Gradle auto-discovers Chrome/Chromium.
+                Set CHROME_BIN only if browser discovery fails while running :runtime:jsTest.
                 Examples:
                   - macOS: export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
                   - Linux: export CHROME_BIN=/usr/bin/google-chrome
@@ -96,7 +122,9 @@ tasks.register("preflight") {
             )
         }
 
-        logger.lifecycle("Preflight passed: Android SDK and CHROME_BIN are configured.")
+        warnings.forEach { warning ->
+            logger.warn(warning)
+        }
+        logger.lifecycle("Preflight passed: Android SDK is valid for build prerequisites.")
     }
 }
-

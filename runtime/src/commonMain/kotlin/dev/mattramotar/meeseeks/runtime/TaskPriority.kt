@@ -13,8 +13,8 @@ import kotlinx.serialization.Serializable
  * @property HIGH Execution should be scheduled in front of other work.
  */
 @Serializable
-enum class TaskPriority {
+public enum class TaskPriority {
     LOW,
     MEDIUM,
-    HIGH
+    HIGH,
 }

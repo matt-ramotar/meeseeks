@@ -10,109 +10,109 @@ import dev.mattramotar.meeseeks.runtime.internal.Timestamp
 /**
  * Base exception for all retry-related errors
  */
-abstract class TaskRetryException(
+public abstract class TaskRetryException(
     message: String,
     cause: Throwable? = null,
-    val attemptNumber: Int = 0,
-    val maxRetries: Int = 0
+    public val attemptNumber: Int = 0,
+    public val maxRetries: Int = 0,
 ) : Exception(message, cause)
 
 /**
  * Thrown when a task has exceeded its maximum retry attempts
  */
-class MaxRetriesExceededException(
+public class MaxRetriesExceededException(
     taskId: String,
     attemptNumber: Int,
     maxRetries: Int,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : TaskRetryException(
     message = "Task $taskId exceeded maximum retry attempts ($attemptNumber/$maxRetries)",
     cause = cause,
     attemptNumber = attemptNumber,
-    maxRetries = maxRetries
+    maxRetries = maxRetries,
 )
 
 /**
  * Thrown when a task experiences a rate limit error
  */
-class RateLimitException(
+public class RateLimitException(
     message: String = "Rate limit exceeded",
-    val retryAfterMs: Long? = null,
+    public val retryAfterMs: Long? = null,
     attemptNumber: Int = 0,
-    maxRetries: Int = 0
+    maxRetries: Int = 0,
 ) : TaskRetryException(
     message = if (retryAfterMs != null) "$message. Retry after ${retryAfterMs}ms" else message,
     attemptNumber = attemptNumber,
-    maxRetries = maxRetries
+    maxRetries = maxRetries,
 )
 
 /**
  * Thrown when a task experiences a timeout
  */
-class TaskTimeoutException(
+public class TaskTimeoutException(
     message: String = "Task execution timed out",
-    val timeoutMs: Long,
+    public val timeoutMs: Long,
     attemptNumber: Int = 0,
-    maxRetries: Int = 0
+    maxRetries: Int = 0,
 ) : TaskRetryException(
     message = "$message after ${timeoutMs}ms",
     attemptNumber = attemptNumber,
-    maxRetries = maxRetries
+    maxRetries = maxRetries,
 )
 
 /**
  * Thrown when a dependent service is unavailable
  */
-class ServiceUnavailableException(
+public class ServiceUnavailableException(
     serviceName: String,
     cause: Throwable? = null,
     attemptNumber: Int = 0,
-    maxRetries: Int = 0
+    maxRetries: Int = 0,
 ) : TaskRetryException(
     message = "Service '$serviceName' is unavailable",
     cause = cause,
     attemptNumber = attemptNumber,
-    maxRetries = maxRetries
+    maxRetries = maxRetries,
 )
 
 /**
  * Thrown when a task cannot acquire a required resource
  */
-class ResourceUnavailableException(
+public class ResourceUnavailableException(
     resourceName: String,
     cause: Throwable? = null,
     attemptNumber: Int = 0,
-    maxRetries: Int = 0
+    maxRetries: Int = 0,
 ) : TaskRetryException(
     message = "Resource '$resourceName' is unavailable",
     cause = cause,
     attemptNumber = attemptNumber,
-    maxRetries = maxRetries
+    maxRetries = maxRetries,
 )
 
 /**
  * Thrown when there's a conflict that might be resolved by retry
  */
-class TransientConflictException(
+public class TransientConflictException(
     message: String = "Transient conflict detected",
     cause: Throwable? = null,
     attemptNumber: Int = 0,
-    maxRetries: Int = 0
+    maxRetries: Int = 0,
 ) : TaskRetryException(
     message = message,
     cause = cause,
     attemptNumber = attemptNumber,
-    maxRetries = maxRetries
+    maxRetries = maxRetries,
 )
 
 /**
  * Thrown when circuit breaker is open for a service
  */
-class CircuitBreakerOpenException(
+public class CircuitBreakerOpenException(
     serviceName: String,
-    val openUntilMs: Long? = null,
+    public val openUntilMs: Long? = null,
     attemptNumber: Int = 0,
-    maxRetries: Int = 0
+    maxRetries: Int = 0,
 ) : TaskRetryException(
     message = if (openUntilMs != null) {
         "Circuit breaker open for '$serviceName' until $openUntilMs"
@@ -120,13 +120,13 @@ class CircuitBreakerOpenException(
         "Circuit breaker open for '$serviceName'"
     },
     attemptNumber = attemptNumber,
-    maxRetries = maxRetries
+    maxRetries = maxRetries,
 )
 
 /**
  * Categories of retry errors for telemetry and monitoring
  */
-enum class RetryErrorCategory {
+public enum class RetryErrorCategory {
     NETWORK,
     RATE_LIMIT,
     TIMEOUT,
@@ -140,9 +140,9 @@ enum class RetryErrorCategory {
 /**
  * Categorize exceptions for retry policy decisions
  */
-object RetryErrorClassifier {
+public object RetryErrorClassifier {
 
-    fun classify(error: Throwable): RetryErrorCategory {
+    public fun classify(error: Throwable): RetryErrorCategory {
         return when (error) {
             is MaxRetriesExceededException -> RetryErrorCategory.MAX_RETRIES_EXCEEDED
             is RateLimitException -> RetryErrorCategory.RATE_LIMIT
@@ -156,7 +156,7 @@ object RetryErrorClassifier {
         }
     }
 
-    fun isRetryable(error: Throwable): Boolean {
+    public fun isRetryable(error: Throwable): Boolean {
         return when (classify(error)) {
             RetryErrorCategory.MAX_RETRIES_EXCEEDED -> false
             RetryErrorCategory.UNKNOWN -> {
@@ -167,7 +167,7 @@ object RetryErrorClassifier {
         }
     }
 
-    fun suggestedRetryDelay(error: Throwable, baseDelayMs: Long): Long {
+    public fun suggestedRetryDelay(error: Throwable, baseDelayMs: Long): Long {
         return when (error) {
             is RateLimitException -> error.retryAfterMs ?: baseDelayMs * 5
             is CircuitBreakerOpenException -> {

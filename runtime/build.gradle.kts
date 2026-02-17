@@ -22,7 +22,7 @@ android {
 }
 
 kotlin {
-    explicitApiWarning()
+    explicitApi()
 
     sourceSets {
         commonMain {
@@ -71,6 +71,13 @@ kotlin {
                 implementation(libs.web.worker.driver)
             }
         }
+    }
+}
+
+apiValidation {
+    @OptIn(kotlinx.validation.ExperimentalBCVApi::class)
+    klib {
+        enabled = true
     }
 }
 

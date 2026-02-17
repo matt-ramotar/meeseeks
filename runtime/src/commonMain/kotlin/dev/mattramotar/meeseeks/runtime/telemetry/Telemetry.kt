@@ -1,7 +1,6 @@
 package dev.mattramotar.meeseeks.runtime.telemetry
 
 
-fun interface Telemetry {
-    suspend fun onEvent(event: TelemetryEvent)
+public fun interface Telemetry {
+    public suspend fun onEvent(event: TelemetryEvent)
 }
-

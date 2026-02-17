@@ -8,24 +8,23 @@ import kotlin.time.Duration.Companion.seconds
  * Defines whether a [TaskRequest] runs once or periodically.
  */
 @Serializable
-sealed class TaskSchedule {
+public sealed class TaskSchedule {
     /**
      * Indicates the task runs once.
      */
     @Serializable
-    data class OneTime(
-        val initialDelay: Duration = 0.seconds
+    public data class OneTime(
+        public val initialDelay: Duration = 0.seconds,
     ) : TaskSchedule()
 
     /**
      * Indicates the task runs periodically at the specified [interval].
      */
     @Serializable
-    data class Periodic(
-        val initialDelay: Duration = 0.seconds,
-        val interval: Duration = 60.seconds,
-        val flexWindow: Duration = Duration.ZERO
+    public data class Periodic(
+        public val initialDelay: Duration = 0.seconds,
+        public val interval: Duration = 60.seconds,
+        public val flexWindow: Duration = Duration.ZERO,
     ) : TaskSchedule()
 
 }
-

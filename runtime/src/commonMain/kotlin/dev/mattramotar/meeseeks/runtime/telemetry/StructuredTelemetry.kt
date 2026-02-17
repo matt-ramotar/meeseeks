@@ -10,7 +10,7 @@ import kotlinx.serialization.json.Json
 /**
  * Structured telemetry implementation that provides comprehensive logging and statistics.
  */
-class StructuredTelemetry(
+public class StructuredTelemetry(
     private val config: Config = Config()
 ) : Telemetry {
 
@@ -21,11 +21,11 @@ class StructuredTelemetry(
      * @param maxStatsRetention Max tasks to keep stats for.
      * @param logger Logger implementation for output.
      */
-    data class Config(
-        val enableStatistics: Boolean = true,
-        val enableStructuredLogs: Boolean = true,
-        val maxStatsRetention: Int = 1000,
-        val logger: Logger = ConsoleLogger()
+    public data class Config(
+        public val enableStatistics: Boolean = true,
+        public val enableStructuredLogs: Boolean = true,
+        public val maxStatsRetention: Int = 1000,
+        public val logger: Logger = ConsoleLogger(),
     )
 
     private val json = Json {
@@ -37,22 +37,22 @@ class StructuredTelemetry(
      * Task statistics tracking.
      */
     @Serializable
-    data class TaskStats(
-        val taskId: String,
-        var totalAttempts: Int = 0,
-        var successfulAttempts: Int = 0,
-        var failedAttempts: Int = 0,
-        var transientFailures: Int = 0,
-        var permanentFailures: Int = 0,
-        val errorCategoryCounts: MutableMap<String, Int> = mutableMapOf(),
-        val retryDelays: MutableList<Long> = mutableListOf(),
-        var lastErrorCategory: String? = null,
-        var lastErrorMessage: String? = null,
-        var firstAttemptTime: Long? = null,
-        var lastAttemptTime: Long? = null,
-        var totalExecutionTimeMs: Long = 0
+    public data class TaskStats(
+        public val taskId: String,
+        public var totalAttempts: Int = 0,
+        public var successfulAttempts: Int = 0,
+        public var failedAttempts: Int = 0,
+        public var transientFailures: Int = 0,
+        public var permanentFailures: Int = 0,
+        public val errorCategoryCounts: MutableMap<String, Int> = mutableMapOf(),
+        public val retryDelays: MutableList<Long> = mutableListOf(),
+        public var lastErrorCategory: String? = null,
+        public var lastErrorMessage: String? = null,
+        public var firstAttemptTime: Long? = null,
+        public var lastAttemptTime: Long? = null,
+        public var totalExecutionTimeMs: Long = 0,
     ) {
-        fun toStatisticsEvent(taskId: TaskId): TelemetryEvent.TaskStatistics {
+        public fun toStatisticsEvent(taskId: TaskId): TelemetryEvent.TaskStatistics {
             val avgDelay = if (retryDelays.isNotEmpty()) {
                 retryDelays.sum() / retryDelays.size
             } else 0L
@@ -119,14 +119,14 @@ class StructuredTelemetry(
     /**
      * Get statistics for a specific task.
      */
-    fun getTaskStatistics(taskId: TaskId): TelemetryEvent.TaskStatistics? {
+    public fun getTaskStatistics(taskId: TaskId): TelemetryEvent.TaskStatistics? {
         return taskStats[taskId.value]?.toStatisticsEvent(taskId)
     }
 
     /**
      * Get aggregated statistics across all tasks.
      */
-    fun getAggregatedStatistics(): Map<String, Any?> {
+    public fun getAggregatedStatistics(): Map<String, Any?> {
         if (taskStats.isEmpty()) {
             return emptyMap()
         }
@@ -171,14 +171,14 @@ class StructuredTelemetry(
     /**
      * Export all events as JSON.
      */
-    fun exportEventsAsJson(): String {
+    public fun exportEventsAsJson(): String {
         return json.encodeToString(eventLog)
     }
 
     /**
      * Export statistics as JSON.
      */
-    fun exportStatisticsAsJson(): String {
+    public fun exportStatisticsAsJson(): String {
         val stats = taskStats.mapValues { (_, stats) ->
             mapOf(
                 "totalAttempts" to stats.totalAttempts,
@@ -202,14 +202,14 @@ class StructuredTelemetry(
     /**
      * Clear statistics for a specific task.
      */
-    fun clearTaskStatistics(taskId: TaskId) {
+    public fun clearTaskStatistics(taskId: TaskId) {
         taskStats.remove(taskId.value)
     }
 
     /**
      * Clear all statistics and logs.
      */
-    fun clearAll() {
+    public fun clearAll() {
         taskStats.clear()
         eventLog.clear()
     }
