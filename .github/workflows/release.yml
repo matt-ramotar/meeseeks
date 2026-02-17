@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'matt-ramotar/meeseeks' && github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    environment: release
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Grant execute permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Retrieve Version
+        run: |
+          echo "VERSION_NAME=$(grep -w 'VERSION_NAME' gradle.properties | cut -d'=' -f2)" >> $GITHUB_ENV
+
+      - name: Guard release to non-SNAPSHOT only
+        run: |
+          if [[ "${VERSION_NAME}" == *-SNAPSHOT ]]; then
+            echo "Refusing release workflow for SNAPSHOT versions."
+            echo "Use CI snapshot publish on main for SNAPSHOTs."
+            exit 1
+          fi
+
+      - name: Publish and Release to Maven Central (Central Portal)
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+        run: ./gradlew publishAndReleaseToMavenCentral

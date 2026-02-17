@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -37,10 +40,12 @@ jobs:
       - name: Build and Test with Coverage
         run: ./gradlew clean build :runtime:jvmApiCheck --stacktrace
 
-  publish:
+  publish-snapshot:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'matt-ramotar/meeseeks'
     runs-on: macos-latest
     needs: build-and-test
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,15 +66,18 @@ jobs:
         run: |
           echo "VERSION_NAME=$(grep -w 'VERSION_NAME' gradle.properties | cut -d'=' -f2)" >> $GITHUB_ENV
 
-      - name: Publish to Maven Central (Central Portal)
+      - name: Guard CI publish to SNAPSHOT only
+        run: |
+          if [[ "${VERSION_NAME}" != *-SNAPSHOT ]]; then
+            echo "Refusing GA release from CI on main."
+            echo "Use the manual release workflow (.github/workflows/release.yml) for non-SNAPSHOT versions."
+            exit 1
+          fi
+
+      - name: Publish SNAPSHOT to Maven Central (Central Portal)
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
-        run: |
-          if [[ "${VERSION_NAME}" == *-SNAPSHOT ]]; then
-            ./gradlew publishToMavenCentral
-          else
-            ./gradlew publishAndReleaseToMavenCentral
-          fi
+        run: ./gradlew publishToMavenCentral
