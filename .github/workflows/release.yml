@@ -39,6 +39,9 @@ jobs:
       - name: Grant execute permission for Gradlew
         run: chmod +x gradlew
 
+      - name: Warning hygiene gate
+        run: bash scripts/ci/check-warning-hygiene.sh
+
       - name: Retrieve Version
         run: |
           echo "VERSION_NAME=$(grep -w 'VERSION_NAME' gradle.properties | cut -d'=' -f2)" >> $GITHUB_ENV

@@ -148,6 +148,7 @@ Typical update flow:
 
 ```bash
 ./gradlew :runtime:dependencies :sample:dependencies :tooling:plugins:dependencies --write-locks
+./gradlew :commonizeNativeDistribution --write-locks
 ./gradlew --write-verification-metadata sha256 help
 ```
 

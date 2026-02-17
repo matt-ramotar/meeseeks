@@ -40,8 +40,11 @@ jobs:
       - name: Grant execute permission for Gradlew
         run: chmod +x gradlew
 
+      - name: Warning hygiene gate
+        run: bash scripts/ci/check-warning-hygiene.sh
+
       - name: Build and Test with Coverage
-        run: ./gradlew clean build :runtime:jvmApiCheck --stacktrace
+        run: ./gradlew clean build :runtime:jvmApiCheck --stacktrace --warning-mode fail
 
   publish-snapshot:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'matt-ramotar/meeseeks'

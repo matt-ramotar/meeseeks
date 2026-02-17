@@ -24,7 +24,6 @@ dependencies {
     compileOnly(libs.kotlin.gradle.plugin)
     compileOnly(libs.dokka.gradle.plugin)
     compileOnly(libs.maven.publish.plugin)
-    implementation(libs.mokkery.gradle)
     implementation(libs.kover.gradle.plugin)
 }
 
