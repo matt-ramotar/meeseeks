@@ -5,7 +5,6 @@ import dev.mattramotar.meeseeks.runtime.internal.MeeseeksDatabaseFactory
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistration
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.internal.createBGTaskManager
-import dev.mattramotar.meeseeks.runtime.internal.db.adapters.TaskSpecAdapter
 import dev.mattramotar.meeseeks.runtime.internal.db.adapters.taskLogEntityAdapter
 import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
 import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
@@ -117,7 +116,6 @@ class ConfigurationScope internal constructor(private val appContext: AppContext
         return factory.create(
             context = context,
             taskLogAdapter = taskLogEntityAdapter(json),
-            taskSpecAdapter = TaskSpecAdapter
         )
     }
 }

@@ -16,6 +16,7 @@ meeseeks = "0.6.0-SNAPSHOT"
 dokka = "1.9.20"
 maven-publish-plugin = "0.34.0"
 buildkonfig = "0.15.1"
+binary-compatibility-validator = "0.18.1"
 quartz = "2.3.2"
 turbine = "1.2.0"
 compose-compiler = "1.5.11"
@@ -80,3 +81,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-plugin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binary-compatibility-validator" }

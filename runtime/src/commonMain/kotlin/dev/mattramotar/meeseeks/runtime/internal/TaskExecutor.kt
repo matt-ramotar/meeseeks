@@ -14,6 +14,7 @@ import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
 import dev.mattramotar.meeseeks.runtime.internal.db.model.BackoffPolicy
 import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toDbValue
 import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
 import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent.TaskRetryDecision.RetryDecision.CIRCUIT_BREAKER_OPEN
 import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent.TaskRetryDecision.RetryDecision.MAX_RETRIES_EXCEEDED
@@ -182,7 +183,7 @@ internal object TaskExecutor {
 
         val taskSpec = database.taskSpecQueries.selectTaskById(taskId).executeAsOneOrNull()
             ?: return ExecutionResult.Terminal.Failure
-        if (taskSpec.state != TaskState.ENQUEUED) {
+        if (TaskState.fromDbValue(taskSpec.state) != TaskState.ENQUEUED) {
             return ExecutionResult.Terminal.Failure
         }
 
@@ -190,7 +191,7 @@ internal object TaskExecutor {
         val now = Timestamp.now()
         val updated = database.taskSpecQueries.transactionWithResult {
             database.taskSpecQueries.updateStateAndNextRunTimeIfEnqueued(
-                state = TaskState.ENQUEUED,
+                state = TaskState.ENQUEUED.toDbValue(),
                 updated_at_ms = now,
                 next_run_time_ms = now + delay.inWholeMilliseconds,
                 id = taskId
@@ -251,7 +252,7 @@ internal object TaskExecutor {
         return when (val schedule = request.schedule) {
             is TaskSchedule.OneTime -> {
                 database.taskSpecQueries.updateState(
-                    state = TaskState.SUCCEEDED,
+                    state = TaskState.SUCCEEDED.toDbValue(),
                     updated_at_ms = Timestamp.now(),
                     id = taskId
                 )
@@ -275,7 +276,7 @@ internal object TaskExecutor {
                 val delay = (base - flex + jitter).coerceAtLeast(Duration.ZERO)
 
                 database.taskSpecQueries.updateStateAndNextRunTime(
-                    state = TaskState.ENQUEUED,
+                    state = TaskState.ENQUEUED.toDbValue(),
                     updated_at_ms = now,
                     next_run_time_ms = now + delay.inWholeMilliseconds,
                     id = taskId
@@ -307,7 +308,7 @@ internal object TaskExecutor {
         config: BGTaskManagerConfig?
     ) {
         database.taskSpecQueries.updateState(
-            state = TaskState.FAILED,
+            state = TaskState.FAILED.toDbValue(),
             updated_at_ms = Timestamp.now(),
             id = taskId
         )
@@ -368,7 +369,7 @@ internal object TaskExecutor {
         database.taskSpecQueries.transaction {
             val now = Timestamp.now()
             database.taskSpecQueries.updateStateAndNextRunTime(
-                state = TaskState.ENQUEUED,
+                state = TaskState.ENQUEUED.toDbValue(),
                 updated_at_ms = now,
                 next_run_time_ms = now + nextRetryDelayMs,
                 id = taskId
@@ -431,7 +432,7 @@ internal object TaskExecutor {
         random: Random = Random.Default,
         minBackoffMs: Long = 0L
     ): Long {
-        val backoffPolicy = taskSpec?.backoff_policy
+        val backoffPolicy = taskSpec?.backoff_policy?.let(BackoffPolicy::fromDbValue)
             ?: BackoffPolicy.EXPONENTIAL
         val baseDelayMs = taskSpec?.backoff_delay_ms ?: 1000L
         val multiplier = taskSpec?.backoff_multiplier ?: 2.0

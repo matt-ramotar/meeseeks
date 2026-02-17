@@ -21,5 +21,6 @@ plugins {
     alias(libs.plugins.buildkonfig) apply false
     alias(libs.plugins.kotlin.plugin.parcelize) apply false
     alias(libs.plugins.maven.publish) apply false
+    alias(libs.plugins.binary.compatibility.validator) apply false
 }
 

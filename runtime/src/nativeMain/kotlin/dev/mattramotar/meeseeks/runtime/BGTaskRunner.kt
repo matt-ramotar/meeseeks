@@ -8,6 +8,7 @@ import dev.mattramotar.meeseeks.runtime.internal.TaskExecutor
 import dev.mattramotar.meeseeks.runtime.internal.Timestamp
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toDbValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -95,7 +96,7 @@ internal class BGTaskRunner(
         when (result) {
             is SubmitRequestResult.Success -> {
                 database.taskSpecQueries.updatePlatformId(identifier, now, taskId)
-                database.taskSpecQueries.updateState(TaskState.ENQUEUED, now, taskId)
+                database.taskSpecQueries.updateState(TaskState.ENQUEUED.toDbValue(), now, taskId)
 
                 database.taskLogQueries.insertLog(
                     taskId = taskId,
@@ -121,7 +122,7 @@ internal class BGTaskRunner(
             is SubmitRequestResult.Failure.NonRetriable -> {
                 // This is a permanent failure
                 // Log and mark task as failed
-                database.taskSpecQueries.updateState(TaskState.FAILED, now, taskId)
+                database.taskSpecQueries.updateState(TaskState.FAILED.toDbValue(), now, taskId)
 
                 database.taskLogQueries.insertLog(
                     taskId = taskId,

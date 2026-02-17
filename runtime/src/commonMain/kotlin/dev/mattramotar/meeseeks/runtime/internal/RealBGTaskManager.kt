@@ -13,6 +13,7 @@ import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import dev.mattramotar.meeseeks.runtime.internal.db.TaskMapper
 import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toDbValue
 import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
 import dev.mattramotar.meeseeks.runtime.telemetry.Telemetry
 import dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent
@@ -181,7 +182,7 @@ internal class RealBGTaskManager(
         val row = taskSpecQueries
             .selectTaskById(id.value)
             .executeAsOneOrNull() ?: return null
-        return row.state.toPublicStatus()
+        return TaskState.fromDbValue(row.state).toPublicStatus()
     }
 
     override fun listTasks(): List<ScheduledTask> {
@@ -216,7 +217,7 @@ internal class RealBGTaskManager(
         val normalized = TaskMapper.normalizeRequest(updatedRequest, timestamp, registry, config)
 
         taskSpecQueries.updateTask(
-            state = TaskState.ENQUEUED,
+            state = TaskState.ENQUEUED.toDbValue(),
             payload_type_id = normalized.payloadTypeId,
             payload_data = normalized.payloadData,
             priority = normalized.priority,
@@ -265,7 +266,7 @@ internal class RealBGTaskManager(
             .selectTaskById(id.value)
             .asFlow()
             .mapToOneOrNull(context = MeeseeksDispatchers.IO)
-            .map { entity -> entity?.state?.toPublicStatus() }
+            .map { entity -> entity?.state?.let { TaskState.fromDbValue(it).toPublicStatus() } }
     }
 
     private fun recoverStuckTasks() {

@@ -4,6 +4,7 @@ import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.db.model.BackoffPolicy
 import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toDbValue
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,7 +28,7 @@ class TaskExecutorBackoffJitterTest {
     ): TaskSpec {
         return TaskSpec(
             id = "task-id",
-            state = TaskState.ENQUEUED,
+            state = TaskState.ENQUEUED.toDbValue(),
             created_at_ms = 0L,
             updated_at_ms = 0L,
             run_attempt_count = 0L,
@@ -43,7 +44,7 @@ class TaskExecutorBackoffJitterTest {
             initial_delay_ms = 0L,
             interval_duration_ms = 0L,
             flex_duration_ms = 0L,
-            backoff_policy = backoffPolicy,
+            backoff_policy = backoffPolicy.toDbValue(),
             backoff_delay_ms = backoffDelayMs,
             max_retries = 3L,
             backoff_multiplier = backoffMultiplier,

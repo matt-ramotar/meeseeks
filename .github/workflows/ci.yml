@@ -35,7 +35,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build and Test with Coverage
-        run: ./gradlew clean build --stacktrace
+        run: ./gradlew clean build :runtime:jvmApiCheck --stacktrace
 
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'matt-ramotar/meeseeks'

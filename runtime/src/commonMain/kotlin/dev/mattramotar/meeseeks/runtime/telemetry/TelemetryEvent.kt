@@ -3,7 +3,6 @@ package dev.mattramotar.meeseeks.runtime.telemetry
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.internal.Timestamp
-import dev.mattramotar.meeseeks.runtime.internal.db.model.BackoffPolicy
 import dev.mattramotar.meeseeks.runtime.types.RetryErrorCategory
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -141,7 +140,7 @@ sealed class TelemetryEvent {
         val remainingRetries: Int,
         val errorCategory: RetryErrorCategory? = null,
         val errorMessage: String? = null,
-        val backoffPolicy: BackoffPolicy? = null
+        val backoffPolicy: String? = null
     ) : TelemetryEvent() {
         override fun structured(): String {
             val log = mapOf(
@@ -154,7 +153,7 @@ sealed class TelemetryEvent {
                 "nextRetryDelayMs" to nextRetryDelayMs,
                 "errorCategory" to errorCategory?.name,
                 "errorMessage" to errorMessage,
-                "backoffPolicy" to backoffPolicy?.name,
+                "backoffPolicy" to backoffPolicy,
                 "priority" to task.priority.name,
                 "requiresNetwork" to task.preconditions.requiresNetwork,
                 "requiresCharging" to task.preconditions.requiresCharging

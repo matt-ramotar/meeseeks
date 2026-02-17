@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.sqldelight)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.binary.compatibility.validator)
 }
 
 android {
@@ -21,6 +22,8 @@ android {
 }
 
 kotlin {
+    explicitApiWarning()
+
     sourceSets {
         commonMain {
             dependencies {

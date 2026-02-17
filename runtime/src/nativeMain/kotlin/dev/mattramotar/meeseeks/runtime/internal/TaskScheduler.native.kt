@@ -4,6 +4,7 @@ import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
+import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
 import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
 import kotlinx.cinterop.ExperimentalForeignApi
 
@@ -38,7 +39,7 @@ internal actual class TaskScheduler(
             .selectTaskById(taskId)
             .executeAsOneOrNull() ?: return false
 
-        val status = taskSpec.state.toPublicStatus()
+        val status = TaskState.fromDbValue(taskSpec.state).toPublicStatus()
         return status is TaskStatus.Pending || status is TaskStatus.Running
     }
 

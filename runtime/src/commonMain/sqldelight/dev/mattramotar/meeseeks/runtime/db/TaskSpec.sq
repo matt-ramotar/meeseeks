@@ -1,12 +1,10 @@
-import dev.mattramotar.meeseeks.runtime.internal.db.model.BackoffPolicy;
-import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState;
 import kotlin.Boolean;
 
 CREATE TABLE taskSpec (
     id TEXT NOT NULL PRIMARY KEY,
 
     -- State and Metadata
-    state TEXT AS TaskState NOT NULL,
+    state TEXT NOT NULL,
     created_at_ms INTEGER NOT NULL,
     updated_at_ms INTEGER NOT NULL,
     run_attempt_count INTEGER NOT NULL DEFAULT 0,
@@ -32,7 +30,7 @@ CREATE TABLE taskSpec (
     flex_duration_ms INTEGER NOT NULL,
 
     -- Retry Policy
-    backoff_policy TEXT AS BackoffPolicy NOT NULL,
+    backoff_policy TEXT NOT NULL,
     backoff_delay_ms INTEGER NOT NULL,
     max_retries INTEGER NOT NULL,
     backoff_multiplier REAL,

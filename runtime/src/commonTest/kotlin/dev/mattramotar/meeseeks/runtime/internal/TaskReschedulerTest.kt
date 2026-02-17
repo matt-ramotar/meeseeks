@@ -6,6 +6,7 @@ import dev.mattramotar.meeseeks.runtime.WorkerFactory
 import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.db.model.BackoffPolicy
 import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toDbValue
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -45,7 +46,7 @@ class TaskReschedulerTest {
         val serialized = registry.serializePayload(TestPayload("value"))
         return TaskSpec(
             id = "task-id",
-            state = TaskState.ENQUEUED,
+            state = TaskState.ENQUEUED.toDbValue(),
             created_at_ms = 0L,
             updated_at_ms = 0L,
             run_attempt_count = 0L,
@@ -61,7 +62,7 @@ class TaskReschedulerTest {
             initial_delay_ms = initialDelayMs,
             interval_duration_ms = intervalMs,
             flex_duration_ms = flexMs,
-            backoff_policy = BackoffPolicy.LINEAR,
+            backoff_policy = BackoffPolicy.LINEAR.toDbValue(),
             backoff_delay_ms = 1000L,
             max_retries = 3L,
             backoff_multiplier = null,

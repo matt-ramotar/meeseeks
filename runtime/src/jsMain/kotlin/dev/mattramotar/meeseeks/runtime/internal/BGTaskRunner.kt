@@ -7,7 +7,7 @@ import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
+internal object BGTaskRunner : CoroutineScope by CoroutineScope(MeeseeksDispatchers.IO) {
 
     private lateinit var database: MeeseeksDatabase
     private lateinit var registry: WorkerRegistry

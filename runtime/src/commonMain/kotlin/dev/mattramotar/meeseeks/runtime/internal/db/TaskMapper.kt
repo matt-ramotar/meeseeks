@@ -5,6 +5,7 @@ import dev.mattramotar.meeseeks.runtime.db.TaskSpec
 import dev.mattramotar.meeseeks.runtime.internal.WorkerRegistry
 import dev.mattramotar.meeseeks.runtime.internal.db.model.BackoffPolicy
 import dev.mattramotar.meeseeks.runtime.internal.db.model.TaskState
+import dev.mattramotar.meeseeks.runtime.internal.db.model.toDbValue
 import dev.mattramotar.meeseeks.runtime.internal.db.model.toPublicStatus
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -18,7 +19,7 @@ internal object TaskMapper {
     private const val SCHEDULE_PERIODIC = "PERIODIC"
 
     data class NormalizedRequest(
-        val state: TaskState,
+        val state: String,
         val payloadTypeId: String,
         val payloadData: String,
         val priority: Long,
@@ -30,7 +31,7 @@ internal object TaskMapper {
         val initialDelayMs: Long,
         val intervalMs: Long,
         val flexMs: Long,
-        val backoffPolicy: BackoffPolicy,
+        val backoffPolicy: String,
         val backoffDelayMs: Long,
         val maxRetries: Long,
         val backoffMultiplier: Double?,
@@ -49,7 +50,7 @@ internal object TaskMapper {
         val retryParams = calculateRetryParams(request.retryPolicy, config)
 
         return NormalizedRequest(
-            state = TaskState.ENQUEUED,
+            state = TaskState.ENQUEUED.toDbValue(),
             payloadTypeId = serializedPayload.typeId,
             payloadData = serializedPayload.data,
             priority = mapApiPriorityToDb(request.priority),
@@ -61,7 +62,7 @@ internal object TaskMapper {
             initialDelayMs = scheduleParams.initialDelayMs,
             intervalMs = scheduleParams.intervalMs,
             flexMs = scheduleParams.flexMs,
-            backoffPolicy = retryParams.backoffPolicy,
+            backoffPolicy = retryParams.backoffPolicy.toDbValue(),
             backoffDelayMs = retryParams.backoffDelayMs,
             maxRetries = retryParams.maxRetries,
             backoffMultiplier = retryParams.backoffMultiplier,
@@ -143,7 +144,7 @@ internal object TaskMapper {
     fun mapToScheduledTask(entity: TaskSpec, registry: WorkerRegistry): ScheduledTask {
         return ScheduledTask(
             id = TaskId(entity.id),
-            status = entity.state.toPublicStatus(),
+            status = TaskState.fromDbValue(entity.state).toPublicStatus(),
             task = mapToTaskRequest(entity, registry),
             runAttemptCount = entity.run_attempt_count.toInt(),
             createdAt = entity.created_at_ms,
@@ -170,7 +171,7 @@ internal object TaskMapper {
             )
             else -> error("Unknown schedule type: ${entity.schedule_type}")
         }
-        val retryPolicy = when (entity.backoff_policy) {
+        val retryPolicy = when (BackoffPolicy.fromDbValue(entity.backoff_policy)) {
             BackoffPolicy.LINEAR -> TaskRetryPolicy.FixedInterval(
                 retryInterval = entity.backoff_delay_ms.milliseconds,
                 maxRetries = if (entity.max_retries == Long.MAX_VALUE) null else entity.max_retries.toInt()
