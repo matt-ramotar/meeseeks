@@ -10,6 +10,10 @@ class SyncWorker(appContext: AppContext) : Worker<SyncPayload>(appContext) {
         payload: SyncPayload,
         context: RuntimeContext
     ): TaskResult {
-        TODO()
+        // Demonstrate a simple retry flow in the sample.
+        if (context.attemptCount <= 1) {
+            return TaskResult.Retry
+        }
+        return TaskResult.Success
     }
 }

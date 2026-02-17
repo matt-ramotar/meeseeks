@@ -10,6 +10,6 @@ class RefreshWorker(appContext: AppContext) : Worker<RefreshPayload>(appContext)
         payload: RefreshPayload,
         context: RuntimeContext
     ): TaskResult {
-        TODO()
+        return TaskResult.Success
     }
 }

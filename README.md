@@ -4,7 +4,81 @@
 
 Kotlin Multiplatform runtime for scheduling and managing background tasks across Android, JVM, JS, and iOS.
 
-## Prerequisites
+## Install
+
+Add Meeseeks in your shared KMP source set:
+
+```kotlin
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("dev.mattramotar.meeseeks:runtime:<version>")
+        }
+    }
+}
+```
+
+## Quickstart
+
+### 1) Define a payload and worker
+
+```kotlin
+@Serializable
+data object SyncPayload : TaskPayload
+
+class SyncWorker(appContext: AppContext) : Worker<SyncPayload>(appContext) {
+    override suspend fun run(payload: SyncPayload, context: RuntimeContext): TaskResult {
+        return TaskResult.Success
+    }
+}
+```
+
+### 2) Initialize Meeseeks and register workers
+
+```kotlin
+val manager = Meeseeks.initialize(appContext) {
+    minBackoff(20.seconds)
+    maxRetryCount(3)
+    maxParallelTasks(5)
+    allowExpedited()
+
+    register<SyncPayload> { SyncWorker(appContext) }
+}
+```
+
+### 3) Schedule tasks
+
+```kotlin
+val oneTime = manager.oneTime(SyncPayload) {
+    requireNetwork()
+    highPriority()
+}
+
+val periodic = manager.periodic(SyncPayload, every = 15.minutes) {
+    retryWithExponentialBackoff(initialDelay = 30.seconds, maxAttempts = 5)
+}
+```
+
+### 4) Observe and cancel
+
+```kotlin
+val taskId = oneTime.id
+val status = manager.getTaskStatus(taskId)
+val stream = manager.observeStatus(taskId)
+
+oneTime.cancel()
+```
+
+## Platform Setup
+
+- Android guide: `docs/platforms/android.md`
+- iOS guide: `docs/platforms/ios.md`
+- JS guide: `docs/platforms/js.md`
+- Capability matrix: `docs/capabilities.md`
+- Troubleshooting: `docs/troubleshooting.md`
+- Migration notes: `docs/migration-0x-to-1x.md`
+
+## Contributor Prerequisites
 
 - JDK 17
 - Android SDK configured via one of:
@@ -63,12 +137,14 @@ For an all-in-one local validation pass:
 ./gradlew preflight clean build --stacktrace
 ```
 
-## Troubleshooting
+## Troubleshooting (quick)
 
 - `SDK location not found`:
   - Set `ANDROID_HOME`/`ANDROID_SDK_ROOT` or add `sdk.dir` to `local.properties`.
 - `Cannot start ChromeHeadless` or `Please set env variable CHROME_BIN`:
   - Export `CHROME_BIN` to a valid Chrome/Chromium binary path.
+- `Cannot schedule task on <target>: unsupported preconditions [...]`:
+  - See `docs/capabilities.md` for target support and fail-fast rules.
 
 ## License
 
