@@ -1,0 +1,1438 @@
+public abstract interface class dev/mattramotar/meeseeks/runtime/BGTaskManager {
+	public abstract fun cancel-yx_VQho (Ljava/lang/String;)V
+	public abstract fun cancelAll ()V
+	public abstract fun getTaskStatus-yx_VQho (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/TaskStatus;
+	public abstract fun listTasks ()Ljava/util/List;
+	public abstract fun observeStatus-yx_VQho (Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun reschedule-h7m6IrY (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;)Ljava/lang/String;
+	public abstract fun reschedulePendingTasks ()V
+	public abstract fun schedule-G09Cy3M (Ldev/mattramotar/meeseeks/runtime/TaskRequest;)Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/BGTaskManagerConfig {
+	public synthetic fun <init> (IZIJLdev/mattramotar/meeseeks/runtime/telemetry/Telemetry;Ldev/mattramotar/meeseeks/runtime/PayloadCipher;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (IZIJLdev/mattramotar/meeseeks/runtime/telemetry/Telemetry;Ldev/mattramotar/meeseeks/runtime/PayloadCipher;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Z
+	public final fun component3 ()I
+	public final fun component4-UwyO8pc ()J
+	public final fun component5 ()Ldev/mattramotar/meeseeks/runtime/telemetry/Telemetry;
+	public final fun component6 ()Ldev/mattramotar/meeseeks/runtime/PayloadCipher;
+	public final fun component7-UwyO8pc ()J
+	public final fun copy-ICyFquI (IZIJLdev/mattramotar/meeseeks/runtime/telemetry/Telemetry;Ldev/mattramotar/meeseeks/runtime/PayloadCipher;J)Ldev/mattramotar/meeseeks/runtime/BGTaskManagerConfig;
+	public static synthetic fun copy-ICyFquI$default (Ldev/mattramotar/meeseeks/runtime/BGTaskManagerConfig;IZIJLdev/mattramotar/meeseeks/runtime/telemetry/Telemetry;Ldev/mattramotar/meeseeks/runtime/PayloadCipher;JILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/BGTaskManagerConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowExpedited ()Z
+	public final fun getMaxParallelTasks ()I
+	public final fun getMaxRetryCount ()I
+	public final fun getMinBackoff-UwyO8pc ()J
+	public final fun getOrphanedTaskWatchdogInterval-UwyO8pc ()J
+	public final fun getPayloadCipher ()Ldev/mattramotar/meeseeks/runtime/PayloadCipher;
+	public final fun getTelemetry ()Ldev/mattramotar/meeseeks/runtime/telemetry/Telemetry;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/BGTaskManagerKt {
+	public static final fun schedule (Ldev/mattramotar/meeseeks/runtime/BGTaskManager;Ldev/mattramotar/meeseeks/runtime/TaskRequest;)Ldev/mattramotar/meeseeks/runtime/TaskHandle;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/ConfigurationScope {
+	public final fun addRegistration (Lkotlin/reflect/KClass;Ldev/mattramotar/meeseeks/runtime/internal/WorkerRegistration;)V
+	public final fun allowExpedited (Z)Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;
+	public static synthetic fun allowExpedited$default (Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;ZILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;
+	public final fun getRegistrations ()Ljava/util/Map;
+	public final fun maxParallelTasks (I)Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;
+	public final fun maxRetryCount (I)Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;
+	public final fun minBackoff-LRDsOJo (J)Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;
+	public final fun payloadCipher (Ldev/mattramotar/meeseeks/runtime/PayloadCipher;)Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;
+	public final fun telemetry (Ldev/mattramotar/meeseeks/runtime/telemetry/Telemetry;)Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;
+	public final fun telemetry (Lkotlin/jvm/functions/Function1;)Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/Meeseeks {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/Meeseeks;
+	public final fun initialize (Landroid/content/Context;Lkotlin/jvm/functions/Function1;)Ldev/mattramotar/meeseeks/runtime/BGTaskManager;
+	public static synthetic fun initialize$default (Ldev/mattramotar/meeseeks/runtime/Meeseeks;Landroid/content/Context;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/BGTaskManager;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/MeeseeksWorkerFactory : androidx/work/WorkerFactory {
+	public fun <init> (Ldev/mattramotar/meeseeks/runtime/BGTaskManager;)V
+	public fun createWorker (Landroid/content/Context;Ljava/lang/String;Landroidx/work/WorkerParameters;)Landroidx/work/ListenableWorker;
+}
+
+public abstract interface class dev/mattramotar/meeseeks/runtime/PayloadCipher {
+	public abstract fun decrypt (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun encrypt (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/RuntimeContext {
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun copy (I)Ldev/mattramotar/meeseeks/runtime/RuntimeContext;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/RuntimeContext;IILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/RuntimeContext;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttemptCount ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/ScheduledTask {
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskStatus;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-c54K5Xc ()Ljava/lang/String;
+	public final fun component2 ()Ldev/mattramotar/meeseeks/runtime/TaskStatus;
+	public final fun component3 ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun component4 ()I
+	public final fun component5 ()J
+	public final fun component6 ()J
+	public final fun copy-QGFH4a8 (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskStatus;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IJJ)Ldev/mattramotar/meeseeks/runtime/ScheduledTask;
+	public static synthetic fun copy-QGFH4a8$default (Ldev/mattramotar/meeseeks/runtime/ScheduledTask;Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskStatus;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IJJILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/ScheduledTask;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCreatedAt ()J
+	public final fun getId-c54K5Xc ()Ljava/lang/String;
+	public final fun getRunAttemptCount ()I
+	public final fun getStatus ()Ldev/mattramotar/meeseeks/runtime/TaskStatus;
+	public final fun getTask ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun getUpdatedAt ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/mattramotar/meeseeks/runtime/TaskHandle {
+	public abstract fun cancel ()V
+	public abstract fun getId-c54K5Xc ()Ljava/lang/String;
+	public abstract fun observe ()Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskId {
+	public static final synthetic fun box-impl (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/TaskId;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public abstract interface class dev/mattramotar/meeseeks/runtime/TaskPayload {
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskPreconditions {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskPreconditions$Companion;
+	public fun <init> ()V
+	public fun <init> (ZZZ)V
+	public synthetic fun <init> (ZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun copy (ZZZ)Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;ZZZILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRequiresBatteryNotLow ()Z
+	public final fun getRequiresCharging ()Z
+	public final fun getRequiresNetwork ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/TaskPreconditions$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskPreconditions$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskPreconditions$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskPriority : java/lang/Enum {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskPriority$Companion;
+	public static final field HIGH Ldev/mattramotar/meeseeks/runtime/TaskPriority;
+	public static final field LOW Ldev/mattramotar/meeseeks/runtime/TaskPriority;
+	public static final field MEDIUM Ldev/mattramotar/meeseeks/runtime/TaskPriority;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/TaskPriority;
+	public static fun values ()[Ldev/mattramotar/meeseeks/runtime/TaskPriority;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskPriority$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskRequest {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskRequest$Companion;
+	public fun <init> (Ldev/mattramotar/meeseeks/runtime/TaskPayload;Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;Ldev/mattramotar/meeseeks/runtime/TaskPriority;Ldev/mattramotar/meeseeks/runtime/TaskSchedule;Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy;)V
+	public synthetic fun <init> (Ldev/mattramotar/meeseeks/runtime/TaskPayload;Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;Ldev/mattramotar/meeseeks/runtime/TaskPriority;Ldev/mattramotar/meeseeks/runtime/TaskSchedule;Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/mattramotar/meeseeks/runtime/TaskPayload;
+	public final fun component2 ()Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;
+	public final fun component3 ()Ldev/mattramotar/meeseeks/runtime/TaskPriority;
+	public final fun component4 ()Ldev/mattramotar/meeseeks/runtime/TaskSchedule;
+	public final fun component5 ()Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy;
+	public final fun copy (Ldev/mattramotar/meeseeks/runtime/TaskPayload;Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;Ldev/mattramotar/meeseeks/runtime/TaskPriority;Ldev/mattramotar/meeseeks/runtime/TaskSchedule;Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy;)Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/TaskRequest;Ldev/mattramotar/meeseeks/runtime/TaskPayload;Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;Ldev/mattramotar/meeseeks/runtime/TaskPriority;Ldev/mattramotar/meeseeks/runtime/TaskSchedule;Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Ldev/mattramotar/meeseeks/runtime/TaskPayload;
+	public final fun getPreconditions ()Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;
+	public final fun getPriority ()Ldev/mattramotar/meeseeks/runtime/TaskPriority;
+	public final fun getRetryPolicy ()Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy;
+	public final fun getSchedule ()Ldev/mattramotar/meeseeks/runtime/TaskSchedule;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskRequest$Companion {
+	public final fun oneTime (Ldev/mattramotar/meeseeks/runtime/TaskPayload;Lkotlin/jvm/functions/Function1;)Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public static synthetic fun oneTime$default (Ldev/mattramotar/meeseeks/runtime/TaskRequest$Companion;Ldev/mattramotar/meeseeks/runtime/TaskPayload;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun periodic-8Mi8wO0 (Ldev/mattramotar/meeseeks/runtime/TaskPayload;JLkotlin/jvm/functions/Function1;)Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public static synthetic fun periodic-8Mi8wO0$default (Ldev/mattramotar/meeseeks/runtime/TaskRequest$Companion;Ldev/mattramotar/meeseeks/runtime/TaskPayload;JLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/TaskResult {
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/TaskResult$Failure : dev/mattramotar/meeseeks/runtime/TaskResult {
+	public abstract fun getError ()Ljava/lang/Throwable;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskResult$Failure$Permanent : dev/mattramotar/meeseeks/runtime/TaskResult$Failure {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/Throwable;)Ldev/mattramotar/meeseeks/runtime/TaskResult$Failure$Permanent;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/TaskResult$Failure$Permanent;Ljava/lang/Throwable;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskResult$Failure$Permanent;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getError ()Ljava/lang/Throwable;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskResult$Failure$Transient : dev/mattramotar/meeseeks/runtime/TaskResult$Failure {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/Throwable;)Ldev/mattramotar/meeseeks/runtime/TaskResult$Failure$Transient;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/TaskResult$Failure$Transient;Ljava/lang/Throwable;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskResult$Failure$Transient;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getError ()Ljava/lang/Throwable;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskResult$Retry : dev/mattramotar/meeseeks/runtime/TaskResult {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskResult$Retry;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskResult$Success : dev/mattramotar/meeseeks/runtime/TaskResult {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskResult$Success;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskResult$Type : java/lang/Enum {
+	public static final field PermanentFailure Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
+	public static final field Retry Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
+	public static final field Success Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
+	public static final field SuccessAndScheduledNext Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
+	public static final field TransientFailure Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
+	public static fun values ()[Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$Companion;
+	public synthetic fun <init> (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public static final synthetic fun write$Self (Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff : dev/mattramotar/meeseeks/runtime/TaskRetryPolicy {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff$Companion;
+	public synthetic fun <init> (JIDLkotlin/time/Duration;DILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JIDLkotlin/time/Duration;DLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-UwyO8pc ()J
+	public final fun component2 ()I
+	public final fun component3 ()D
+	public final fun component4-FghU774 ()Lkotlin/time/Duration;
+	public final fun component5 ()D
+	public final fun copy-2bhVMm0 (JIDLkotlin/time/Duration;D)Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff;
+	public static synthetic fun copy-2bhVMm0$default (Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff;JIDLkotlin/time/Duration;DILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInitialInterval-UwyO8pc ()J
+	public final fun getJitterFactor ()D
+	public final fun getMaxInterval-FghU774 ()Lkotlin/time/Duration;
+	public final fun getMaxRetries ()I
+	public final fun getMultiplier ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval : dev/mattramotar/meeseeks/runtime/TaskRetryPolicy {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval$Companion;
+	public synthetic fun <init> (JLjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JLjava/lang/Integer;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-UwyO8pc ()J
+	public final fun component2 ()Ljava/lang/Integer;
+	public final fun copy-VtjQ1oo (JLjava/lang/Integer;)Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval;
+	public static synthetic fun copy-VtjQ1oo$default (Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval;JLjava/lang/Integer;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxRetries ()Ljava/lang/Integer;
+	public final fun getRetryInterval-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/TaskSchedule {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskSchedule$Companion;
+	public synthetic fun <init> (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public static final synthetic fun write$Self (Ldev/mattramotar/meeseeks/runtime/TaskSchedule;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskSchedule$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime : dev/mattramotar/meeseeks/runtime/TaskSchedule {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime$Companion;
+	public synthetic fun <init> (JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-UwyO8pc ()J
+	public final fun copy-LRDsOJo (J)Ldev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime;
+	public static synthetic fun copy-LRDsOJo$default (Ldev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime;JILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInitialDelay-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic : dev/mattramotar/meeseeks/runtime/TaskSchedule {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic$Companion;
+	public synthetic fun <init> (JJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-UwyO8pc ()J
+	public final fun component2-UwyO8pc ()J
+	public final fun component3-UwyO8pc ()J
+	public final fun copy-WzaCiaA (JJJ)Ldev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic;
+	public static synthetic fun copy-WzaCiaA$default (Ldev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic;JJJILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFlexWindow-UwyO8pc ()J
+	public final fun getInitialDelay-UwyO8pc ()J
+	public final fun getInterval-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/TaskStatus {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskStatus$Companion;
+	public synthetic fun <init> (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public static final synthetic fun write$Self (Ldev/mattramotar/meeseeks/runtime/TaskStatus;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskStatus$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/TaskStatus$Finished : dev/mattramotar/meeseeks/runtime/TaskStatus {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/TaskStatus$Finished$Companion;
+	public synthetic fun <init> (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public static final synthetic fun write$Self (Ldev/mattramotar/meeseeks/runtime/TaskStatus$Finished;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskStatus$Finished$Cancelled : dev/mattramotar/meeseeks/runtime/TaskStatus$Finished {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskStatus$Finished$Cancelled;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskStatus$Finished$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskStatus$Finished$Completed : dev/mattramotar/meeseeks/runtime/TaskStatus$Finished {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskStatus$Finished$Completed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskStatus$Finished$Failed : dev/mattramotar/meeseeks/runtime/TaskStatus$Finished {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskStatus$Finished$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskStatus$Pending : dev/mattramotar/meeseeks/runtime/TaskStatus {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskStatus$Pending;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskStatus$Running : dev/mattramotar/meeseeks/runtime/TaskStatus {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskStatus$Running;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/Worker {
+	public fun <init> (Landroid/content/Context;)V
+	public final fun getAppContext ()Landroid/content/Context;
+	public abstract fun run (Ldev/mattramotar/meeseeks/runtime/TaskPayload;Ldev/mattramotar/meeseeks/runtime/RuntimeContext;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/mattramotar/meeseeks/runtime/WorkerFactory {
+	public abstract fun create (Landroid/content/Context;)Ldev/mattramotar/meeseeks/runtime/Worker;
+}
+
+public abstract interface class dev/mattramotar/meeseeks/runtime/db/MeeseeksDatabase : app/cash/sqldelight/Transacter {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/db/MeeseeksDatabase$Companion;
+	public abstract fun getTaskLogQueries ()Ldev/mattramotar/meeseeks/runtime/db/TaskLogQueries;
+	public abstract fun getTaskSpecQueries ()Ldev/mattramotar/meeseeks/runtime/db/TaskSpecQueries;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/db/MeeseeksDatabase$Companion {
+	public final fun getSchema ()Lapp/cash/sqldelight/db/SqlSchema;
+	public final fun invoke (Lapp/cash/sqldelight/db/SqlDriver;Ldev/mattramotar/meeseeks/runtime/db/TaskLogEntity$Adapter;)Ldev/mattramotar/meeseeks/runtime/db/MeeseeksDatabase;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/db/SelectEarliestNextRunTime {
+	public fun <init> (Ljava/lang/Long;)V
+	public final fun component1 ()Ljava/lang/Long;
+	public final fun copy (Ljava/lang/Long;)Ldev/mattramotar/meeseeks/runtime/db/SelectEarliestNextRunTime;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/db/SelectEarliestNextRunTime;Ljava/lang/Long;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/db/SelectEarliestNextRunTime;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMIN ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/db/TaskLogEntity {
+	public fun <init> (JLjava/lang/String;JLdev/mattramotar/meeseeks/runtime/TaskResult$Type;JLjava/lang/String;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun component4 ()Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
+	public final fun component5 ()J
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (JLjava/lang/String;JLdev/mattramotar/meeseeks/runtime/TaskResult$Type;JLjava/lang/String;)Ldev/mattramotar/meeseeks/runtime/db/TaskLogEntity;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/db/TaskLogEntity;JLjava/lang/String;JLdev/mattramotar/meeseeks/runtime/TaskResult$Type;JLjava/lang/String;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/db/TaskLogEntity;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttempt ()J
+	public final fun getCreated ()J
+	public final fun getId ()J
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getResult ()Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
+	public final fun getTaskId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/db/TaskLogEntity$Adapter {
+	public fun <init> (Lapp/cash/sqldelight/ColumnAdapter;)V
+	public final fun getResultAdapter ()Lapp/cash/sqldelight/ColumnAdapter;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/db/TaskLogQueries : app/cash/sqldelight/TransacterImpl {
+	public fun <init> (Lapp/cash/sqldelight/db/SqlDriver;Ldev/mattramotar/meeseeks/runtime/db/TaskLogEntity$Adapter;)V
+	public final fun insertLog (Ljava/lang/String;JLdev/mattramotar/meeseeks/runtime/TaskResult$Type;JLjava/lang/String;)V
+	public final fun selectLogsForTask (Ljava/lang/String;)Lapp/cash/sqldelight/Query;
+	public final fun selectLogsForTask (Ljava/lang/String;Lkotlin/jvm/functions/Function6;)Lapp/cash/sqldelight/Query;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/db/TaskSpec {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;JJJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZZLjava/lang/String;JJJJLjava/lang/String;JJLjava/lang/Double;D)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Z
+	public final fun component11 ()Z
+	public final fun component12 ()Z
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component14 ()J
+	public final fun component15 ()J
+	public final fun component16 ()J
+	public final fun component17 ()J
+	public final fun component18 ()Ljava/lang/String;
+	public final fun component19 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component20 ()J
+	public final fun component21 ()Ljava/lang/Double;
+	public final fun component22 ()D
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun component5 ()J
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()J
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;JJJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZZLjava/lang/String;JJJJLjava/lang/String;JJLjava/lang/Double;D)Ldev/mattramotar/meeseeks/runtime/db/TaskSpec;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/db/TaskSpec;Ljava/lang/String;Ljava/lang/String;JJJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZZLjava/lang/String;JJJJLjava/lang/String;JJLjava/lang/Double;DILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/db/TaskSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackoff_delay_ms ()J
+	public final fun getBackoff_jitter_factor ()D
+	public final fun getBackoff_multiplier ()Ljava/lang/Double;
+	public final fun getBackoff_policy ()Ljava/lang/String;
+	public final fun getCreated_at_ms ()J
+	public final fun getFlex_duration_ms ()J
+	public final fun getId ()Ljava/lang/String;
+	public final fun getInitial_delay_ms ()J
+	public final fun getInterval_duration_ms ()J
+	public final fun getMax_retries ()J
+	public final fun getNext_run_time_ms ()J
+	public final fun getPayload_data ()Ljava/lang/String;
+	public final fun getPayload_type_id ()Ljava/lang/String;
+	public final fun getPlatform_id ()Ljava/lang/String;
+	public final fun getPriority ()J
+	public final fun getRequires_battery_not_low ()Z
+	public final fun getRequires_charging ()Z
+	public final fun getRequires_network ()Z
+	public final fun getRun_attempt_count ()J
+	public final fun getSchedule_type ()Ljava/lang/String;
+	public final fun getState ()Ljava/lang/String;
+	public final fun getUpdated_at_ms ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/db/TaskSpecQueries : app/cash/sqldelight/TransacterImpl {
+	public fun <init> (Lapp/cash/sqldelight/db/SqlDriver;)V
+	public final fun atomicallyClaimAndStartTask (JLjava/lang/String;)V
+	public final fun atomicallyClaimAndStartTaskWithLimit (JLjava/lang/String;J)V
+	public final fun cancelTask (JLjava/lang/String;)V
+	public final fun insertTask (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZZJLjava/lang/String;JJJLjava/lang/String;JJLjava/lang/Double;D)V
+	public final fun resetRunningTasksToEnqueued (J)V
+	public final fun selectAllActive ()Lapp/cash/sqldelight/Query;
+	public final fun selectAllActive (Lkotlin/jvm/functions/Function22;)Lapp/cash/sqldelight/Query;
+	public final fun selectAllPending ()Lapp/cash/sqldelight/Query;
+	public final fun selectAllPending (Lkotlin/jvm/functions/Function22;)Lapp/cash/sqldelight/Query;
+	public final fun selectAllTasks ()Lapp/cash/sqldelight/Query;
+	public final fun selectAllTasks (Lkotlin/jvm/functions/Function22;)Lapp/cash/sqldelight/Query;
+	public final fun selectChanges ()Lapp/cash/sqldelight/ExecutableQuery;
+	public final fun selectEarliestNextRunTime ()Lapp/cash/sqldelight/Query;
+	public final fun selectEarliestNextRunTime (Lkotlin/jvm/functions/Function1;)Lapp/cash/sqldelight/Query;
+	public final fun selectNextEligibleTasks (JJJJ)Lapp/cash/sqldelight/Query;
+	public final fun selectNextEligibleTasks (JJJJLkotlin/jvm/functions/Function22;)Lapp/cash/sqldelight/Query;
+	public final fun selectOverdueTasks (J)Lapp/cash/sqldelight/Query;
+	public final fun selectOverdueTasks (JLkotlin/jvm/functions/Function22;)Lapp/cash/sqldelight/Query;
+	public final fun selectTaskById (Ljava/lang/String;)Lapp/cash/sqldelight/Query;
+	public final fun selectTaskById (Ljava/lang/String;Lkotlin/jvm/functions/Function22;)Lapp/cash/sqldelight/Query;
+	public final fun updatePlatformId (Ljava/lang/String;JLjava/lang/String;)V
+	public final fun updateState (Ljava/lang/String;JLjava/lang/String;)V
+	public final fun updateStateAndNextRunTime (Ljava/lang/String;JJLjava/lang/String;)V
+	public final fun updateStateAndNextRunTimeIfEnqueued (Ljava/lang/String;JJLjava/lang/String;)V
+	public final fun updateTask (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZZLjava/lang/String;JJJJLjava/lang/String;JJLjava/lang/Double;DLjava/lang/String;JLjava/lang/String;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/dsl/OneTimeTaskRequestConfigurationScope : dev/mattramotar/meeseeks/runtime/dsl/TaskRequestConfigurationScope {
+	public synthetic fun <init> (Ldev/mattramotar/meeseeks/runtime/TaskPayload;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/dsl/PeriodicTaskRequestConfigurationScope : dev/mattramotar/meeseeks/runtime/dsl/TaskRequestConfigurationScope {
+	public synthetic fun <init> (Ldev/mattramotar/meeseeks/runtime/TaskPayload;JJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public class dev/mattramotar/meeseeks/runtime/dsl/TaskRequestConfigurationScope {
+	public final fun build ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun highPriority ()V
+	public final fun lowPriority ()V
+	public final fun mediumPriority ()V
+	public final fun requireBatteryNotLow (Z)V
+	public static synthetic fun requireBatteryNotLow$default (Ldev/mattramotar/meeseeks/runtime/dsl/TaskRequestConfigurationScope;ZILjava/lang/Object;)V
+	public final fun requireCharging (Z)V
+	public static synthetic fun requireCharging$default (Ldev/mattramotar/meeseeks/runtime/dsl/TaskRequestConfigurationScope;ZILjava/lang/Object;)V
+	public final fun requireNetwork (Z)V
+	public static synthetic fun requireNetwork$default (Ldev/mattramotar/meeseeks/runtime/dsl/TaskRequestConfigurationScope;ZILjava/lang/Object;)V
+	public final fun retryWithExponentialBackoff-VtjQ1oo (JI)V
+	public static synthetic fun retryWithExponentialBackoff-VtjQ1oo$default (Ldev/mattramotar/meeseeks/runtime/dsl/TaskRequestConfigurationScope;JIILjava/lang/Object;)V
+}
+
+public abstract interface annotation class dev/mattramotar/meeseeks/runtime/dsl/TaskRequestDsl : java/lang/annotation/Annotation {
+}
+
+public final class dev/mattramotar/meeseeks/runtime/internal/RealTaskHandle : dev/mattramotar/meeseeks/runtime/TaskHandle {
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/BGTaskManager;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun cancel ()V
+	public fun getId-c54K5Xc ()Ljava/lang/String;
+	public fun observe ()Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/internal/WorkerRegistration {
+	public fun <init> (Lkotlin/reflect/KClass;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ldev/mattramotar/meeseeks/runtime/WorkerFactory;)V
+	public final fun component1 ()Lkotlin/reflect/KClass;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/KSerializer;
+	public final fun component4 ()Ldev/mattramotar/meeseeks/runtime/WorkerFactory;
+	public final fun copy (Lkotlin/reflect/KClass;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ldev/mattramotar/meeseeks/runtime/WorkerFactory;)Ldev/mattramotar/meeseeks/runtime/internal/WorkerRegistration;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/internal/WorkerRegistration;Lkotlin/reflect/KClass;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ldev/mattramotar/meeseeks/runtime/WorkerFactory;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/internal/WorkerRegistration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFactory ()Ldev/mattramotar/meeseeks/runtime/WorkerFactory;
+	public final fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun getType ()Lkotlin/reflect/KClass;
+	public final fun getTypeId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/internal/concurrency/SynchronizedKt {
+	public static final fun synchronized (Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/internal/coroutines/MeeseeksDispatchers {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/internal/coroutines/MeeseeksDispatchers;
+	public final fun getIO ()Lkotlinx/coroutines/CoroutineDispatcher;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/CompositeLogger : dev/mattramotar/meeseeks/runtime/telemetry/Logger {
+	public fun <init> (Ljava/util/List;)V
+	public fun error (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public fun flush ()V
+	public fun isEnabled (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;)Z
+	public fun log (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Ljava/lang/String;)V
+	public fun logStructured (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/ConsoleLogger : dev/mattramotar/meeseeks/runtime/telemetry/Logger {
+	public fun <init> ()V
+	public fun <init> (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Z)V
+	public synthetic fun <init> (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun error (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public fun flush ()V
+	public fun isEnabled (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;)Z
+	public fun log (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Ljava/lang/String;)V
+	public fun logStructured (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/LogLevel : java/lang/Enum {
+	public static final field DEBUG Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;
+	public static final field ERROR Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;
+	public static final field INFO Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;
+	public static final field WARN Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;
+	public static fun values ()[Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;
+}
+
+public abstract interface class dev/mattramotar/meeseeks/runtime/telemetry/Logger {
+	public abstract fun error (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public abstract fun flush ()V
+	public abstract fun isEnabled (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;)Z
+	public abstract fun log (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Ljava/lang/String;)V
+	public abstract fun logStructured (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/Logger$DefaultImpls {
+	public static synthetic fun error$default (Ldev/mattramotar/meeseeks/runtime/telemetry/Logger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static fun flush (Ldev/mattramotar/meeseeks/runtime/telemetry/Logger;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/NoOpLogger : dev/mattramotar/meeseeks/runtime/telemetry/Logger {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/telemetry/NoOpLogger;
+	public fun error (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public fun flush ()V
+	public fun isEnabled (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;)Z
+	public fun log (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Ljava/lang/String;)V
+	public fun logStructured (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry : dev/mattramotar/meeseeks/runtime/telemetry/Telemetry {
+	public fun <init> ()V
+	public fun <init> (Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$Config;)V
+	public synthetic fun <init> (Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$Config;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clearAll ()V
+	public final fun clearTaskStatistics-yx_VQho (Ljava/lang/String;)V
+	public final fun exportEventsAsJson ()Ljava/lang/String;
+	public final fun exportStatisticsAsJson ()Ljava/lang/String;
+	public final fun getAggregatedStatistics ()Ljava/util/Map;
+	public final fun getTaskStatistics-yx_VQho (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskStatistics;
+	public fun onEvent (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$Config {
+	public fun <init> ()V
+	public fun <init> (ZZILdev/mattramotar/meeseeks/runtime/telemetry/Logger;)V
+	public synthetic fun <init> (ZZILdev/mattramotar/meeseeks/runtime/telemetry/Logger;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()I
+	public final fun component4 ()Ldev/mattramotar/meeseeks/runtime/telemetry/Logger;
+	public final fun copy (ZZILdev/mattramotar/meeseeks/runtime/telemetry/Logger;)Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$Config;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$Config;ZZILdev/mattramotar/meeseeks/runtime/telemetry/Logger;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$Config;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnableStatistics ()Z
+	public final fun getEnableStructuredLogs ()Z
+	public final fun getLogger ()Ldev/mattramotar/meeseeks/runtime/telemetry/Logger;
+	public final fun getMaxStatsRetention ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats$Companion;
+	public fun <init> (Ljava/lang/String;IIIIILjava/util/Map;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;J)V
+	public synthetic fun <init> (Ljava/lang/String;IIIIILjava/util/Map;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Ljava/lang/Long;
+	public final fun component12 ()Ljava/lang/Long;
+	public final fun component13 ()J
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun component7 ()Ljava/util/Map;
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;IIIIILjava/util/Map;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;J)Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats;Ljava/lang/String;IIIIILjava/util/Map;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;JILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getErrorCategoryCounts ()Ljava/util/Map;
+	public final fun getFailedAttempts ()I
+	public final fun getFirstAttemptTime ()Ljava/lang/Long;
+	public final fun getLastAttemptTime ()Ljava/lang/Long;
+	public final fun getLastErrorCategory ()Ljava/lang/String;
+	public final fun getLastErrorMessage ()Ljava/lang/String;
+	public final fun getPermanentFailures ()I
+	public final fun getRetryDelays ()Ljava/util/List;
+	public final fun getSuccessfulAttempts ()I
+	public final fun getTaskId ()Ljava/lang/String;
+	public final fun getTotalAttempts ()I
+	public final fun getTotalExecutionTimeMs ()J
+	public final fun getTransientFailures ()I
+	public fun hashCode ()I
+	public final fun setFailedAttempts (I)V
+	public final fun setFirstAttemptTime (Ljava/lang/Long;)V
+	public final fun setLastAttemptTime (Ljava/lang/Long;)V
+	public final fun setLastErrorCategory (Ljava/lang/String;)V
+	public final fun setLastErrorMessage (Ljava/lang/String;)V
+	public final fun setPermanentFailures (I)V
+	public final fun setSuccessfulAttempts (I)V
+	public final fun setTotalAttempts (I)V
+	public final fun setTotalExecutionTimeMs (J)V
+	public final fun setTransientFailures (I)V
+	public final fun toStatisticsEvent-yx_VQho (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskStatistics;
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class dev/mattramotar/meeseeks/runtime/telemetry/Telemetry {
+	public abstract fun onEvent (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public abstract fun structured ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$OrphanedTasksRecovered : dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$OrphanedTasksRecovered;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$OrphanedTasksRecovered;IILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$OrphanedTasksRecovered;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCount ()I
+	public fun hashCode ()I
+	public fun structured ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskCancelled : dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-c54K5Xc ()Ljava/lang/String;
+	public final fun component2 ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun component3 ()I
+	public final fun copy-7b6ikdY (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;I)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskCancelled;
+	public static synthetic fun copy-7b6ikdY$default (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskCancelled;Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskCancelled;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRunAttemptCount ()I
+	public final fun getTask ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun getTaskId-c54K5Xc ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun structured ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskFailed : dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;Ljava/lang/Throwable;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-c54K5Xc ()Ljava/lang/String;
+	public final fun component2 ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun component3 ()Ljava/lang/Throwable;
+	public final fun component4 ()I
+	public final fun copy-pYoL_Ps (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;Ljava/lang/Throwable;I)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskFailed;
+	public static synthetic fun copy-pYoL_Ps$default (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskFailed;Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;Ljava/lang/Throwable;IILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskFailed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/Throwable;
+	public final fun getRunAttemptCount ()I
+	public final fun getTask ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun getTaskId-c54K5Xc ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun structured ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision : dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;IILdev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-c54K5Xc ()Ljava/lang/String;
+	public final fun component2 ()Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy-QGFH4a8 (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;IILdev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision;
+	public static synthetic fun copy-QGFH4a8$default (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision;Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;IILdev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;Ljava/lang/String;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttemptCount ()I
+	public final fun getDecision ()Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;
+	public final fun getErrorCategory ()Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public final fun getMaxRetries ()I
+	public final fun getReason ()Ljava/lang/String;
+	public final fun getTaskId-c54K5Xc ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun structured ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision : java/lang/Enum {
+	public static final field CIRCUIT_BREAKER_OPEN Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;
+	public static final field MAX_RETRIES_EXCEEDED Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;
+	public static final field PERMANENT_FAILURE Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;
+	public static final field RATE_LIMITED Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;
+	public static final field RETRY_SCHEDULED Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;
+	public static fun values ()[Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryDecision$RetryDecision;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryScheduled : dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IJILdev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IJILdev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-c54K5Xc ()Ljava/lang/String;
+	public final fun component2 ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun component3 ()I
+	public final fun component4 ()J
+	public final fun component5 ()I
+	public final fun component6 ()Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun copy-7R4Yqqw (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IJILdev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;Ljava/lang/String;Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryScheduled;
+	public static synthetic fun copy-7R4Yqqw$default (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryScheduled;Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IJILdev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskRetryScheduled;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttemptCount ()I
+	public final fun getBackoffPolicy ()Ljava/lang/String;
+	public final fun getErrorCategory ()Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public final fun getErrorMessage ()Ljava/lang/String;
+	public final fun getNextRetryDelayMs ()J
+	public final fun getRemainingRetries ()I
+	public final fun getTask ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun getTaskId-c54K5Xc ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun structured ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskScheduled : dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-c54K5Xc ()Ljava/lang/String;
+	public final fun component2 ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun copy-kh89E0c (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskScheduled;
+	public static synthetic fun copy-kh89E0c$default (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskScheduled;Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskScheduled;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTask ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun getTaskId-c54K5Xc ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun structured ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskStarted : dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-c54K5Xc ()Ljava/lang/String;
+	public final fun component2 ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun component3 ()I
+	public final fun copy-7b6ikdY (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;I)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskStarted;
+	public static synthetic fun copy-7b6ikdY$default (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskStarted;Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskStarted;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRunAttemptCount ()I
+	public final fun getTask ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun getTaskId-c54K5Xc ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun structured ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskStatistics : dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public synthetic fun <init> (Ljava/lang/String;IIIIIJLjava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-c54K5Xc ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun component7 ()J
+	public final fun component8 ()Ljava/util/Map;
+	public final fun copy-7R4Yqqw (Ljava/lang/String;IIIIIJLjava/util/Map;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskStatistics;
+	public static synthetic fun copy-7R4Yqqw$default (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskStatistics;Ljava/lang/String;IIIIIJLjava/util/Map;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskStatistics;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAverageRetryDelayMs ()J
+	public final fun getErrorCategoryCounts ()Ljava/util/Map;
+	public final fun getFailedAttempts ()I
+	public final fun getPermanentFailures ()I
+	public final fun getSuccessfulAttempts ()I
+	public final fun getTaskId-c54K5Xc ()Ljava/lang/String;
+	public final fun getTotalAttempts ()I
+	public final fun getTransientFailures ()I
+	public fun hashCode ()I
+	public fun structured ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskSubmitFailed : dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public fun <init> (Ljava/lang/String;ILjava/lang/String;Z)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;ILjava/lang/String;Z)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskSubmitFailed;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskSubmitFailed;Ljava/lang/String;ILjava/lang/String;ZILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskSubmitFailed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getErrorCode ()I
+	public final fun getErrorDescription ()Ljava/lang/String;
+	public final fun getTaskIdentifier ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isRetriable ()Z
+	public fun structured ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskSucceeded : dev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent {
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-c54K5Xc ()Ljava/lang/String;
+	public final fun component2 ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun component3 ()I
+	public final fun copy-7b6ikdY (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;I)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskSucceeded;
+	public static synthetic fun copy-7b6ikdY$default (Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskSucceeded;Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskRequest;IILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/telemetry/TelemetryEvent$TaskSucceeded;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRunAttemptCount ()I
+	public final fun getTask ()Ldev/mattramotar/meeseeks/runtime/TaskRequest;
+	public final fun getTaskId-c54K5Xc ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun structured ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/BooleanValue : dev/mattramotar/meeseeks/runtime/types/Primitive {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/BooleanValue$Companion;
+	public fun <init> (Z)V
+	public final fun component1 ()Z
+	public final fun copy (Z)Ldev/mattramotar/meeseeks/runtime/types/BooleanValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/BooleanValue;ZILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/BooleanValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/BooleanValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/BooleanValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/BooleanValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/BooleanValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/BooleanValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/ByteValue : dev/mattramotar/meeseeks/runtime/types/Primitive {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/ByteValue$Companion;
+	public fun <init> (B)V
+	public final fun component1 ()B
+	public final fun copy (B)Ldev/mattramotar/meeseeks/runtime/types/ByteValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/ByteValue;BILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/ByteValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()B
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/ByteValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/ByteValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/ByteValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/ByteValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/ByteValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/CharValue : dev/mattramotar/meeseeks/runtime/types/Primitive {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/CharValue$Companion;
+	public fun <init> (C)V
+	public final fun component1 ()C
+	public final fun copy (C)Ldev/mattramotar/meeseeks/runtime/types/CharValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/CharValue;CILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/CharValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()C
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/CharValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/CharValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/CharValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/CharValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/CharValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/CircuitBreakerOpenException : dev/mattramotar/meeseeks/runtime/types/TaskRetryException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Long;II)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Long;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getOpenUntilMs ()Ljava/lang/Long;
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/types/Collection : dev/mattramotar/meeseeks/runtime/types/Value {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/Collection$Companion;
+	public synthetic fun <init> (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public static final synthetic fun write$Self (Ldev/mattramotar/meeseeks/runtime/types/Collection;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/Collection$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/DoubleValue : dev/mattramotar/meeseeks/runtime/types/Primitive {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/DoubleValue$Companion;
+	public fun <init> (D)V
+	public final fun component1 ()D
+	public final fun copy (D)Ldev/mattramotar/meeseeks/runtime/types/DoubleValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/DoubleValue;DILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/DoubleValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/DoubleValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/DoubleValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/DoubleValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/DoubleValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/DoubleValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/FloatValue : dev/mattramotar/meeseeks/runtime/types/Primitive {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/FloatValue$Companion;
+	public fun <init> (F)V
+	public final fun component1 ()F
+	public final fun copy (F)Ldev/mattramotar/meeseeks/runtime/types/FloatValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/FloatValue;FILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/FloatValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/FloatValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/FloatValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/FloatValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/FloatValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/FloatValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/IntValue : dev/mattramotar/meeseeks/runtime/types/Primitive {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/IntValue$Companion;
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Ldev/mattramotar/meeseeks/runtime/types/IntValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/IntValue;IILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/IntValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/IntValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/IntValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/IntValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/IntValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/IntValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/ListValue : dev/mattramotar/meeseeks/runtime/types/Collection {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/ListValue$Companion;
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Ldev/mattramotar/meeseeks/runtime/types/ListValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/ListValue;Ljava/util/List;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/ListValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/ListValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/ListValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/ListValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/ListValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/ListValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/LongValue : dev/mattramotar/meeseeks/runtime/types/Primitive {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/LongValue$Companion;
+	public fun <init> (J)V
+	public final fun component1 ()J
+	public final fun copy (J)Ldev/mattramotar/meeseeks/runtime/types/LongValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/LongValue;JILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/LongValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/LongValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/LongValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/LongValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/LongValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/LongValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/MapValue : dev/mattramotar/meeseeks/runtime/types/Collection {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/MapValue$Companion;
+	public fun <init> (Ljava/util/Map;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun copy (Ljava/util/Map;)Ldev/mattramotar/meeseeks/runtime/types/MapValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/MapValue;Ljava/util/Map;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/MapValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/MapValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/MapValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/MapValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/MapValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/MapValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/MaxRetriesExceededException : dev/mattramotar/meeseeks/runtime/types/TaskRetryException {
+	public fun <init> (Ljava/lang/String;IILjava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;IILjava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/NullValue : dev/mattramotar/meeseeks/runtime/types/Primitive {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/NullValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/PermanentValidationException : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/types/Primitive : dev/mattramotar/meeseeks/runtime/types/Value {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/Primitive$Companion;
+	public synthetic fun <init> (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public static final synthetic fun write$Self (Ldev/mattramotar/meeseeks/runtime/types/Primitive;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/Primitive$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/RateLimitException : dev/mattramotar/meeseeks/runtime/types/TaskRetryException {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Long;II)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Long;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getRetryAfterMs ()Ljava/lang/Long;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/ResourceUnavailableException : dev/mattramotar/meeseeks/runtime/types/TaskRetryException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;II)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/RetryErrorCategory : java/lang/Enum {
+	public static final field CIRCUIT_BREAKER Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public static final field MAX_RETRIES_EXCEEDED Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public static final field NETWORK Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public static final field RATE_LIMIT Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public static final field RESOURCE_CONTENTION Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public static final field SERVICE_UNAVAILABLE Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public static final field TIMEOUT Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public static final field UNKNOWN Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public static fun values ()[Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/RetryErrorClassifier {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/RetryErrorClassifier;
+	public final fun classify (Ljava/lang/Throwable;)Ldev/mattramotar/meeseeks/runtime/types/RetryErrorCategory;
+	public final fun isRetryable (Ljava/lang/Throwable;)Z
+	public final fun suggestedRetryDelay (Ljava/lang/Throwable;J)J
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/ServiceUnavailableException : dev/mattramotar/meeseeks/runtime/types/TaskRetryException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;II)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/ShortValue : dev/mattramotar/meeseeks/runtime/types/Primitive {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/ShortValue$Companion;
+	public fun <init> (S)V
+	public final fun component1 ()S
+	public final fun copy (S)Ldev/mattramotar/meeseeks/runtime/types/ShortValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/ShortValue;SILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/ShortValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()S
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/ShortValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/ShortValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/ShortValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/ShortValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/ShortValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/StringValue : dev/mattramotar/meeseeks/runtime/types/Primitive {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/StringValue$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/types/StringValue;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/types/StringValue;Ljava/lang/String;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/types/StringValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class dev/mattramotar/meeseeks/runtime/types/StringValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/StringValue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/StringValue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/mattramotar/meeseeks/runtime/types/StringValue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/StringValue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/types/TaskRetryException : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;II)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAttemptNumber ()I
+	public final fun getMaxRetries ()I
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/TaskTimeoutException : dev/mattramotar/meeseeks/runtime/types/TaskRetryException {
+	public fun <init> (Ljava/lang/String;JII)V
+	public synthetic fun <init> (Ljava/lang/String;JIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getTimeoutMs ()J
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/TransientConflictException : dev/mattramotar/meeseeks/runtime/types/TaskRetryException {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;II)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/TransientNetworkException : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public abstract class dev/mattramotar/meeseeks/runtime/types/Value {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/types/Value$Companion;
+	public synthetic fun <init> (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public static final synthetic fun write$Self (Ldev/mattramotar/meeseeks/runtime/types/Value;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/types/Value$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
