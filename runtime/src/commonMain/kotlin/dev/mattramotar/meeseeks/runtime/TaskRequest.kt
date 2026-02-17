@@ -24,7 +24,7 @@ data class TaskRequest(
             interval: Duration,
             block: TaskRequestConfigurationScope<T>.() -> Unit = {}
         ): TaskRequest {
-            return builder(payload, TaskSchedule.Periodic(interval), block)
+            return builder(payload, TaskSchedule.Periodic(interval = interval), block)
         }
 
         private fun <T : TaskPayload> builder(
