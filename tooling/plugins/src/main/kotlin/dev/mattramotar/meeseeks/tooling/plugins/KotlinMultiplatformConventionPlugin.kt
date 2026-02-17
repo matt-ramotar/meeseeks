@@ -5,7 +5,6 @@ import dev.mattramotar.meeseeks.tooling.extensions.libs
 import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.configurationcache.extensions.capitalized
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getByType
@@ -40,8 +39,10 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
 
             targets.all {
                 compilations.all {
-                    compilerOptions.configure {
-                        freeCompilerArgs.add("-Xexpect-actual-classes")
+                    compileTaskProvider.configure {
+                        compilerOptions {
+                            freeCompilerArgs.add("-Xexpect-actual-classes")
+                        }
                     }
                 }
             }
@@ -65,19 +66,21 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
 
             targets.withType<KotlinNativeTarget>().configureEach {
                 compilations.configureEach {
-                    compilerOptions.configure {
-                        freeCompilerArgs.add("-Xallocator=custom")
-                        freeCompilerArgs.add("-XXLanguage:+ImplicitSignedToUnsignedIntegerConversion")
-                        freeCompilerArgs.add("-Xadd-light-debug=enable")
+                    compileTaskProvider.configure {
+                        compilerOptions {
+                            freeCompilerArgs.add("-Xallocator=custom")
+                            freeCompilerArgs.add("-XXLanguage:+ImplicitSignedToUnsignedIntegerConversion")
+                            freeCompilerArgs.add("-Xadd-light-debug=enable")
 
-                        freeCompilerArgs.addAll(
-                            "-opt-in=kotlin.RequiresOptIn",
-                            "-opt-in=kotlin.time.ExperimentalTime",
-                            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                            "-opt-in=kotlinx.coroutines.FlowPreview",
-                            "-opt-in=kotlinx.cinterop.ExperimentalForeignApi",
-                            "-opt-in=kotlinx.cinterop.BetaInteropApi",
-                        )
+                            freeCompilerArgs.addAll(
+                                "-opt-in=kotlin.RequiresOptIn",
+                                "-opt-in=kotlin.time.ExperimentalTime",
+                                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                                "-opt-in=kotlinx.coroutines.FlowPreview",
+                                "-opt-in=kotlinx.cinterop.ExperimentalForeignApi",
+                                "-opt-in=kotlinx.cinterop.BetaInteropApi",
+                            )
+                        }
                     }
                 }
             }
@@ -114,7 +117,7 @@ private fun Project.addKspDependencyForAllTargets(
             }
             .forEach { target ->
                 add(
-                    "ksp${target.targetName.capitalized()}$configurationNameSuffix",
+                    "ksp${target.targetName.replaceFirstChar { it.uppercaseChar() }}$configurationNameSuffix",
                     dependencyNotation,
                 )
             }
