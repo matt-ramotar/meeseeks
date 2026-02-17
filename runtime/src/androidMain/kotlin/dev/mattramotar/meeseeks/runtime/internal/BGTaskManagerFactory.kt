@@ -36,6 +36,7 @@ internal actual class BGTaskManagerFactory {
             taskRescheduler,
             config,
             registry = registry,
+            constraintCapabilities = ConstraintCapabilities.ANDROID,
             telemetry = config.telemetry,
             appContext = context
         )

@@ -32,6 +32,7 @@ internal class RealBGTaskManager(
     private val taskRescheduler: TaskRescheduler,
     internal val config: BGTaskManagerConfig,
     internal val registry: WorkerRegistry,
+    private val constraintCapabilities: ConstraintCapabilities,
     private val appContext: AppContext,
     override val coroutineContext: CoroutineContext = SupervisorJob() + MeeseeksDispatchers.IO,
     private val telemetry: Telemetry? = null,
@@ -64,6 +65,8 @@ internal class RealBGTaskManager(
     }
 
     override fun schedule(request: TaskRequest): TaskId {
+        constraintCapabilities.validate(request.preconditions, operation = "schedule")
+
         val timestamp = Timestamp.now()
         val normalized = TaskMapper.normalizeRequest(request, timestamp, registry, config)
         val taskId = newTaskId()
@@ -195,6 +198,8 @@ internal class RealBGTaskManager(
         id: TaskId,
         updatedRequest: TaskRequest
     ): TaskId {
+        constraintCapabilities.validate(updatedRequest.preconditions, operation = "reschedule")
+
         val existing = taskSpecQueries.selectTaskById(id.value).executeAsOneOrNull()
             ?: error("Update failed: Task $id not found.")
 

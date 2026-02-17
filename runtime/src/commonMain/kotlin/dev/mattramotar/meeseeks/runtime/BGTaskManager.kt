@@ -18,6 +18,7 @@ interface BGTaskManager {
      *
      * @param request The [TaskRequest] to schedule.
      * @return [TaskId] identifying the summoned [Worker].
+     * @throws IllegalArgumentException if [request] contains preconditions unsupported by this target.
      */
     fun schedule(request: TaskRequest): TaskId
 
@@ -57,6 +58,7 @@ interface BGTaskManager {
      *
      * @return the same ID that was updated, for convenience
      * @throws IllegalStateException if no task with [id] exists
+     * @throws IllegalArgumentException if [updatedRequest] contains preconditions unsupported by this target.
      */
     fun reschedule(id: TaskId, updatedRequest: TaskRequest): TaskId
 

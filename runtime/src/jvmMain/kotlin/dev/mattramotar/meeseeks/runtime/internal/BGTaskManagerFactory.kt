@@ -49,6 +49,7 @@ internal actual class BGTaskManagerFactory {
             taskRescheduler = taskRescheduler,
             registry = registry,
             config = config,
+            constraintCapabilities = ConstraintCapabilities.JVM,
             appContext = context,
             telemetry = config.telemetry,
         )

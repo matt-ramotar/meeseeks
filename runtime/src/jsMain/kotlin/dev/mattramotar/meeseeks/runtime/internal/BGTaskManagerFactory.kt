@@ -27,6 +27,7 @@ internal actual class BGTaskManagerFactory actual constructor() {
             taskRescheduler = taskRescheduler,
             registry = registry,
             config = config,
+            constraintCapabilities = ConstraintCapabilities.JS,
             appContext = context
         )
     }

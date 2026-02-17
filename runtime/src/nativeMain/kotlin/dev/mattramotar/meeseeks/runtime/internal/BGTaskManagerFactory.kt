@@ -50,6 +50,7 @@ internal actual class BGTaskManagerFactory {
             taskRescheduler = taskRescheduler,
             config = config,
             registry = registry,
+            constraintCapabilities = ConstraintCapabilities.IOS,
             telemetry = config.telemetry,
             appContext = context
         )
