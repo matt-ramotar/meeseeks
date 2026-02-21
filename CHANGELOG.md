@@ -6,6 +6,12 @@ This project follows semantic versioning.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-02-20
+
+### Fixed
+
+- Resolved iOS crash when logging task results by replacing `TaskResult.Type` serializer lookup in `TaskResultAdapter` with string-based encoding/decoding and compatibility handling for both JSON-quoted and plain stored values (issue #64).
+
 ## [1.0.0] - 2026-02-17
 
 ### Added
