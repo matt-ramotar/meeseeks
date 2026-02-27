@@ -31,7 +31,6 @@ kotlin {
                 api(libs.kotlinx.serialization.core)
                 api(libs.kotlinx.serialization.json)
                 implementation(libs.kotlin.reflect)
-                implementation(libs.kotlinx.datetime)
                 implementation(libs.coroutines.extensions)
             }
         }
