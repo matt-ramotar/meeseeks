@@ -19,7 +19,7 @@ quartz = "2.3.2"
 turbine = "1.2.0"
 compose-compiler = "1.5.11"
 junit = "4.13.2"
-sqldelight = "2.0.2"
+sqldelight = "2.2.1"
 android-work = "2.10.0"
 
 
