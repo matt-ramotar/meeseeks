@@ -6,6 +6,12 @@ This project follows semantic versioning.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-02-28
+
+### Fixed
+
+- Migrated runtime timestamping from `kotlinx.datetime.Clock` to `kotlin.time.Clock` and removed the `kotlinx-datetime` runtime dependency (`3334f22af6440bbded956fcc5b809f45eed4aadd`, #67).
+
 ## [1.0.1] - 2026-02-20
 
 ### Fixed
