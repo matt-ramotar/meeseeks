@@ -141,7 +141,7 @@ public final class dev/mattramotar/meeseeks/runtime/TaskPreconditions {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/TaskPreconditions$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/TaskPreconditions$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskPreconditions$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/TaskPreconditions;
@@ -287,7 +287,7 @@ public final class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialB
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$ExponentialBackoff;
@@ -317,7 +317,7 @@ public final class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterva
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/TaskRetryPolicy$FixedInterval;
@@ -355,7 +355,7 @@ public final class dev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime : dev/m
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/TaskSchedule$OneTime;
@@ -387,7 +387,7 @@ public final class dev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic : dev/
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/TaskSchedule$Periodic;
@@ -675,7 +675,8 @@ public final class dev/mattramotar/meeseeks/runtime/telemetry/LogLevel : java/la
 
 public abstract interface class dev/mattramotar/meeseeks/runtime/telemetry/Logger {
 	public abstract fun error (Ljava/lang/String;Ljava/lang/Throwable;)V
-	public abstract fun flush ()V
+	public static synthetic fun error$default (Ldev/mattramotar/meeseeks/runtime/telemetry/Logger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public fun flush ()V
 	public abstract fun isEnabled (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;)Z
 	public abstract fun log (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Ljava/lang/String;)V
 	public abstract fun logStructured (Ldev/mattramotar/meeseeks/runtime/telemetry/LogLevel;Ljava/lang/String;Ljava/lang/String;)V
@@ -775,7 +776,7 @@ public final class dev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetr
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/telemetry/StructuredTelemetry$TaskStats;
@@ -1010,7 +1011,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/BooleanValue : dev/mat
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/BooleanValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/BooleanValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/BooleanValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/BooleanValue;
@@ -1037,7 +1038,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/ByteValue : dev/mattra
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/ByteValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/ByteValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/ByteValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/ByteValue;
@@ -1064,7 +1065,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/CharValue : dev/mattra
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/CharValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/CharValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/CharValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/CharValue;
@@ -1107,7 +1108,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/DoubleValue : dev/matt
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/DoubleValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/DoubleValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/DoubleValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/DoubleValue;
@@ -1134,7 +1135,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/FloatValue : dev/mattr
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/FloatValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/FloatValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/FloatValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/FloatValue;
@@ -1161,7 +1162,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/IntValue : dev/mattram
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/IntValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/IntValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/IntValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/IntValue;
@@ -1188,7 +1189,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/ListValue : dev/mattra
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/ListValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/ListValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/ListValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/ListValue;
@@ -1215,7 +1216,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/LongValue : dev/mattra
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/LongValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/LongValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/LongValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/LongValue;
@@ -1242,7 +1243,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/MapValue : dev/mattram
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/MapValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/MapValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/MapValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/MapValue;
@@ -1335,7 +1336,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/ShortValue : dev/mattr
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/ShortValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/ShortValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/ShortValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/ShortValue;
@@ -1362,7 +1363,7 @@ public final class dev/mattramotar/meeseeks/runtime/types/StringValue : dev/matt
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class dev/mattramotar/meeseeks/runtime/types/StringValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class dev/mattramotar/meeseeks/runtime/types/StringValue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Ldev/mattramotar/meeseeks/runtime/types/StringValue$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/mattramotar/meeseeks/runtime/types/StringValue;

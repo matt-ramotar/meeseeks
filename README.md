@@ -182,6 +182,8 @@ Typical update flow:
 ./gradlew --write-verification-metadata sha256 help
 ```
 
+CI enforces verification metadata drift checks via `bash scripts/ci/check-dependency-verification.sh`.
+
 ## Troubleshooting (quick)
 
 - `SDK location not found`:
