@@ -4,8 +4,10 @@ import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.internal.Timestamp
 import dev.mattramotar.meeseeks.runtime.types.RetryErrorCategory
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 
 public sealed class TelemetryEvent {
 
@@ -16,7 +18,7 @@ public sealed class TelemetryEvent {
         public val task: TaskRequest
     ) : TelemetryEvent() {
         override fun structured(): String {
-            val log = mapOf(
+            return telemetryJson(
                 "event" to "TASK_SCHEDULED",
                 "timestamp" to Timestamp.now(),
                 "taskId" to taskId.value,
@@ -25,7 +27,6 @@ public sealed class TelemetryEvent {
                 "requiresNetwork" to task.preconditions.requiresNetwork,
                 "requiresCharging" to task.preconditions.requiresCharging
             )
-            return Json.encodeToString(log)
         }
     }
 
@@ -35,7 +36,7 @@ public sealed class TelemetryEvent {
         public val runAttemptCount: Int = 1,
     ) : TelemetryEvent() {
         override fun structured(): String {
-            val log = mapOf(
+            return telemetryJson(
                 "event" to "TASK_STARTED",
                 "timestamp" to Timestamp.now(),
                 "taskId" to taskId.value,
@@ -45,7 +46,6 @@ public sealed class TelemetryEvent {
                 "requiresNetwork" to task.preconditions.requiresNetwork,
                 "requiresCharging" to task.preconditions.requiresCharging
             )
-            return Json.encodeToString(log)
         }
     }
 
@@ -55,7 +55,7 @@ public sealed class TelemetryEvent {
         public val runAttemptCount: Int = 1,
     ) : TelemetryEvent() {
         override fun structured(): String {
-            val log = mapOf(
+            return telemetryJson(
                 "event" to "TASK_SUCCEEDED",
                 "timestamp" to Timestamp.now(),
                 "taskId" to taskId.value,
@@ -63,7 +63,6 @@ public sealed class TelemetryEvent {
                 "runAttemptCount" to runAttemptCount,
                 "totalRetries" to (runAttemptCount - 1)
             )
-            return Json.encodeToString(log)
         }
     }
 
@@ -74,7 +73,7 @@ public sealed class TelemetryEvent {
         public val runAttemptCount: Int = 1,
     ) : TelemetryEvent() {
         override fun structured(): String {
-            val log = mapOf(
+            return telemetryJson(
                 "event" to "TASK_FAILED",
                 "timestamp" to Timestamp.now(),
                 "taskId" to taskId.value,
@@ -83,7 +82,6 @@ public sealed class TelemetryEvent {
                 "errorType" to (error?.let { it::class.simpleName } ?: "Unknown"),
                 "errorMessage" to error?.message
             )
-            return Json.encodeToString(log)
         }
     }
 
@@ -93,14 +91,13 @@ public sealed class TelemetryEvent {
         public val runAttemptCount: Int = 1,
     ) : TelemetryEvent() {
         override fun structured(): String {
-            val log = mapOf(
+            return telemetryJson(
                 "event" to "TASK_CANCELLED",
                 "timestamp" to Timestamp.now(),
                 "taskId" to taskId.value,
                 "taskType" to (task.payload::class.simpleName ?: "Unknown"),
                 "runAttemptCount" to runAttemptCount
             )
-            return Json.encodeToString(log)
         }
     }
 
@@ -114,7 +111,7 @@ public sealed class TelemetryEvent {
         public val isRetriable: Boolean
     ) : TelemetryEvent() {
         override fun structured(): String {
-            val log = mapOf(
+            return telemetryJson(
                 "event" to "TASK_SUBMIT_FAILED",
                 "timestamp" to Timestamp.now(),
                 "taskIdentifier" to taskIdentifier,
@@ -128,7 +125,6 @@ public sealed class TelemetryEvent {
                     else -> "Unknown"
                 }
             )
-            return Json.encodeToString(log)
         }
     }
 
@@ -143,7 +139,7 @@ public sealed class TelemetryEvent {
         public val backoffPolicy: String? = null
     ) : TelemetryEvent() {
         override fun structured(): String {
-            val log = mapOf(
+            return telemetryJson(
                 "event" to "TASK_RETRY_SCHEDULED",
                 "timestamp" to Timestamp.now(),
                 "taskId" to taskId.value,
@@ -158,7 +154,6 @@ public sealed class TelemetryEvent {
                 "requiresNetwork" to task.preconditions.requiresNetwork,
                 "requiresCharging" to task.preconditions.requiresCharging
             )
-            return Json.encodeToString(log)
         }
     }
 
@@ -179,7 +174,7 @@ public sealed class TelemetryEvent {
         }
 
         override fun structured(): String {
-            val log = mapOf(
+            return telemetryJson(
                 "event" to "TASK_RETRY_DECISION",
                 "timestamp" to Timestamp.now(),
                 "taskId" to taskId.value,
@@ -189,7 +184,6 @@ public sealed class TelemetryEvent {
                 "errorCategory" to errorCategory.name,
                 "reason" to reason
             )
-            return Json.encodeToString(log)
         }
     }
 
@@ -204,22 +198,20 @@ public sealed class TelemetryEvent {
         public val errorCategoryCounts: Map<String, Int>
     ) : TelemetryEvent() {
         override fun structured(): String {
-            return Json.encodeToString(
-                mapOf(
-                    "event" to "TASK_STATISTICS",
-                    "timestamp" to Timestamp.now(),
-                    "taskId" to taskId.value,
-                    "totalAttempts" to totalAttempts,
-                    "successfulAttempts" to successfulAttempts,
-                    "failedAttempts" to failedAttempts,
-                    "transientFailures" to transientFailures,
-                    "permanentFailures" to permanentFailures,
-                    "averageRetryDelayMs" to averageRetryDelayMs,
-                    "errorCategoryCounts" to errorCategoryCounts,
-                    "successRate" to if (totalAttempts > 0) {
-                        (successfulAttempts.toDouble() / totalAttempts * 100)
-                    } else 0.0
-                )
+            return telemetryJson(
+                "event" to "TASK_STATISTICS",
+                "timestamp" to Timestamp.now(),
+                "taskId" to taskId.value,
+                "totalAttempts" to totalAttempts,
+                "successfulAttempts" to successfulAttempts,
+                "failedAttempts" to failedAttempts,
+                "transientFailures" to transientFailures,
+                "permanentFailures" to permanentFailures,
+                "averageRetryDelayMs" to averageRetryDelayMs,
+                "errorCategoryCounts" to errorCategoryCounts,
+                "successRate" to if (totalAttempts > 0) {
+                    (successfulAttempts.toDouble() / totalAttempts * 100)
+                } else 0.0
             )
         }
     }
@@ -231,12 +223,44 @@ public sealed class TelemetryEvent {
         public val count: Int
     ) : TelemetryEvent() {
         override fun structured(): String {
-            val log = mapOf(
+            return telemetryJson(
                 "event" to "ORPHANED_TASKS_RECOVERED",
                 "timestamp" to Timestamp.now(),
                 "count" to count
             )
-            return Json.encodeToString(log)
         }
+    }
+}
+
+private fun telemetryJson(vararg fields: Pair<String, Any?>): String {
+    return buildJsonObject {
+        fields.forEach { (key, value) ->
+            putJsonValue(key, value)
+        }
+    }.toString()
+}
+
+private fun JsonObjectBuilder.putJsonValue(key: String, value: Any?) {
+    when (value) {
+        null -> put(key, JsonNull)
+        is String -> put(key, JsonPrimitive(value))
+        is Boolean -> put(key, JsonPrimitive(value))
+        is Int -> put(key, JsonPrimitive(value))
+        is Long -> put(key, JsonPrimitive(value))
+        is Double -> put(key, JsonPrimitive(value))
+        is Float -> put(key, JsonPrimitive(value))
+        is Map<*, *> -> {
+            put(
+                key,
+                buildJsonObject {
+                    value.forEach { (nestedKey, nestedValue) ->
+                        if (nestedKey != null) {
+                            putJsonValue(nestedKey.toString(), nestedValue)
+                        }
+                    }
+                }
+            )
+        }
+        else -> put(key, JsonPrimitive(value.toString()))
     }
 }
