@@ -76,13 +76,46 @@ jobs:
       - name: Preflight
         run: ./gradlew preflight --stacktrace
 
+      - name: Sample app smoke gate (Android/Desktop/Web)
+        run: bash scripts/ci/check-sample-app-smoke.sh
+
       - name: Build and Test with Coverage
         run: ./gradlew clean build :runtime:jvmApiCheck :runtime:klibApiCheck :runtime:verifyCommonMainMeeseeksDatabaseMigration --stacktrace --warning-mode fail
+
+  sample-ios-smoke:
+    needs: dependency-verification
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.head_ref || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@d9c87d481d55275bb5441eef3fe0e46805f9ef70
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1
+
+      - name: Grant execute permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: iOS sample smoke gate
+        run: ./gradlew sampleIosSmoke --stacktrace --console=plain
 
   publish-snapshot:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'matt-ramotar/meeseeks'
     runs-on: macos-latest
-    needs: build-and-test
+    needs: [build-and-test, sample-ios-smoke]
     permissions:
       contents: read
     steps:
