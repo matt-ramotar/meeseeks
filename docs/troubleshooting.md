@@ -56,6 +56,6 @@ Fix:
 ./gradlew preflight --stacktrace
 ./gradlew :runtime:jvmTest --stacktrace
 ./gradlew :runtime:jsTest --stacktrace
-./gradlew :sample:compileKotlinJvm --stacktrace
-./gradlew :sample:compileKotlinJs --stacktrace
+./gradlew :sample:multiplatform:compileKotlinJvm --stacktrace
+./gradlew :sample:multiplatform:compileKotlinJs --stacktrace
 ```

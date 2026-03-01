@@ -74,6 +74,7 @@ oneTime.cancel()
 - Android guide: `docs/platforms/android.md`
 - iOS guide: `docs/platforms/ios.md`
 - JS guide: `docs/platforms/js.md`
+- Sample app guide: `docs/sample-app.md`
 - Capability matrix: `docs/capabilities.md`
 - Troubleshooting: `docs/troubleshooting.md`
 - Migration notes: `docs/migration-0x-to-1x.md`
@@ -138,6 +139,7 @@ Then run the main verification commands:
 ```bash
 ./gradlew :runtime:jvmTest --stacktrace
 ./gradlew :runtime:jsTest --stacktrace
+./gradlew sampleSmoke --stacktrace
 ./gradlew clean build --stacktrace
 ```
 
@@ -145,6 +147,7 @@ For an all-in-one local validation pass:
 
 ```bash
 ./gradlew preflight clean build --stacktrace
+./gradlew sampleIosSmoke --stacktrace
 ```
 
 ## Release Verification Matrix
@@ -173,13 +176,14 @@ Meeseeks uses Gradle dependency locking and verification metadata for reproducib
 
 - Lockfiles are committed and should be updated intentionally when dependencies change.
 - Verification metadata is committed to protect against unexpected artifact changes.
+- Source/Javadoc artifacts are trusted by pattern to avoid IDE/tooling sync churn in strict verification mode.
 
 Typical update flow:
 
 ```bash
-./gradlew :runtime:dependencies :sample:dependencies :tooling:plugins:dependencies --write-locks
-./gradlew :commonizeNativeDistribution --write-locks
-./gradlew --write-verification-metadata sha256 help
+./gradlew :runtime:dependencies :sample:multiplatform:dependencies :sample:androidApp:dependencies :sample:desktopApp:dependencies :sample:webApp:dependencies :tooling:plugins:dependencies --write-locks
+./gradlew :sample:multiplatform:commonizeNativeDistribution --write-locks
+./gradlew help :runtime:dependencies :sample:multiplatform:dependencies :sample:androidApp:dependencies :sample:desktopApp:dependencies :sample:webApp:dependencies :tooling:plugins:dependencies :sample:multiplatform:commonizeNativeDistribution resolveIdeDependenciesAll --write-verification-metadata sha256
 ```
 
 CI enforces verification metadata drift checks via `bash scripts/ci/check-dependency-verification.sh`.

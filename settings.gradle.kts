@@ -22,4 +22,7 @@ dependencyResolutionManagement {
 rootProject.name = "meeseeks"
 
 include(":runtime")
-include(":sample")
+include(":sample:multiplatform")
+include(":sample:androidApp")
+include(":sample:desktopApp")
+include(":sample:webApp")

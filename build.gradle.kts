@@ -1,5 +1,9 @@
 
 import org.gradle.api.GradleException
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.result.ResolvedArtifactResult
+import org.gradle.jvm.JvmLibrary
+import org.gradle.language.base.artifact.SourcesArtifact
 import java.io.File
 import java.util.Properties
 
@@ -134,4 +138,75 @@ tasks.register("preflight") {
         }
         logger.lifecycle("Preflight passed: Android SDK is valid for build prerequisites.")
     }
+}
+
+tasks.register("sampleSmoke") {
+    group = "verification"
+    description = "Compiles shared sample core and visual shells for Android, Desktop, and Web."
+    dependsOn(
+        ":sample:multiplatform:compileKotlinJvm",
+        ":sample:multiplatform:compileKotlinJs",
+        ":sample:androidApp:compileDebugKotlin",
+        ":sample:desktopApp:compileKotlinJvm",
+        ":sample:webApp:compileKotlinJs",
+    )
+}
+
+tasks.register("sampleIosSmoke") {
+    group = "verification"
+    description = "Links the iOS simulator framework consumed by the SwiftUI host shell."
+    dependsOn(":sample:multiplatform:linkDebugFrameworkIosSimulatorArm64")
+}
+
+tasks.register("resolveVerificationSources") {
+    group = "verification"
+    description = "Resolves source artifacts for all resolvable project and buildscript classpaths."
+
+    doLast {
+        val moduleComponentIds = mutableSetOf<ModuleComponentIdentifier>()
+
+        allprojects.forEach { project ->
+            project.configurations
+                .filter { it.isCanBeResolved }
+                .forEach { configuration ->
+                    moduleComponentIds += configuration.incoming.resolutionResult.allComponents
+                        .mapNotNull { it.id as? ModuleComponentIdentifier }
+                }
+
+            project.buildscript.configurations.findByName("classpath")?.let { classpath ->
+                moduleComponentIds += classpath.incoming.resolutionResult.allComponents
+                    .mapNotNull { it.id as? ModuleComponentIdentifier }
+            }
+        }
+
+        if (moduleComponentIds.isEmpty()) {
+            return@doLast
+        }
+
+        val resolution = dependencies.createArtifactResolutionQuery()
+            .forComponents(moduleComponentIds)
+            .withArtifacts(JvmLibrary::class.java, SourcesArtifact::class.java)
+            .execute()
+
+        resolution.resolvedComponents.forEach { component ->
+            component.getArtifacts(SourcesArtifact::class.java).forEach { artifact ->
+                if (artifact is ResolvedArtifactResult) {
+                    artifact.file
+                }
+            }
+        }
+    }
+}
+
+tasks.register("resolveIdeDependenciesAll") {
+    group = "verification"
+    description = "Resolves IDE dependency metadata and source artifacts for all IDE-aware modules."
+    dependsOn(
+        "resolveVerificationSources",
+        gradle.includedBuild("tooling").task(":plugins:resolveVerificationSources"),
+        ":runtime:resolveIdeDependencies",
+        ":sample:multiplatform:resolveIdeDependencies",
+        ":sample:desktopApp:resolveIdeDependencies",
+        ":sample:webApp:resolveIdeDependencies",
+    )
 }
