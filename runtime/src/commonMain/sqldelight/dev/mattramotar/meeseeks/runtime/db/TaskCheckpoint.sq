@@ -1,0 +1,56 @@
+CREATE TABLE taskCheckpointEntity (
+    task_id TEXT NOT NULL,
+    checkpoint_key TEXT NOT NULL,
+    payload_type_id TEXT NOT NULL,
+    worker_type_id TEXT NOT NULL,
+    checkpoint_type_id TEXT NOT NULL,
+    schema_version INTEGER NOT NULL,
+    data TEXT NOT NULL,
+    created_at_ms INTEGER NOT NULL,
+    updated_at_ms INTEGER NOT NULL,
+    PRIMARY KEY (task_id, checkpoint_key),
+    FOREIGN KEY (task_id) REFERENCES taskSpec(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_taskCheckpointEntity_task_id ON taskCheckpointEntity(task_id);
+
+selectCheckpoint:
+SELECT * FROM taskCheckpointEntity
+WHERE task_id = ? AND checkpoint_key = ?;
+
+insertCheckpoint:
+INSERT INTO taskCheckpointEntity(
+    task_id,
+    checkpoint_key,
+    payload_type_id,
+    worker_type_id,
+    checkpoint_type_id,
+    schema_version,
+    data,
+    created_at_ms,
+    updated_at_ms
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateCheckpoint:
+UPDATE taskCheckpointEntity
+SET
+    payload_type_id = ?,
+    worker_type_id = ?,
+    checkpoint_type_id = ?,
+    schema_version = ?,
+    data = ?,
+    updated_at_ms = ?
+WHERE task_id = ? AND checkpoint_key = ?;
+
+deleteCheckpoint:
+DELETE FROM taskCheckpointEntity
+WHERE task_id = ? AND checkpoint_key = ?;
+
+deleteAllCheckpointsForTask:
+DELETE FROM taskCheckpointEntity
+WHERE task_id = ?;
+
+countCheckpointsForTask:
+SELECT COUNT(*) FROM taskCheckpointEntity
+WHERE task_id = ?;

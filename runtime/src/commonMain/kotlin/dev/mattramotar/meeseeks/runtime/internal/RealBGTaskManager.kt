@@ -185,8 +185,9 @@ internal class RealBGTaskManager(
 
     /**
      * Atomically cancels a task unless it already reached a terminal state, and
-     * logs the durable Cancelled event only when this call performed the
-     * cancellation. Returns false for tasks that were already terminal.
+     * logs the durable Cancelled event and clears checkpoints only when this
+     * call performed the cancellation. Returns false for tasks that were
+     * already terminal.
      */
     private fun cancelInDatabase(taskId: String, attempt: Long, message: String): Boolean {
         val cancelledAt = Timestamp.now()
@@ -201,6 +202,7 @@ internal class RealBGTaskManager(
                     attempt = attempt,
                     message = message
                 )
+                database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
             }
             cancelled
         }

@@ -37,6 +37,41 @@ public final class dev/mattramotar/meeseeks/runtime/BGTaskManagerKt {
 	public static final fun schedule (Ldev/mattramotar/meeseeks/runtime/BGTaskManager;Ldev/mattramotar/meeseeks/runtime/TaskRequest;)Ldev/mattramotar/meeseeks/runtime/TaskHandle;
 }
 
+public final class dev/mattramotar/meeseeks/runtime/CheckpointDecodeException : java/lang/IllegalStateException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class dev/mattramotar/meeseeks/runtime/CheckpointIncompatibleException : java/lang/IllegalStateException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public abstract interface class dev/mattramotar/meeseeks/runtime/CheckpointStore {
+	public static final field Companion Ldev/mattramotar/meeseeks/runtime/CheckpointStore$Companion;
+	public static final field DEFAULT_KEY Ljava/lang/String;
+	public abstract fun clear (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun clear$default (Ldev/mattramotar/meeseeks/runtime/CheckpointStore;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun clearAll (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun read (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun read$default (Ldev/mattramotar/meeseeks/runtime/CheckpointStore;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun write (Ljava/lang/String;Ljava/lang/Object;Lkotlinx/serialization/KSerializer;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun write$default (Ldev/mattramotar/meeseeks/runtime/CheckpointStore;Ljava/lang/String;Ljava/lang/Object;Lkotlinx/serialization/KSerializer;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/CheckpointStore$Companion {
+	public static final field DEFAULT_KEY Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/CheckpointStore$DefaultImpls {
+	public static synthetic fun clear$default (Ldev/mattramotar/meeseeks/runtime/CheckpointStore;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun read$default (Ldev/mattramotar/meeseeks/runtime/CheckpointStore;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun write$default (Ldev/mattramotar/meeseeks/runtime/CheckpointStore;Ljava/lang/String;Ljava/lang/Object;Lkotlinx/serialization/KSerializer;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/mattramotar/meeseeks/runtime/CheckpointedWorker {
+	public abstract fun run (Ldev/mattramotar/meeseeks/runtime/TaskPayload;Ldev/mattramotar/meeseeks/runtime/RuntimeContext;Ldev/mattramotar/meeseeks/runtime/CheckpointStore;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class dev/mattramotar/meeseeks/runtime/ConfigurationScope {
 	public final fun allowExpedited (Z)Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;
 	public static synthetic fun allowExpedited$default (Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;ZILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/ConfigurationScope;
@@ -523,6 +558,7 @@ public abstract interface class dev/mattramotar/meeseeks/runtime/WorkerFactory {
 
 public abstract interface class dev/mattramotar/meeseeks/runtime/db/MeeseeksDatabase : app/cash/sqldelight/Transacter {
 	public static final field Companion Ldev/mattramotar/meeseeks/runtime/db/MeeseeksDatabase$Companion;
+	public abstract fun getTaskCheckpointQueries ()Ldev/mattramotar/meeseeks/runtime/db/TaskCheckpointQueries;
 	public abstract fun getTaskLogQueries ()Ldev/mattramotar/meeseeks/runtime/db/TaskLogQueries;
 	public abstract fun getTaskSpecQueries ()Ldev/mattramotar/meeseeks/runtime/db/TaskSpecQueries;
 }
@@ -541,6 +577,44 @@ public final class dev/mattramotar/meeseeks/runtime/db/SelectEarliestNextRunTime
 	public final fun getMIN ()Ljava/lang/Long;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/db/TaskCheckpointEntity {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;JJ)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()J
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()J
+	public final fun component9 ()J
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;JJ)Ldev/mattramotar/meeseeks/runtime/db/TaskCheckpointEntity;
+	public static synthetic fun copy$default (Ldev/mattramotar/meeseeks/runtime/db/TaskCheckpointEntity;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;JJILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/db/TaskCheckpointEntity;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCheckpoint_key ()Ljava/lang/String;
+	public final fun getCheckpoint_type_id ()Ljava/lang/String;
+	public final fun getCreated_at_ms ()J
+	public final fun getData_ ()Ljava/lang/String;
+	public final fun getPayload_type_id ()Ljava/lang/String;
+	public final fun getSchema_version ()J
+	public final fun getTask_id ()Ljava/lang/String;
+	public final fun getUpdated_at_ms ()J
+	public final fun getWorker_type_id ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/db/TaskCheckpointQueries : app/cash/sqldelight/TransacterImpl {
+	public fun <init> (Lapp/cash/sqldelight/db/SqlDriver;)V
+	public final fun countCheckpointsForTask (Ljava/lang/String;)Lapp/cash/sqldelight/Query;
+	public final fun deleteAllCheckpointsForTask (Ljava/lang/String;)V
+	public final fun deleteCheckpoint (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun insertCheckpoint (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;JJ)V
+	public final fun selectCheckpoint (Ljava/lang/String;Ljava/lang/String;)Lapp/cash/sqldelight/Query;
+	public final fun selectCheckpoint (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function9;)Lapp/cash/sqldelight/Query;
+	public final fun updateCheckpoint (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;JLjava/lang/String;Ljava/lang/String;)V
 }
 
 public final class dev/mattramotar/meeseeks/runtime/db/TaskLogEntity {

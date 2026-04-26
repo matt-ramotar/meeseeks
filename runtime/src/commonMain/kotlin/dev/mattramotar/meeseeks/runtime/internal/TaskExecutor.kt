@@ -2,6 +2,7 @@ package dev.mattramotar.meeseeks.runtime.internal
 
 import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
+import dev.mattramotar.meeseeks.runtime.CheckpointedWorker
 import dev.mattramotar.meeseeks.runtime.RuntimeContext
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskPayload
@@ -90,7 +91,15 @@ internal object TaskExecutor {
             )
         )
 
-        val result = executeWorker(request, registry, appContext, effectiveAttemptCount)
+        val result = executeWorker(
+            taskId = taskId,
+            request = request,
+            registry = registry,
+            appContext = appContext,
+            database = database,
+            payloadTypeId = claimed.payload_type_id,
+            effectiveAttemptCount = effectiveAttemptCount
+        )
 
         val taskSpec = database.taskSpecQueries.selectTaskById(taskId).executeAsOneOrNull()
         val maxRetries = taskSpec?.max_retries?.toInt() ?: 3
@@ -235,17 +244,38 @@ internal object TaskExecutor {
      * Execute the worker for the given task request.
      */
     private suspend fun executeWorker(
+        taskId: String,
         request: TaskRequest,
         registry: WorkerRegistry,
         appContext: AppContext,
-        attemptCount: Int
+        database: MeeseeksDatabase,
+        payloadTypeId: String,
+        effectiveAttemptCount: Int
     ): TaskResult {
         return try {
-            val factory = registry.getFactory(request.payload::class)
+            val registration = registry.getRegistration(request.payload::class)
 
             @Suppress("UNCHECKED_CAST")
-            val worker = factory.create(appContext) as Worker<TaskPayload>
-            worker.run(request.payload, RuntimeContext(attemptCount))
+            val worker = registration.factory.create(appContext) as Worker<TaskPayload>
+            val context = RuntimeContext(effectiveAttemptCount)
+
+            if (worker is CheckpointedWorker<*>) {
+                @Suppress("UNCHECKED_CAST")
+                val checkpointedWorker = worker as CheckpointedWorker<TaskPayload>
+                checkpointedWorker.run(
+                    payload = request.payload,
+                    context = context,
+                    checkpoints = RealCheckpointStore(
+                        database = database,
+                        registry = registry,
+                        taskId = taskId,
+                        payloadTypeId = payloadTypeId,
+                        workerTypeId = registration.typeId,
+                    ),
+                )
+            } else {
+                worker.run(request.payload, context)
+            }
         } catch (error: Throwable) {
             classifyError(error)
         }
@@ -276,11 +306,14 @@ internal object TaskExecutor {
     ): ExecutionResult {
         return when (val schedule = request.schedule) {
             is TaskSchedule.OneTime -> {
-                database.taskSpecQueries.updateState(
-                    state = TaskState.SUCCEEDED.toDbValue(),
-                    updated_at_ms = Timestamp.now(),
-                    id = taskId
-                )
+                database.transaction {
+                    database.taskSpecQueries.updateState(
+                        state = TaskState.SUCCEEDED.toDbValue(),
+                        updated_at_ms = Timestamp.now(),
+                        id = taskId
+                    )
+                    database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
+                }
 
                 config?.telemetry?.onEvent(
                     TelemetryEvent.TaskSucceeded(
@@ -300,12 +333,15 @@ internal object TaskExecutor {
                 val jitter = if (flex.isPositive()) (0..flex.inWholeMilliseconds).random().milliseconds else Duration.ZERO
                 val delay = (base - flex + jitter).coerceAtLeast(Duration.ZERO)
 
-                database.taskSpecQueries.updateStateAndNextRunTime(
-                    state = TaskState.ENQUEUED.toDbValue(),
-                    updated_at_ms = now,
-                    next_run_time_ms = now + delay.inWholeMilliseconds,
-                    id = taskId
-                )
+                database.transaction {
+                    database.taskSpecQueries.updateStateAndNextRunTime(
+                        state = TaskState.ENQUEUED.toDbValue(),
+                        updated_at_ms = now,
+                        next_run_time_ms = now + delay.inWholeMilliseconds,
+                        id = taskId
+                    )
+                    database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
+                }
 
                 config?.telemetry?.onEvent(
                     TelemetryEvent.TaskSucceeded(
@@ -332,11 +368,14 @@ internal object TaskExecutor {
         database: MeeseeksDatabase,
         config: BGTaskManagerConfig?
     ) {
-        database.taskSpecQueries.updateState(
-            state = TaskState.FAILED.toDbValue(),
-            updated_at_ms = Timestamp.now(),
-            id = taskId
-        )
+        database.transaction {
+            database.taskSpecQueries.updateState(
+                state = TaskState.FAILED.toDbValue(),
+                updated_at_ms = Timestamp.now(),
+                id = taskId
+            )
+            database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
+        }
 
         config?.telemetry?.onEvent(
             TelemetryEvent.TaskFailed(

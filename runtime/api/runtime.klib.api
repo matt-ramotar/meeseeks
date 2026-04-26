@@ -78,7 +78,13 @@ abstract fun interface dev.mattramotar.meeseeks.runtime.telemetry/Telemetry { //
     abstract suspend fun onEvent(dev.mattramotar.meeseeks.runtime.telemetry/TelemetryEvent) // dev.mattramotar.meeseeks.runtime.telemetry/Telemetry.onEvent|onEvent(dev.mattramotar.meeseeks.runtime.telemetry.TelemetryEvent){}[0]
 }
 
+abstract interface <#A: dev.mattramotar.meeseeks.runtime/TaskPayload> dev.mattramotar.meeseeks.runtime/CheckpointedWorker { // dev.mattramotar.meeseeks.runtime/CheckpointedWorker|null[0]
+    abstract suspend fun run(#A, dev.mattramotar.meeseeks.runtime/RuntimeContext, dev.mattramotar.meeseeks.runtime/CheckpointStore): dev.mattramotar.meeseeks.runtime/TaskResult // dev.mattramotar.meeseeks.runtime/CheckpointedWorker.run|run(1:0;dev.mattramotar.meeseeks.runtime.RuntimeContext;dev.mattramotar.meeseeks.runtime.CheckpointStore){}[0]
+}
+
 abstract interface dev.mattramotar.meeseeks.runtime.db/MeeseeksDatabase : app.cash.sqldelight/Transacter { // dev.mattramotar.meeseeks.runtime.db/MeeseeksDatabase|null[0]
+    abstract val taskCheckpointQueries // dev.mattramotar.meeseeks.runtime.db/MeeseeksDatabase.taskCheckpointQueries|{}taskCheckpointQueries[0]
+        abstract fun <get-taskCheckpointQueries>(): dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries // dev.mattramotar.meeseeks.runtime.db/MeeseeksDatabase.taskCheckpointQueries.<get-taskCheckpointQueries>|<get-taskCheckpointQueries>(){}[0]
     abstract val taskLogQueries // dev.mattramotar.meeseeks.runtime.db/MeeseeksDatabase.taskLogQueries|{}taskLogQueries[0]
         abstract fun <get-taskLogQueries>(): dev.mattramotar.meeseeks.runtime.db/TaskLogQueries // dev.mattramotar.meeseeks.runtime.db/MeeseeksDatabase.taskLogQueries.<get-taskLogQueries>|<get-taskLogQueries>(){}[0]
     abstract val taskSpecQueries // dev.mattramotar.meeseeks.runtime.db/MeeseeksDatabase.taskSpecQueries|{}taskSpecQueries[0]
@@ -109,6 +115,18 @@ abstract interface dev.mattramotar.meeseeks.runtime/BGTaskManager { // dev.mattr
     abstract fun reschedule(dev.mattramotar.meeseeks.runtime/TaskId, dev.mattramotar.meeseeks.runtime/TaskRequest): dev.mattramotar.meeseeks.runtime/TaskId // dev.mattramotar.meeseeks.runtime/BGTaskManager.reschedule|reschedule(dev.mattramotar.meeseeks.runtime.TaskId;dev.mattramotar.meeseeks.runtime.TaskRequest){}[0]
     abstract fun reschedulePendingTasks() // dev.mattramotar.meeseeks.runtime/BGTaskManager.reschedulePendingTasks|reschedulePendingTasks(){}[0]
     abstract fun schedule(dev.mattramotar.meeseeks.runtime/TaskRequest): dev.mattramotar.meeseeks.runtime/TaskId // dev.mattramotar.meeseeks.runtime/BGTaskManager.schedule|schedule(dev.mattramotar.meeseeks.runtime.TaskRequest){}[0]
+}
+
+abstract interface dev.mattramotar.meeseeks.runtime/CheckpointStore { // dev.mattramotar.meeseeks.runtime/CheckpointStore|null[0]
+    abstract suspend fun <#A1: kotlin/Any> read(kotlin/String = ..., kotlinx.serialization/KSerializer<#A1>): #A1? // dev.mattramotar.meeseeks.runtime/CheckpointStore.read|read(kotlin.String;kotlinx.serialization.KSerializer<0:0>){0§<kotlin.Any>}[0]
+    abstract suspend fun <#A1: kotlin/Any> write(kotlin/String = ..., #A1, kotlinx.serialization/KSerializer<#A1>, kotlin/Int = ...) // dev.mattramotar.meeseeks.runtime/CheckpointStore.write|write(kotlin.String;0:0;kotlinx.serialization.KSerializer<0:0>;kotlin.Int){0§<kotlin.Any>}[0]
+    abstract suspend fun clear(kotlin/String = ...) // dev.mattramotar.meeseeks.runtime/CheckpointStore.clear|clear(kotlin.String){}[0]
+    abstract suspend fun clearAll() // dev.mattramotar.meeseeks.runtime/CheckpointStore.clearAll|clearAll(){}[0]
+
+    final object Companion { // dev.mattramotar.meeseeks.runtime/CheckpointStore.Companion|null[0]
+        final const val DEFAULT_KEY // dev.mattramotar.meeseeks.runtime/CheckpointStore.Companion.DEFAULT_KEY|{}DEFAULT_KEY[0]
+            final fun <get-DEFAULT_KEY>(): kotlin/String // dev.mattramotar.meeseeks.runtime/CheckpointStore.Companion.DEFAULT_KEY.<get-DEFAULT_KEY>|<get-DEFAULT_KEY>(){}[0]
+    }
 }
 
 abstract interface dev.mattramotar.meeseeks.runtime/PayloadCipher { // dev.mattramotar.meeseeks.runtime/PayloadCipher|null[0]
@@ -174,6 +192,55 @@ final class dev.mattramotar.meeseeks.runtime.db/SelectEarliestNextRunTime { // d
     final fun equals(kotlin/Any?): kotlin/Boolean // dev.mattramotar.meeseeks.runtime.db/SelectEarliestNextRunTime.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // dev.mattramotar.meeseeks.runtime.db/SelectEarliestNextRunTime.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/SelectEarliestNextRunTime.toString|toString(){}[0]
+}
+
+final class dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity { // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/Long, kotlin/String, kotlin/Long, kotlin/Long) // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.Long;kotlin.String;kotlin.Long;kotlin.Long){}[0]
+
+    final val checkpoint_key // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.checkpoint_key|{}checkpoint_key[0]
+        final fun <get-checkpoint_key>(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.checkpoint_key.<get-checkpoint_key>|<get-checkpoint_key>(){}[0]
+    final val checkpoint_type_id // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.checkpoint_type_id|{}checkpoint_type_id[0]
+        final fun <get-checkpoint_type_id>(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.checkpoint_type_id.<get-checkpoint_type_id>|<get-checkpoint_type_id>(){}[0]
+    final val created_at_ms // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.created_at_ms|{}created_at_ms[0]
+        final fun <get-created_at_ms>(): kotlin/Long // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.created_at_ms.<get-created_at_ms>|<get-created_at_ms>(){}[0]
+    final val data_ // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.data_|{}data_[0]
+        final fun <get-data_>(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.data_.<get-data_>|<get-data_>(){}[0]
+    final val payload_type_id // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.payload_type_id|{}payload_type_id[0]
+        final fun <get-payload_type_id>(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.payload_type_id.<get-payload_type_id>|<get-payload_type_id>(){}[0]
+    final val schema_version // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.schema_version|{}schema_version[0]
+        final fun <get-schema_version>(): kotlin/Long // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.schema_version.<get-schema_version>|<get-schema_version>(){}[0]
+    final val task_id // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.task_id|{}task_id[0]
+        final fun <get-task_id>(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.task_id.<get-task_id>|<get-task_id>(){}[0]
+    final val updated_at_ms // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.updated_at_ms|{}updated_at_ms[0]
+        final fun <get-updated_at_ms>(): kotlin/Long // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.updated_at_ms.<get-updated_at_ms>|<get-updated_at_ms>(){}[0]
+    final val worker_type_id // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.worker_type_id|{}worker_type_id[0]
+        final fun <get-worker_type_id>(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.worker_type_id.<get-worker_type_id>|<get-worker_type_id>(){}[0]
+
+    final fun component1(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.component1|component1(){}[0]
+    final fun component2(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.component2|component2(){}[0]
+    final fun component3(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.component3|component3(){}[0]
+    final fun component4(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.component4|component4(){}[0]
+    final fun component5(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.component5|component5(){}[0]
+    final fun component6(): kotlin/Long // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.component6|component6(){}[0]
+    final fun component7(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.component7|component7(){}[0]
+    final fun component8(): kotlin/Long // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.component8|component8(){}[0]
+    final fun component9(): kotlin/Long // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.component9|component9(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/Long = ..., kotlin/String = ..., kotlin/Long = ..., kotlin/Long = ...): dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.Long;kotlin.String;kotlin.Long;kotlin.Long){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity.toString|toString(){}[0]
+}
+
+final class dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries : app.cash.sqldelight/TransacterImpl { // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries|null[0]
+    constructor <init>(app.cash.sqldelight.db/SqlDriver) // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries.<init>|<init>(app.cash.sqldelight.db.SqlDriver){}[0]
+
+    final fun <#A1: kotlin/Any> selectCheckpoint(kotlin/String, kotlin/String, kotlin/Function9<kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/Long, kotlin/String, kotlin/Long, kotlin/Long, #A1>): app.cash.sqldelight/Query<#A1> // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries.selectCheckpoint|selectCheckpoint(kotlin.String;kotlin.String;kotlin.Function9<kotlin.String,kotlin.String,kotlin.String,kotlin.String,kotlin.String,kotlin.Long,kotlin.String,kotlin.Long,kotlin.Long,0:0>){0§<kotlin.Any>}[0]
+    final fun countCheckpointsForTask(kotlin/String): app.cash.sqldelight/Query<kotlin/Long> // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries.countCheckpointsForTask|countCheckpointsForTask(kotlin.String){}[0]
+    final fun deleteAllCheckpointsForTask(kotlin/String) // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries.deleteAllCheckpointsForTask|deleteAllCheckpointsForTask(kotlin.String){}[0]
+    final fun deleteCheckpoint(kotlin/String, kotlin/String) // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries.deleteCheckpoint|deleteCheckpoint(kotlin.String;kotlin.String){}[0]
+    final fun insertCheckpoint(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/Long, kotlin/String, kotlin/Long, kotlin/Long) // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries.insertCheckpoint|insertCheckpoint(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.Long;kotlin.String;kotlin.Long;kotlin.Long){}[0]
+    final fun selectCheckpoint(kotlin/String, kotlin/String): app.cash.sqldelight/Query<dev.mattramotar.meeseeks.runtime.db/TaskCheckpointEntity> // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries.selectCheckpoint|selectCheckpoint(kotlin.String;kotlin.String){}[0]
+    final fun updateCheckpoint(kotlin/String, kotlin/String, kotlin/String, kotlin/Long, kotlin/String, kotlin/Long, kotlin/String, kotlin/String) // dev.mattramotar.meeseeks.runtime.db/TaskCheckpointQueries.updateCheckpoint|updateCheckpoint(kotlin.String;kotlin.String;kotlin.String;kotlin.Long;kotlin.String;kotlin.Long;kotlin.String;kotlin.String){}[0]
 }
 
 final class dev.mattramotar.meeseeks.runtime.db/TaskLogEntity { // dev.mattramotar.meeseeks.runtime.db/TaskLogEntity|null[0]
@@ -834,6 +901,14 @@ final class dev.mattramotar.meeseeks.runtime/BGTaskManagerConfig { // dev.mattra
     final fun equals(kotlin/Any?): kotlin/Boolean // dev.mattramotar.meeseeks.runtime/BGTaskManagerConfig.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // dev.mattramotar.meeseeks.runtime/BGTaskManagerConfig.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // dev.mattramotar.meeseeks.runtime/BGTaskManagerConfig.toString|toString(){}[0]
+}
+
+final class dev.mattramotar.meeseeks.runtime/CheckpointDecodeException : kotlin/IllegalStateException { // dev.mattramotar.meeseeks.runtime/CheckpointDecodeException|null[0]
+    constructor <init>(kotlin/String, kotlin/Throwable? = ...) // dev.mattramotar.meeseeks.runtime/CheckpointDecodeException.<init>|<init>(kotlin.String;kotlin.Throwable?){}[0]
+}
+
+final class dev.mattramotar.meeseeks.runtime/CheckpointIncompatibleException : kotlin/IllegalStateException { // dev.mattramotar.meeseeks.runtime/CheckpointIncompatibleException|null[0]
+    constructor <init>(kotlin/String) // dev.mattramotar.meeseeks.runtime/CheckpointIncompatibleException.<init>|<init>(kotlin.String){}[0]
 }
 
 final class dev.mattramotar.meeseeks.runtime/ConfigurationScope { // dev.mattramotar.meeseeks.runtime/ConfigurationScope|null[0]
@@ -1560,6 +1635,8 @@ final fun (dev.mattramotar.meeseeks.runtime/BGTaskManager).dev.mattramotar.meese
 final fun dev.mattramotar.meeseeks.runtime/schedule(dev.mattramotar.meeseeks.runtime/BGTaskManager, dev.mattramotar.meeseeks.runtime/TaskRequest): dev.mattramotar.meeseeks.runtime/TaskHandle // dev.mattramotar.meeseeks.runtime/schedule|schedule(dev.mattramotar.meeseeks.runtime.BGTaskManager;dev.mattramotar.meeseeks.runtime.TaskRequest){}[0]
 final inline fun <#A: reified dev.mattramotar.meeseeks.runtime/TaskPayload> (dev.mattramotar.meeseeks.runtime/BGTaskManager).dev.mattramotar.meeseeks.runtime/oneTime(#A, kotlin.time/Duration = ..., noinline kotlin/Function1<dev.mattramotar.meeseeks.runtime.dsl/OneTimeTaskRequestConfigurationScope<#A>, kotlin/Unit> = ...): dev.mattramotar.meeseeks.runtime/TaskHandle // dev.mattramotar.meeseeks.runtime/oneTime|oneTime@dev.mattramotar.meeseeks.runtime.BGTaskManager(0:0;kotlin.time.Duration;kotlin.Function1<dev.mattramotar.meeseeks.runtime.dsl.OneTimeTaskRequestConfigurationScope<0:0>,kotlin.Unit>){0§<dev.mattramotar.meeseeks.runtime.TaskPayload>}[0]
 final inline fun <#A: reified dev.mattramotar.meeseeks.runtime/TaskPayload> (dev.mattramotar.meeseeks.runtime/BGTaskManager).dev.mattramotar.meeseeks.runtime/periodic(#A, kotlin.time/Duration, kotlin.time/Duration = ..., kotlin.time/Duration = ..., noinline kotlin/Function1<dev.mattramotar.meeseeks.runtime.dsl/PeriodicTaskRequestConfigurationScope<#A>, kotlin/Unit> = ...): dev.mattramotar.meeseeks.runtime/TaskHandle // dev.mattramotar.meeseeks.runtime/periodic|periodic@dev.mattramotar.meeseeks.runtime.BGTaskManager(0:0;kotlin.time.Duration;kotlin.time.Duration;kotlin.time.Duration;kotlin.Function1<dev.mattramotar.meeseeks.runtime.dsl.PeriodicTaskRequestConfigurationScope<0:0>,kotlin.Unit>){0§<dev.mattramotar.meeseeks.runtime.TaskPayload>}[0]
+final suspend inline fun <#A: reified kotlin/Any> (dev.mattramotar.meeseeks.runtime/CheckpointStore).dev.mattramotar.meeseeks.runtime/read(kotlin/String = ...): #A? // dev.mattramotar.meeseeks.runtime/read|read@dev.mattramotar.meeseeks.runtime.CheckpointStore(kotlin.String){0§<kotlin.Any>}[0]
+final suspend inline fun <#A: reified kotlin/Any> (dev.mattramotar.meeseeks.runtime/CheckpointStore).dev.mattramotar.meeseeks.runtime/write(#A, kotlin/String = ..., kotlin/Int = ...) // dev.mattramotar.meeseeks.runtime/write|write@dev.mattramotar.meeseeks.runtime.CheckpointStore(0:0;kotlin.String;kotlin.Int){0§<kotlin.Any>}[0]
 
 // Targets: [ios]
 final object dev.mattramotar.meeseeks.runtime/BGTaskIdentifiers { // dev.mattramotar.meeseeks.runtime/BGTaskIdentifiers|null[0]
