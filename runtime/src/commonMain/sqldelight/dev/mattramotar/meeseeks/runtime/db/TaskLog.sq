@@ -17,3 +17,67 @@ VALUES (?, ?, ?, ?, ?);
 selectLogsForTask:
 SELECT * FROM taskLogEntity
 WHERE taskId = ?;
+
+selectTerminalEventsForTask:
+SELECT taskLogEntity.*
+FROM taskLogEntity
+WHERE taskLogEntity.taskId = :taskId
+  AND (
+    (
+      taskLogEntity.result = :success
+      AND EXISTS (
+        SELECT 1
+        FROM taskSpec
+        WHERE taskSpec.id = taskLogEntity.taskId
+          AND taskSpec.schedule_type = 'ONE_TIME'
+      )
+    )
+    OR taskLogEntity.result = :permanentFailure
+    OR taskLogEntity.result = :cancelled
+    OR (
+      EXISTS (
+        SELECT 1
+        FROM taskSpec
+        WHERE taskSpec.id = taskLogEntity.taskId
+          AND taskSpec.state = 'FAILED'
+      )
+      AND taskLogEntity.id = (
+        SELECT MAX(latest.id)
+        FROM taskLogEntity latest
+        WHERE latest.taskId = taskLogEntity.taskId
+      )
+    )
+  )
+ORDER BY taskLogEntity.id ASC;
+
+selectTerminalEventsSince:
+SELECT taskLogEntity.*
+FROM taskLogEntity
+WHERE taskLogEntity.id > :sinceEventId
+  AND (
+    (
+      taskLogEntity.result = :success
+      AND EXISTS (
+        SELECT 1
+        FROM taskSpec
+        WHERE taskSpec.id = taskLogEntity.taskId
+          AND taskSpec.schedule_type = 'ONE_TIME'
+      )
+    )
+    OR taskLogEntity.result = :permanentFailure
+    OR taskLogEntity.result = :cancelled
+    OR (
+      EXISTS (
+        SELECT 1
+        FROM taskSpec
+        WHERE taskSpec.id = taskLogEntity.taskId
+          AND taskSpec.state = 'FAILED'
+      )
+      AND taskLogEntity.id = (
+        SELECT MAX(latest.id)
+        FROM taskLogEntity latest
+        WHERE latest.taskId = taskLogEntity.taskId
+      )
+    )
+  )
+ORDER BY taskLogEntity.id ASC;

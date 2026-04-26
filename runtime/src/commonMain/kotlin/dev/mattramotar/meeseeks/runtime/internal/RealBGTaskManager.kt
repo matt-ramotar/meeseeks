@@ -1,13 +1,18 @@
 package dev.mattramotar.meeseeks.runtime.internal
 
 import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.ScheduledTask
+import dev.mattramotar.meeseeks.runtime.TaskEvent
+import dev.mattramotar.meeseeks.runtime.TaskEventOutcome
+import dev.mattramotar.meeseeks.runtime.TaskEventReplay
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskRequest
+import dev.mattramotar.meeseeks.runtime.TaskResult
 import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
@@ -36,7 +41,7 @@ internal class RealBGTaskManager(
     private val appContext: AppContext,
     override val coroutineContext: CoroutineContext = SupervisorJob() + MeeseeksDispatchers.IO,
     private val telemetry: Telemetry? = null,
-) : BGTaskManager, CoroutineScope {
+) : BGTaskManager, TaskEventReplay, CoroutineScope {
 
     private val orphanedTaskWatchdog = OrphanedTaskWatchdog(
         scope = this,
@@ -53,6 +58,7 @@ internal class RealBGTaskManager(
     }
 
     private val taskSpecQueries = database.taskSpecQueries
+    private val taskLogQueries = database.taskLogQueries
 
     init {
         recoverStuckTasks()
@@ -142,7 +148,17 @@ internal class RealBGTaskManager(
             )
         }
 
-        taskSpecQueries.cancelTask(Timestamp.now(), id.value)
+        val cancelledAt = Timestamp.now()
+        taskSpecQueries.transaction {
+            taskSpecQueries.cancelTask(cancelledAt, id.value)
+            taskLogQueries.insertLog(
+                taskId = id.value,
+                created = cancelledAt,
+                result = TaskResult.Type.Cancelled,
+                attempt = taskEntity.run_attempt_count,
+                message = "Task cancelled."
+            )
+        }
 
         launch {
             telemetry?.onEvent(
@@ -159,8 +175,21 @@ internal class RealBGTaskManager(
 
         val activeTasks = taskSpecQueries.selectAllActive().executeAsList()
 
+        val cancelledAt = Timestamp.now()
+        taskSpecQueries.transaction {
+            activeTasks.forEach { entity ->
+                taskSpecQueries.cancelTask(cancelledAt, entity.id)
+                taskLogQueries.insertLog(
+                    taskId = entity.id,
+                    created = cancelledAt,
+                    result = TaskResult.Type.Cancelled,
+                    attempt = entity.run_attempt_count,
+                    message = "Task cancelled by cancelAll()."
+                )
+            }
+        }
+
         activeTasks.forEach { entity ->
-            taskSpecQueries.cancelTask(Timestamp.now(), entity.id)
             launch {
                 telemetry?.onEvent(
                     TelemetryEvent.TaskCancelled(
@@ -274,7 +303,64 @@ internal class RealBGTaskManager(
             .map { entity -> entity?.state?.let { TaskState.fromDbValue(it).toPublicStatus() } }
     }
 
+    override fun getTaskEvents(taskId: TaskId): List<TaskEvent> {
+        return terminalEventsForTask(taskId).executeAsList()
+    }
+
+    override fun observeTaskEvents(taskId: TaskId): Flow<List<TaskEvent>> {
+        return terminalEventsForTask(taskId)
+            .asFlow()
+            .mapToList(context = MeeseeksDispatchers.IO)
+    }
+
+    override fun replayTerminalEvents(sinceEventId: Long): List<TaskEvent> {
+        return taskLogQueries.selectTerminalEventsSince(
+            sinceEventId = sinceEventId,
+            success = TaskResult.Type.Success,
+            permanentFailure = TaskResult.Type.PermanentFailure,
+            cancelled = TaskResult.Type.Cancelled,
+            mapper = ::mapTaskEvent
+        ).executeAsList()
+    }
+
     private fun recoverStuckTasks() {
         database.taskSpecQueries.resetRunningTasksToEnqueued(Timestamp.now())
+    }
+
+    private fun terminalEventsForTask(taskId: TaskId) = taskLogQueries.selectTerminalEventsForTask(
+        taskId = taskId.value,
+        success = TaskResult.Type.Success,
+        permanentFailure = TaskResult.Type.PermanentFailure,
+        cancelled = TaskResult.Type.Cancelled,
+        mapper = ::mapTaskEvent
+    )
+
+    private fun mapTaskEvent(
+        id: Long,
+        taskId: String,
+        created: Long,
+        result: TaskResult.Type,
+        attempt: Long,
+        message: String?
+    ): TaskEvent {
+        return TaskEvent(
+            id = id,
+            taskId = TaskId(taskId),
+            outcome = result.toEventOutcome(),
+            createdAt = created,
+            attempt = attempt.toInt(),
+            message = message
+        )
+    }
+
+    private fun TaskResult.Type.toEventOutcome(): TaskEventOutcome {
+        return when (this) {
+            TaskResult.Type.Cancelled -> TaskEventOutcome.Cancelled
+            TaskResult.Type.Success -> TaskEventOutcome.Success
+            TaskResult.Type.PermanentFailure,
+            TaskResult.Type.TransientFailure,
+            TaskResult.Type.Retry,
+            TaskResult.Type.SuccessAndScheduledNext -> TaskEventOutcome.Failure
+        }
     }
 }
