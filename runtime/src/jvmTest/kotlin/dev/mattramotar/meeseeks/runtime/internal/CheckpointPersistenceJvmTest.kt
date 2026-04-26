@@ -49,6 +49,9 @@ class CheckpointPersistenceJvmTest {
     private data class Progress(val completedStep: Int)
 
     @Serializable
+    private data class MultiStepCheckpoint(val completedThrough: Int = 0)
+
+    @Serializable
     private data class OtherProgress(val value: String)
 
     private val json = Json {
@@ -87,6 +90,56 @@ class CheckpointPersistenceJvmTest {
 
         assertEquals(TaskExecutor.ExecutionResult.Terminal.Success, secondResult)
         assertEquals(listOf(null, Progress(1)), observed)
+        assertEquals(0L, checkpointCount(database, taskId))
+    }
+
+    @Test
+    fun multiStepWorkerSkipsCompletedStepsAfterManagerRestart() = runTest {
+        val database = database()
+        val sideEffects = mutableListOf<String>()
+        val taskId = "multi-step-resume-task"
+        val firstRegistry = registry { appContext ->
+            MultiStepWorker(
+                appContext = appContext,
+                sideEffects = sideEffects,
+                failAfterCompletedThrough = 2,
+            )
+        }
+
+        insertTask(database, firstRegistry, taskId)
+
+        val firstResult = TaskExecutor.execute(
+            taskId = taskId,
+            database = database,
+            registry = firstRegistry,
+            appContext = TestAppContext,
+            config = BGTaskManagerConfig()
+        )
+
+        assertIs<TaskExecutor.ExecutionResult.ScheduleNextActivation>(firstResult)
+        assertEquals(listOf("download", "transform"), sideEffects)
+        assertEquals(1L, checkpointCount(database, taskId))
+
+        val restartedRegistry = registry { appContext ->
+            MultiStepWorker(
+                appContext = appContext,
+                sideEffects = sideEffects,
+                failAfterCompletedThrough = null,
+            )
+        }
+        val secondResult = TaskExecutor.execute(
+            taskId = taskId,
+            database = database,
+            registry = restartedRegistry,
+            appContext = TestAppContext,
+            config = BGTaskManagerConfig()
+        )
+
+        assertEquals(TaskExecutor.ExecutionResult.Terminal.Success, secondResult)
+        assertEquals(listOf("download", "transform", "upload"), sideEffects)
+        assertEquals(1, sideEffects.count { it == "download" })
+        assertEquals(1, sideEffects.count { it == "transform" })
+        assertEquals(1, sideEffects.count { it == "upload" })
         assertEquals(0L, checkpointCount(database, taskId))
     }
 
@@ -222,6 +275,39 @@ class CheckpointPersistenceJvmTest {
             } else {
                 TaskResult.Success
             }
+        }
+    }
+
+    private class MultiStepWorker(
+        appContext: AppContext,
+        private val sideEffects: MutableList<String>,
+        private val failAfterCompletedThrough: Int?,
+    ) : Worker<ResumePayload>(appContext), CheckpointedWorker<ResumePayload> {
+
+        private val steps = listOf("download", "transform", "upload")
+
+        override suspend fun run(payload: ResumePayload, context: RuntimeContext): TaskResult {
+            error("Checkpointed workers must use the checkpoint-aware run method.")
+        }
+
+        override suspend fun run(
+            payload: ResumePayload,
+            context: RuntimeContext,
+            checkpoints: CheckpointStore,
+        ): TaskResult {
+            val checkpoint = checkpoints.read<MultiStepCheckpoint>() ?: MultiStepCheckpoint()
+
+            for (index in checkpoint.completedThrough until steps.size) {
+                sideEffects += steps[index]
+                val completedThrough = index + 1
+                checkpoints.write(MultiStepCheckpoint(completedThrough = completedThrough))
+
+                if (completedThrough == failAfterCompletedThrough) {
+                    return TaskResult.Failure.Transient(RuntimeException("simulated process death"))
+                }
+            }
+
+            return TaskResult.Success
         }
     }
 
