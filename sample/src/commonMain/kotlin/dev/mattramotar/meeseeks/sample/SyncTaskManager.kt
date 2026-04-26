@@ -1,6 +1,7 @@
 package dev.mattramotar.meeseeks.sample
 
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
+import dev.mattramotar.meeseeks.runtime.TaskEvent
 import dev.mattramotar.meeseeks.runtime.TaskHandle
 import dev.mattramotar.meeseeks.runtime.TaskId
 import dev.mattramotar.meeseeks.runtime.TaskRequest
@@ -8,6 +9,7 @@ import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.dsl.TaskRequestConfigurationScope
 import dev.mattramotar.meeseeks.runtime.oneTime
 import dev.mattramotar.meeseeks.runtime.periodic
+import dev.mattramotar.meeseeks.runtime.replayTerminalEvents
 import dev.mattramotar.meeseeks.sample.shared.SyncPayload
 import dev.mattramotar.meeseeks.sample.shared.Update
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +39,15 @@ class SyncTaskManager(
 
     fun observeStatus(taskId: TaskId): Flow<TaskStatus?> =
         bgTaskManager.observeStatus(taskId)
+
+    fun replayMissedCompletions(
+        lastHandledEventId: Long,
+        handleEvent: (TaskEvent) -> Unit
+    ): Long {
+        val events = bgTaskManager.replayTerminalEvents(lastHandledEventId)
+        events.forEach(handleEvent)
+        return events.lastOrNull()?.id ?: lastHandledEventId
+    }
 
     fun reschedule(taskId: TaskId) {
         val updates = listOf(Update("new token"))
