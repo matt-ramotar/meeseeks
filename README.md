@@ -96,7 +96,7 @@ missedEvents.forEach { event ->
 
 ## Stable API Surface
 
-The `1.0.0` SemVer contract is intentionally limited to these packages:
+The `1.x` SemVer contract is intentionally limited to these packages:
 
 - `dev.mattramotar.meeseeks.runtime`
 - `dev.mattramotar.meeseeks.runtime.dsl`
