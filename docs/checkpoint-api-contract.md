@@ -6,11 +6,21 @@ Meeseeks does not restore coroutine stacks, function locals, open sockets, file 
 
 ## Public API shape
 
-`RuntimeContext` is a public data class in the 1.x API surface. Adding constructor properties would change generated `copy`/`componentN` members and is not 1.x-compatible. Checkpoint support should therefore be additive through a new worker capability and store type.
+`RuntimeContext` is a public data class in the 1.x API surface. Adding constructor properties would change generated `copy`/`componentN` members and is not 1.x-compatible. Checkpoint support should therefore be additive through a new worker base class and store type.
+
+`CheckpointedWorker` is an abstract class extending `Worker` rather than a separate capability interface. `Worker` is already an abstract class, so single inheritance is already spent and no flexibility is lost; the subclass relationship ties the payload type parameter of the worker and its checkpoint-aware entry point together (a separate interface would let `Worker<A>` be combined with `CheckpointedWorker<B>`), and it spares every checkpointed worker from writing a dead two-argument `run` override.
 
 ```kotlin
-public interface CheckpointedWorker<T : TaskPayload> {
-    public suspend fun run(
+public abstract class CheckpointedWorker<T : TaskPayload>(
+    appContext: AppContext,
+) : Worker<T>(appContext) {
+
+    final override suspend fun run(payload: T, context: RuntimeContext): TaskResult =
+        throw UnsupportedOperationException(
+            "CheckpointedWorker executes through run(payload, context, checkpoints)."
+        )
+
+    public abstract suspend fun run(
         payload: T,
         context: RuntimeContext,
         checkpoints: CheckpointStore,
@@ -19,15 +29,14 @@ public interface CheckpointedWorker<T : TaskPayload> {
 
 public interface CheckpointStore {
     public suspend fun <T : Any> read(
-        key: String = DEFAULT_KEY,
         serializer: KSerializer<T>,
+        key: String = DEFAULT_KEY,
     ): T?
 
     public suspend fun <T : Any> write(
-        key: String = DEFAULT_KEY,
         value: T,
         serializer: KSerializer<T>,
-        schemaVersion: Int = 1,
+        key: String = DEFAULT_KEY,
     )
 
     public suspend fun clear(key: String = DEFAULT_KEY)
@@ -49,22 +58,22 @@ public suspend inline fun <reified T : Any> CheckpointStore.read(
 public suspend inline fun <reified T : Any> CheckpointStore.write(
     value: T,
     key: String = CheckpointStore.DEFAULT_KEY,
-    schemaVersion: Int = 1,
 )
 ```
 
 Execution rule:
 
-- If a `Worker` also implements `CheckpointedWorker`, Meeseeks calls the checkpoint-aware `run(payload, context, checkpoints)` method.
+- Meeseeks always invokes the checkpoint-aware `run(payload, context, checkpoints)` for workers extending `CheckpointedWorker`. All platforms execute workers through the shared `TaskExecutor`, so the plain two-argument `run` is never called by the runtime; it is final and throws to surface accidental direct invocation. Unit tests for a checkpointed worker should call the three-argument `run` with a fake store.
 - Existing `Worker.run(payload, context)` remains unchanged for non-checkpointed workers.
-- A worker may still implement ordinary `Worker.run` as a fallback, but Meeseeks should prefer the checkpoint-aware path when available.
+
+There is no `schemaVersion` parameter. A version field belongs inside the worker's own `@Serializable` checkpoint class (see below), which keeps versioning in one place that the worker actually reads back.
 
 ## Serialization and type-safety boundaries
 
 Checkpoints are app-defined serializable values, not raw Kotlin objects.
 
 - Serialization uses `kotlinx.serialization.KSerializer<T>`.
-- The stored row records `key`, `schemaVersion`, serializer/type identity, payload bytes or text, and timestamps.
+- The stored row records `key`, serializer/type identity, payload text, and timestamps.
 - The default encoding should be JSON to match existing payload serialization. Binary encodings can be a later additive option.
 - If `PayloadCipher` is configured, checkpoint payloads should be encrypted with the same cipher boundary as task payloads.
 - Meeseeks guarantees durable storage and retrieval of the serialized checkpoint envelope. It does not guarantee semantic compatibility after app schema changes.
@@ -104,7 +113,7 @@ Loads:
 
 - `read` returns `null` when no checkpoint exists for the key.
 - `read` throws `CheckpointDecodeException` when stored data is corrupt or cannot be decoded as the requested type.
-- `read` throws `CheckpointIncompatibleException` when stored type metadata or schema metadata does not match the requested checkpoint.
+- `read` throws `CheckpointIncompatibleException` when stored type metadata (payload, worker, or checkpoint type id) does not match the requested checkpoint.
 
 Clears:
 
@@ -165,7 +174,7 @@ CREATE TABLE taskCheckpointEntity (
     key TEXT NOT NULL,
     payloadTypeId TEXT NOT NULL,
     workerTypeId TEXT NOT NULL,
-    schemaVersion INTEGER NOT NULL,
+    checkpointTypeId TEXT NOT NULL,
     data TEXT NOT NULL,
     createdAtMs INTEGER NOT NULL,
     updatedAtMs INTEGER NOT NULL,
@@ -174,6 +183,8 @@ CREATE TABLE taskCheckpointEntity (
 );
 ```
 
+The composite primary key on `(taskId, key)` already serves `WHERE taskId = ?` lookups through its left prefix, so no separate index on `taskId` is needed.
+
 The implementation should update SQLDelight migrations and migration verification. The worker API should be commonMain-first and work across JVM, Android, iOS/native, and JS wherever the Meeseeks database is available.
 
 ## SemVer implications
@@ -181,7 +192,7 @@ The implementation should update SQLDelight migrations and migration verificatio
 Allowed in 1.x:
 
 - Add `CheckpointStore`.
-- Add `CheckpointedWorker`.
+- Add the `CheckpointedWorker` base class.
 - Add checkpoint exceptions.
 - Add extension helpers.
 - Add database tables and migrations.
