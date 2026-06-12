@@ -69,11 +69,25 @@ val stream = manager.observeStatus(taskId)
 oneTime.cancel()
 ```
 
+### 5) Replay missed completions on startup
+
+```kotlin
+val missedEvents = manager.replayTerminalEvents(lastHandledEventId)
+missedEvents.forEach { event ->
+    when (event.outcome) {
+        TaskEventOutcome.Success -> showCompleted(event.taskId)
+        TaskEventOutcome.Failure -> showFailed(event.taskId)
+        TaskEventOutcome.Cancelled -> showCancelled(event.taskId)
+    }
+}
+```
+
 ## Platform Setup
 
 - Android guide: `docs/platforms/android.md`
 - iOS guide: `docs/platforms/ios.md`
 - JS guide: `docs/platforms/js.md`
+- Completion replay: `docs/completion-replay.md`
 - Capability matrix: `docs/capabilities.md`
 - Troubleshooting: `docs/troubleshooting.md`
 - Migration notes: `docs/migration-0x-to-1x.md`
