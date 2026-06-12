@@ -716,6 +716,8 @@ public final class dev/mattramotar/meeseeks/runtime/db/TaskSpecQueries : app/cas
 	public final fun resetRunningTasksToEnqueued (J)V
 	public final fun selectAllActive ()Lapp/cash/sqldelight/Query;
 	public final fun selectAllActive (Lkotlin/jvm/functions/Function22;)Lapp/cash/sqldelight/Query;
+	public final fun selectAllCancellable ()Lapp/cash/sqldelight/Query;
+	public final fun selectAllCancellable (Lkotlin/jvm/functions/Function22;)Lapp/cash/sqldelight/Query;
 	public final fun selectAllPending ()Lapp/cash/sqldelight/Query;
 	public final fun selectAllPending (Lkotlin/jvm/functions/Function22;)Lapp/cash/sqldelight/Query;
 	public final fun selectAllTasks ()Lapp/cash/sqldelight/Query;
@@ -733,6 +735,9 @@ public final class dev/mattramotar/meeseeks/runtime/db/TaskSpecQueries : app/cas
 	public final fun updateState (Ljava/lang/String;JLjava/lang/String;)V
 	public final fun updateStateAndNextRunTime (Ljava/lang/String;JJLjava/lang/String;)V
 	public final fun updateStateAndNextRunTimeIfEnqueued (Ljava/lang/String;JJLjava/lang/String;)V
+	public final fun updateStateAndNextRunTimeIfRunning (Ljava/lang/String;JJLjava/lang/String;)V
+	public final fun updateStateIfEnqueued (Ljava/lang/String;JLjava/lang/String;)V
+	public final fun updateStateIfRunning (Ljava/lang/String;JLjava/lang/String;)V
 	public final fun updateTask (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZZLjava/lang/String;JJJJLjava/lang/String;JJLjava/lang/Double;DLjava/lang/String;JLjava/lang/String;)V
 }
 

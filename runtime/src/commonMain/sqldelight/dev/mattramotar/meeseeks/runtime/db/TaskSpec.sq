@@ -149,6 +149,23 @@ UPDATE taskSpec
 SET state = ?, updated_at_ms = ?, next_run_time_ms = ?
 WHERE id = ? AND state = 'ENQUEUED';
 
+updateStateIfEnqueued:
+UPDATE taskSpec
+SET state = ?, updated_at_ms = ?
+WHERE id = ? AND state = 'ENQUEUED';
+
+-- Guarded post-run writes: only the attempt that still owns the RUNNING state
+-- may record its outcome, so a cancellation that lands mid-attempt wins.
+updateStateIfRunning:
+UPDATE taskSpec
+SET state = ?, updated_at_ms = ?
+WHERE id = ? AND state = 'RUNNING';
+
+updateStateAndNextRunTimeIfRunning:
+UPDATE taskSpec
+SET state = ?, updated_at_ms = ?, next_run_time_ms = ?
+WHERE id = ? AND state = 'RUNNING';
+
 -- Get all tasks regardless of state
 selectAllTasks:
 SELECT * FROM taskSpec
@@ -158,6 +175,13 @@ ORDER BY created_at_ms DESC;
 selectAllActive:
 SELECT * FROM taskSpec
 WHERE state = 'ENQUEUED'
+ORDER BY priority DESC, next_run_time_ms ASC;
+
+-- Get all tasks that have not reached a terminal state, including RUNNING
+-- tasks, so cancelAll() can cancel in-flight work in the database.
+selectAllCancellable:
+SELECT * FROM taskSpec
+WHERE state NOT IN ('SUCCEEDED', 'FAILED', 'CANCELLED')
 ORDER BY priority DESC, next_run_time_ms ASC;
 
 -- Get all ENQUEUED tasks for rescheduling
