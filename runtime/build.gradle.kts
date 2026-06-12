@@ -84,6 +84,8 @@ sqldelight {
     databases {
         create("MeeseeksDatabase") {
             packageName.set("dev.mattramotar.meeseeks.runtime.db")
+            schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
+            verifyMigrations.set(true)
         }
     }
 }
