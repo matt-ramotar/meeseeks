@@ -118,41 +118,35 @@ internal object TaskExecutor {
             else -> result.type
         }
 
-        database.taskLogQueries.insertLog(
-            taskId = taskId,
-            created = Timestamp.now(),
-            result = loggedType,
-            attempt = effectiveAttemptCount.toLong(),
-            message = when (result) {
-                is TaskResult.Failure.Transient -> {
-                    val category = result.error?.let { RetryErrorClassifier.classify(it) }
-                    val prefix = if (retriesExhausted) "Max retries exceeded" else "Transient failure"
-                    "$prefix [${category?.name ?: "UNKNOWN"}] (attempt $effectiveAttemptCount/$maxRetries): ${result.error?.message}"
-                }
-
-                is TaskResult.Failure.Permanent -> {
-                    val category = result.error?.let { RetryErrorClassifier.classify(it) }
-                    "Permanent failure [${category?.name ?: "UNKNOWN"}]: ${result.error?.message}"
-                }
-
-                TaskResult.Retry ->
-                    if (retriesExhausted) {
-                        "Max retries exceeded (attempt $effectiveAttemptCount/$maxRetries)"
-                    } else {
-                        "Explicit retry requested (attempt $effectiveAttemptCount/$maxRetries)"
-                    }
-
-                TaskResult.Success -> "Success"
-            }
-        )
-
-        return when (result) {
-            is TaskResult.Success -> {
-                handleSuccess(taskId, taskIdObj, request, effectiveAttemptCount, database, config)
+        val logMessage = when (result) {
+            is TaskResult.Failure.Transient -> {
+                val category = result.error?.let { RetryErrorClassifier.classify(it) }
+                val prefix = if (retriesExhausted) "Max retries exceeded" else "Transient failure"
+                "$prefix [${category?.name ?: "UNKNOWN"}] (attempt $effectiveAttemptCount/$maxRetries): ${result.error?.message}"
             }
 
             is TaskResult.Failure.Permanent -> {
-                handlePermanentFailure(taskId, taskIdObj, request, result, effectiveAttemptCount, database, config)
+                val category = result.error?.let { RetryErrorClassifier.classify(it) }
+                "Permanent failure [${category?.name ?: "UNKNOWN"}]: ${result.error?.message}"
+            }
+
+            TaskResult.Retry ->
+                if (retriesExhausted) {
+                    "Max retries exceeded (attempt $effectiveAttemptCount/$maxRetries)"
+                } else {
+                    "Explicit retry requested (attempt $effectiveAttemptCount/$maxRetries)"
+                }
+
+            TaskResult.Success -> "Success"
+        }
+
+        return when (result) {
+            is TaskResult.Success -> {
+                handleSuccess(taskId, taskIdObj, request, effectiveAttemptCount, database, config, loggedType, logMessage)
+            }
+
+            is TaskResult.Failure.Permanent -> {
+                handlePermanentFailure(taskId, taskIdObj, request, result, effectiveAttemptCount, database, config, loggedType, logMessage)
                 ExecutionResult.Terminal.Failure
             }
 
@@ -167,9 +161,68 @@ internal object TaskExecutor {
                     config,
                     taskSpec,
                     maxRetries,
-                    retriesExhausted
+                    retriesExhausted,
+                    loggedType,
+                    logMessage
                 )
             }
+        }
+    }
+
+    /**
+     * Atomically transitions the task out of RUNNING and records the attempt's
+     * log entry. Returns false when the task is no longer RUNNING — e.g. it was
+     * cancelled mid-attempt — in which case the cancellation wins: the attempt's
+     * outcome is neither applied to the task state nor logged as an event.
+     */
+    private fun finalizeAttemptIfRunning(
+        database: MeeseeksDatabase,
+        taskId: String,
+        newState: TaskState,
+        nextRunDelayMs: Long?,
+        clearCheckpoints: Boolean,
+        logType: TaskResult.Type,
+        attempt: Int,
+        logMessage: String
+    ): Boolean {
+        return database.transactionWithResult {
+            val now = Timestamp.now()
+            if (nextRunDelayMs != null) {
+                database.taskSpecQueries.updateStateAndNextRunTimeIfRunning(
+                    state = newState.toDbValue(),
+                    updated_at_ms = now,
+                    next_run_time_ms = now + nextRunDelayMs,
+                    id = taskId
+                )
+            } else {
+                database.taskSpecQueries.updateStateIfRunning(
+                    state = newState.toDbValue(),
+                    updated_at_ms = now,
+                    id = taskId
+                )
+            }
+            val finalized = database.taskSpecQueries.selectChanges().executeAsOne() > 0L
+            if (finalized) {
+                database.taskLogQueries.insertLog(
+                    taskId = taskId,
+                    created = now,
+                    result = logType,
+                    attempt = attempt.toLong(),
+                    message = logMessage
+                )
+                if (clearCheckpoints) {
+                    database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
+                }
+            } else {
+                val state = database.taskSpecQueries.selectTaskById(taskId).executeAsOneOrNull()
+                    ?.state?.let(TaskState::fromDbValue)
+                if (state == TaskState.SUCCEEDED || state == TaskState.FAILED || state == TaskState.CANCELLED) {
+                    // Drop checkpoints the worker may have saved after the
+                    // cancellation cleared them; terminal tasks never resume.
+                    database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
+                }
+            }
+            finalized
         }
     }
 
@@ -302,18 +355,23 @@ internal object TaskExecutor {
         request: TaskRequest,
         attemptCount: Int,
         database: MeeseeksDatabase,
-        config: BGTaskManagerConfig?
+        config: BGTaskManagerConfig?,
+        logType: TaskResult.Type,
+        logMessage: String
     ): ExecutionResult {
         return when (val schedule = request.schedule) {
             is TaskSchedule.OneTime -> {
-                database.transaction {
-                    database.taskSpecQueries.updateState(
-                        state = TaskState.SUCCEEDED.toDbValue(),
-                        updated_at_ms = Timestamp.now(),
-                        id = taskId
-                    )
-                    database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
-                }
+                val finalized = finalizeAttemptIfRunning(
+                    database = database,
+                    taskId = taskId,
+                    newState = TaskState.SUCCEEDED,
+                    nextRunDelayMs = null,
+                    clearCheckpoints = true,
+                    logType = logType,
+                    attempt = attemptCount,
+                    logMessage = logMessage
+                )
+                if (!finalized) return ExecutionResult.Terminal.Failure
 
                 config?.telemetry?.onEvent(
                     TelemetryEvent.TaskSucceeded(
@@ -327,21 +385,22 @@ internal object TaskExecutor {
             }
 
             is TaskSchedule.Periodic -> {
-                val now = Timestamp.now()
                 val base = schedule.interval
                 val flex = schedule.flexWindow
                 val jitter = if (flex.isPositive()) (0..flex.inWholeMilliseconds).random().milliseconds else Duration.ZERO
                 val delay = (base - flex + jitter).coerceAtLeast(Duration.ZERO)
 
-                database.transaction {
-                    database.taskSpecQueries.updateStateAndNextRunTime(
-                        state = TaskState.ENQUEUED.toDbValue(),
-                        updated_at_ms = now,
-                        next_run_time_ms = now + delay.inWholeMilliseconds,
-                        id = taskId
-                    )
-                    database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
-                }
+                val finalized = finalizeAttemptIfRunning(
+                    database = database,
+                    taskId = taskId,
+                    newState = TaskState.ENQUEUED,
+                    nextRunDelayMs = delay.inWholeMilliseconds,
+                    clearCheckpoints = true,
+                    logType = logType,
+                    attempt = attemptCount,
+                    logMessage = logMessage
+                )
+                if (!finalized) return ExecutionResult.Terminal.Failure
 
                 config?.telemetry?.onEvent(
                     TelemetryEvent.TaskSucceeded(
@@ -366,16 +425,21 @@ internal object TaskExecutor {
         result: TaskResult.Failure.Permanent,
         attemptCount: Int,
         database: MeeseeksDatabase,
-        config: BGTaskManagerConfig?
+        config: BGTaskManagerConfig?,
+        logType: TaskResult.Type,
+        logMessage: String
     ) {
-        database.transaction {
-            database.taskSpecQueries.updateState(
-                state = TaskState.FAILED.toDbValue(),
-                updated_at_ms = Timestamp.now(),
-                id = taskId
-            )
-            database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
-        }
+        val finalized = finalizeAttemptIfRunning(
+            database = database,
+            taskId = taskId,
+            newState = TaskState.FAILED,
+            nextRunDelayMs = null,
+            clearCheckpoints = true,
+            logType = logType,
+            attempt = attemptCount,
+            logMessage = logMessage
+        )
+        if (!finalized) return
 
         config?.telemetry?.onEvent(
             TelemetryEvent.TaskFailed(
@@ -400,7 +464,9 @@ internal object TaskExecutor {
         config: BGTaskManagerConfig?,
         taskSpec: TaskSpec?,
         maxRetries: Int,
-        retriesExhausted: Boolean
+        retriesExhausted: Boolean,
+        logType: TaskResult.Type,
+        logMessage: String
     ): ExecutionResult {
         if (retriesExhausted) {
             val exceededException = MaxRetriesExceededException(
@@ -417,7 +483,9 @@ internal object TaskExecutor {
                 TaskResult.Failure.Permanent(exceededException),
                 attemptCount,
                 database,
-                config
+                config,
+                logType,
+                logMessage
             )
             return ExecutionResult.Terminal.Failure
         }
@@ -430,15 +498,17 @@ internal object TaskExecutor {
             minBackoffMs = minBackoffMs
         )
 
-        database.taskSpecQueries.transaction {
-            val now = Timestamp.now()
-            database.taskSpecQueries.updateStateAndNextRunTime(
-                state = TaskState.ENQUEUED.toDbValue(),
-                updated_at_ms = now,
-                next_run_time_ms = now + nextRetryDelayMs,
-                id = taskId
-            )
-        }
+        val finalized = finalizeAttemptIfRunning(
+            database = database,
+            taskId = taskId,
+            newState = TaskState.ENQUEUED,
+            nextRunDelayMs = nextRetryDelayMs,
+            clearCheckpoints = false,
+            logType = logType,
+            attempt = attemptCount,
+            logMessage = logMessage
+        )
+        if (!finalized) return ExecutionResult.Terminal.Failure
 
         config?.telemetry?.let { telemetry ->
             telemetry.onEvent(

@@ -165,7 +165,10 @@ internal class RealBGTaskManager(
     override fun cancelAll() {
         taskScheduler.cancelAllWorkByTag(WorkRequestFactory.WORK_REQUEST_TAG)
 
-        val activeTasks = taskSpecQueries.selectAllActive().executeAsList()
+        // Includes RUNNING tasks: an in-flight attempt cannot be interrupted,
+        // but cancelling it in the database means its completion loses to the
+        // cancellation and recoverStuckTasks() will not resurrect it.
+        val activeTasks = taskSpecQueries.selectAllCancellable().executeAsList()
 
         val cancelledTasks = activeTasks.filter { entity ->
             cancelInDatabase(entity.id, entity.run_attempt_count, "Task cancelled by cancelAll().")

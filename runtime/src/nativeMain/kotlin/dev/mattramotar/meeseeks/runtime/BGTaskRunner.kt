@@ -96,7 +96,9 @@ internal class BGTaskRunner(
         when (result) {
             is SubmitRequestResult.Success -> {
                 database.taskSpecQueries.updatePlatformId(identifier, now, taskId)
-                database.taskSpecQueries.updateState(TaskState.ENQUEUED.toDbValue(), now, taskId)
+                // Guarded so a cancellation that landed after the attempt
+                // finished is not flipped back to ENQUEUED.
+                database.taskSpecQueries.updateStateIfEnqueued(TaskState.ENQUEUED.toDbValue(), now, taskId)
 
                 database.taskLogQueries.insertLog(
                     taskId = taskId,
@@ -120,17 +122,22 @@ internal class BGTaskRunner(
             }
 
             is SubmitRequestResult.Failure.NonRetriable -> {
-                // This is a permanent failure
-                // Log and mark task as failed
-                database.taskSpecQueries.updateState(TaskState.FAILED.toDbValue(), now, taskId)
-
-                database.taskLogQueries.insertLog(
-                    taskId = taskId,
-                    created = now,
-                    result = TaskResult.Type.PermanentFailure,
-                    attempt = attemptCount.toLong(),
-                    message = "Failed to resubmit task (non-retriable, code ${result.errorCode}): ${result.errorDescription}"
-                )
+                // This is a permanent failure. Mark the task as failed and log
+                // the terminal event only if it is still enqueued; a concurrent
+                // cancellation keeps its Cancelled outcome and event.
+                database.transaction {
+                    database.taskSpecQueries.updateStateIfEnqueued(TaskState.FAILED.toDbValue(), now, taskId)
+                    val failed = database.taskSpecQueries.selectChanges().executeAsOne() > 0L
+                    if (failed) {
+                        database.taskLogQueries.insertLog(
+                            taskId = taskId,
+                            created = now,
+                            result = TaskResult.Type.PermanentFailure,
+                            attempt = attemptCount.toLong(),
+                            message = "Failed to resubmit task (non-retriable, code ${result.errorCode}): ${result.errorDescription}"
+                        )
+                    }
+                }
             }
         }
     }
