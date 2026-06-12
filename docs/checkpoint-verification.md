@@ -2,7 +2,7 @@
 
 Meeseeks verifies checkpoint resume behavior with a repeatable JVM fixture in `CheckpointPersistenceJvmTest.multiStepWorkerSkipsCompletedStepsAfterManagerRestart`.
 
-The fixture models a checkpointed worker with three idempotent steps:
+The fixture models a worker extending `CheckpointedWorker` with three idempotent steps:
 
 1. `download`
 2. `transform`

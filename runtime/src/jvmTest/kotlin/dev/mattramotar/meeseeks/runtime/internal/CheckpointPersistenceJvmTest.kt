@@ -282,13 +282,9 @@ class CheckpointPersistenceJvmTest {
         appContext: AppContext,
         private val sideEffects: MutableList<String>,
         private val failAfterCompletedThrough: Int?,
-    ) : Worker<ResumePayload>(appContext), CheckpointedWorker<ResumePayload> {
+    ) : CheckpointedWorker<ResumePayload>(appContext) {
 
         private val steps = listOf("download", "transform", "upload")
-
-        override suspend fun run(payload: ResumePayload, context: RuntimeContext): TaskResult {
-            error("Checkpointed workers must use the checkpoint-aware run method.")
-        }
 
         override suspend fun run(
             payload: ResumePayload,
