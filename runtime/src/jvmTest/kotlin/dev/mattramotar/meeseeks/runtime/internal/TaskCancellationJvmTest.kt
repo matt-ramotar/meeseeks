@@ -19,6 +19,8 @@ import dev.mattramotar.meeseeks.runtime.internal.db.adapters.taskLogEntityAdapte
 import dev.mattramotar.meeseeks.runtime.replayTerminalEvents
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -224,7 +226,7 @@ class TaskCancellationJvmTest {
         return MeeseeksDatabase(driver, taskLogEntityAdapter(json))
     }
 
-    private fun createManager(
+    private suspend fun createManager(
         database: MeeseeksDatabase,
         registry: WorkerRegistry
     ): BGTaskManager {
@@ -234,7 +236,7 @@ class TaskCancellationJvmTest {
         val workRequestFactory = WorkRequestFactory()
         val taskRescheduler = TaskRescheduler(database, taskScheduler, workRequestFactory, config, registry)
 
-        return RealBGTaskManager(
+        val manager = RealBGTaskManager(
             database = database,
             workRequestFactory = workRequestFactory,
             taskScheduler = taskScheduler,
@@ -244,6 +246,13 @@ class TaskCancellationJvmTest {
             constraintCapabilities = ConstraintCapabilities.JVM,
             appContext = TestAppContext
         )
+
+        // The manager's init launches rescheduleTasks() on real IO threads. Join
+        // it before the test schedules anything so it cannot race the test and
+        // log a resurrection Retry row for the task being cancelled.
+        manager.coroutineContext.job.children.toList().joinAll()
+
+        return manager
     }
 
     private fun registry(work: suspend () -> TaskResult): WorkerRegistry {
