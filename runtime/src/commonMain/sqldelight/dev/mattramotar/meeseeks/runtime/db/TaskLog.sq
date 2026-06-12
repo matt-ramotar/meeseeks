@@ -10,6 +10,8 @@ CREATE TABLE taskLogEntity (
     FOREIGN KEY (taskId) REFERENCES taskSpec(id)
 );
 
+CREATE INDEX idx_taskLogEntity_taskId ON taskLogEntity(taskId);
+
 insertLog:
 INSERT INTO taskLogEntity (taskId, created, result, attempt, message)
 VALUES (?, ?, ?, ?, ?);
@@ -18,66 +20,18 @@ selectLogsForTask:
 SELECT * FROM taskLogEntity
 WHERE taskId = ?;
 
+-- Terminal outcomes are written as facts at log time: one-time success is
+-- logged as Success, periodic per-run success as SuccessAndScheduledNext,
+-- retry exhaustion as PermanentFailure, and cancellation as Cancelled. These
+-- queries therefore only need to filter on the logged result type.
 selectTerminalEventsForTask:
-SELECT taskLogEntity.*
-FROM taskLogEntity
-WHERE taskLogEntity.taskId = :taskId
-  AND (
-    (
-      taskLogEntity.result = :success
-      AND EXISTS (
-        SELECT 1
-        FROM taskSpec
-        WHERE taskSpec.id = taskLogEntity.taskId
-          AND taskSpec.schedule_type = 'ONE_TIME'
-      )
-    )
-    OR taskLogEntity.result = :permanentFailure
-    OR taskLogEntity.result = :cancelled
-    OR (
-      EXISTS (
-        SELECT 1
-        FROM taskSpec
-        WHERE taskSpec.id = taskLogEntity.taskId
-          AND taskSpec.state = 'FAILED'
-      )
-      AND taskLogEntity.id = (
-        SELECT MAX(latest.id)
-        FROM taskLogEntity latest
-        WHERE latest.taskId = taskLogEntity.taskId
-      )
-    )
-  )
-ORDER BY taskLogEntity.id ASC;
+SELECT * FROM taskLogEntity
+WHERE taskId = :taskId
+  AND result IN (:success, :permanentFailure, :cancelled)
+ORDER BY id ASC;
 
 selectTerminalEventsSince:
-SELECT taskLogEntity.*
-FROM taskLogEntity
-WHERE taskLogEntity.id > :sinceEventId
-  AND (
-    (
-      taskLogEntity.result = :success
-      AND EXISTS (
-        SELECT 1
-        FROM taskSpec
-        WHERE taskSpec.id = taskLogEntity.taskId
-          AND taskSpec.schedule_type = 'ONE_TIME'
-      )
-    )
-    OR taskLogEntity.result = :permanentFailure
-    OR taskLogEntity.result = :cancelled
-    OR (
-      EXISTS (
-        SELECT 1
-        FROM taskSpec
-        WHERE taskSpec.id = taskLogEntity.taskId
-          AND taskSpec.state = 'FAILED'
-      )
-      AND taskLogEntity.id = (
-        SELECT MAX(latest.id)
-        FROM taskLogEntity latest
-        WHERE latest.taskId = taskLogEntity.taskId
-      )
-    )
-  )
-ORDER BY taskLogEntity.id ASC;
+SELECT * FROM taskLogEntity
+WHERE id > :sinceEventId
+  AND result IN (:success, :permanentFailure, :cancelled)
+ORDER BY id ASC;

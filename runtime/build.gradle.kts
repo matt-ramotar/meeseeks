@@ -84,8 +84,13 @@ sqldelight {
     databases {
         create("MeeseeksDatabase") {
             packageName.set("dev.mattramotar.meeseeks.runtime.db")
+            // Committed schema snapshots under src/commonMain/sqldelight/databases
+            // make verifyCommonMainMeeseeksDatabaseMigration apply each migration
+            // to the previous snapshot and compare against the current schema.
+            // verifyMigrations stays off: migration history starts at 1.sqm
+            // (no 0.sqm creates the original tables), so compile-time validation
+            // of the legacy migrations cannot pass.
             schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
-            verifyMigrations.set(true)
         }
     }
 }

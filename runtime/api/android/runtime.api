@@ -638,6 +638,7 @@ public final class dev/mattramotar/meeseeks/runtime/db/TaskSpecQueries : app/cas
 	public final fun atomicallyClaimAndStartTask (JLjava/lang/String;)V
 	public final fun atomicallyClaimAndStartTaskWithLimit (JLjava/lang/String;J)V
 	public final fun cancelTask (JLjava/lang/String;)V
+	public final fun cancelTaskIfActive (JLjava/lang/String;)V
 	public final fun insertTask (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZZJLjava/lang/String;JJJLjava/lang/String;JJLjava/lang/Double;D)V
 	public final fun resetRunningTasksToEnqueued (J)V
 	public final fun selectAllActive ()Lapp/cash/sqldelight/Query;

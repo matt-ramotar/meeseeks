@@ -148,16 +148,8 @@ internal class RealBGTaskManager(
             )
         }
 
-        val cancelledAt = Timestamp.now()
-        taskSpecQueries.transaction {
-            taskSpecQueries.cancelTask(cancelledAt, id.value)
-            taskLogQueries.insertLog(
-                taskId = id.value,
-                created = cancelledAt,
-                result = TaskResult.Type.Cancelled,
-                attempt = taskEntity.run_attempt_count,
-                message = "Task cancelled."
-            )
+        if (!cancelInDatabase(id.value, taskEntity.run_attempt_count, "Task cancelled.")) {
+            return
         }
 
         launch {
@@ -175,21 +167,11 @@ internal class RealBGTaskManager(
 
         val activeTasks = taskSpecQueries.selectAllActive().executeAsList()
 
-        val cancelledAt = Timestamp.now()
-        taskSpecQueries.transaction {
-            activeTasks.forEach { entity ->
-                taskSpecQueries.cancelTask(cancelledAt, entity.id)
-                taskLogQueries.insertLog(
-                    taskId = entity.id,
-                    created = cancelledAt,
-                    result = TaskResult.Type.Cancelled,
-                    attempt = entity.run_attempt_count,
-                    message = "Task cancelled by cancelAll()."
-                )
-            }
+        val cancelledTasks = activeTasks.filter { entity ->
+            cancelInDatabase(entity.id, entity.run_attempt_count, "Task cancelled by cancelAll().")
         }
 
-        activeTasks.forEach { entity ->
+        cancelledTasks.forEach { entity ->
             launch {
                 telemetry?.onEvent(
                     TelemetryEvent.TaskCancelled(
@@ -198,6 +180,29 @@ internal class RealBGTaskManager(
                     )
                 )
             }
+        }
+    }
+
+    /**
+     * Atomically cancels a task unless it already reached a terminal state, and
+     * logs the durable Cancelled event only when this call performed the
+     * cancellation. Returns false for tasks that were already terminal.
+     */
+    private fun cancelInDatabase(taskId: String, attempt: Long, message: String): Boolean {
+        val cancelledAt = Timestamp.now()
+        return taskSpecQueries.transactionWithResult {
+            taskSpecQueries.cancelTaskIfActive(cancelledAt, taskId)
+            val cancelled = taskSpecQueries.selectChanges().executeAsOne() > 0L
+            if (cancelled) {
+                taskLogQueries.insertLog(
+                    taskId = taskId,
+                    created = cancelledAt,
+                    result = TaskResult.Type.Cancelled,
+                    attempt = attempt,
+                    message = message
+                )
+            }
+            cancelled
         }
     }
 
@@ -355,12 +360,13 @@ internal class RealBGTaskManager(
 
     private fun TaskResult.Type.toEventOutcome(): TaskEventOutcome {
         return when (this) {
-            TaskResult.Type.Cancelled -> TaskEventOutcome.Cancelled
             TaskResult.Type.Success -> TaskEventOutcome.Success
-            TaskResult.Type.PermanentFailure,
+            TaskResult.Type.PermanentFailure -> TaskEventOutcome.Failure
+            TaskResult.Type.Cancelled -> TaskEventOutcome.Cancelled
             TaskResult.Type.TransientFailure,
             TaskResult.Type.Retry,
-            TaskResult.Type.SuccessAndScheduledNext -> TaskEventOutcome.Failure
+            TaskResult.Type.SuccessAndScheduledNext ->
+                error("Non-terminal log type $this should never match a terminal event query.")
         }
     }
 }

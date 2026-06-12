@@ -93,16 +93,32 @@ internal object TaskExecutor {
         val result = executeWorker(request, registry, appContext, effectiveAttemptCount)
 
         val taskSpec = database.taskSpecQueries.selectTaskById(taskId).executeAsOneOrNull()
-        val maxRetries = taskSpec?.max_retries ?: 3
+        val maxRetries = taskSpec?.max_retries?.toInt() ?: 3
+        val retriesExhausted = (result is TaskResult.Failure.Transient || result is TaskResult.Retry) &&
+            effectiveAttemptCount >= maxRetries
+
+        // The logged type is the durable terminal fact consumed by terminal event
+        // replay: a periodic per-run success is not terminal, and an attempt that
+        // exhausts its retry budget is.
+        val loggedType = when {
+            retriesExhausted -> TaskResult.Type.PermanentFailure
+
+            result is TaskResult.Success && request.schedule is TaskSchedule.Periodic ->
+                TaskResult.Type.SuccessAndScheduledNext
+
+            else -> result.type
+        }
+
         database.taskLogQueries.insertLog(
             taskId = taskId,
             created = Timestamp.now(),
-            result = result.type,
+            result = loggedType,
             attempt = effectiveAttemptCount.toLong(),
             message = when (result) {
                 is TaskResult.Failure.Transient -> {
                     val category = result.error?.let { RetryErrorClassifier.classify(it) }
-                    "Transient failure [${category?.name ?: "UNKNOWN"}] (attempt $effectiveAttemptCount/$maxRetries): ${result.error?.message}"
+                    val prefix = if (retriesExhausted) "Max retries exceeded" else "Transient failure"
+                    "$prefix [${category?.name ?: "UNKNOWN"}] (attempt $effectiveAttemptCount/$maxRetries): ${result.error?.message}"
                 }
 
                 is TaskResult.Failure.Permanent -> {
@@ -110,7 +126,13 @@ internal object TaskExecutor {
                     "Permanent failure [${category?.name ?: "UNKNOWN"}]: ${result.error?.message}"
                 }
 
-                TaskResult.Retry -> "Explicit retry requested (attempt $effectiveAttemptCount/$maxRetries)"
+                TaskResult.Retry ->
+                    if (retriesExhausted) {
+                        "Max retries exceeded (attempt $effectiveAttemptCount/$maxRetries)"
+                    } else {
+                        "Explicit retry requested (attempt $effectiveAttemptCount/$maxRetries)"
+                    }
+
                 TaskResult.Success -> "Success"
             }
         )
@@ -133,7 +155,10 @@ internal object TaskExecutor {
                     result as? TaskResult.Failure,
                     effectiveAttemptCount,
                     database,
-                    config
+                    config,
+                    taskSpec,
+                    maxRetries,
+                    retriesExhausted
                 )
             }
         }
@@ -333,12 +358,12 @@ internal object TaskExecutor {
         result: TaskResult.Failure?,
         attemptCount: Int,
         database: MeeseeksDatabase,
-        config: BGTaskManagerConfig?
+        config: BGTaskManagerConfig?,
+        taskSpec: TaskSpec?,
+        maxRetries: Int,
+        retriesExhausted: Boolean
     ): ExecutionResult {
-        val taskSpec = database.taskSpecQueries.selectTaskById(taskId).executeAsOneOrNull()
-        val maxRetries = taskSpec?.max_retries?.toInt() ?: 3
-
-        if (attemptCount >= maxRetries) {
+        if (retriesExhausted) {
             val exceededException = MaxRetriesExceededException(
                 taskId = taskId,
                 attemptNumber = attemptCount,

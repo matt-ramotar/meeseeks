@@ -8,6 +8,7 @@ import dev.mattramotar.meeseeks.runtime.TaskEventOutcome
 import dev.mattramotar.meeseeks.runtime.TaskPayload
 import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskResult
+import dev.mattramotar.meeseeks.runtime.TaskRetryPolicy
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.TaskStatus
 import dev.mattramotar.meeseeks.runtime.Worker
@@ -15,7 +16,9 @@ import dev.mattramotar.meeseeks.runtime.WorkerFactory
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.getTaskEvents
 import dev.mattramotar.meeseeks.runtime.internal.db.adapters.taskLogEntityAdapter
+import dev.mattramotar.meeseeks.runtime.observeTaskEvents
 import dev.mattramotar.meeseeks.runtime.replayTerminalEvents
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -127,6 +130,119 @@ class TaskEventReplayJvmTest {
         val restarted: BGTaskManager = createManager(database, registry)
         assertTrue(execution is TaskExecutor.ExecutionResult.ScheduleNextActivation)
         assertTrue(restarted.getTaskEvents(taskId).isEmpty())
+    }
+
+    @Test
+    fun retryExhaustionIsReplayedAsSingleFailureEvent() = runTest {
+        val database = createDatabase()
+        val registry = registry(TaskResult.Failure.Transient(IllegalStateException("flaky")))
+        val manager = createManager(database, registry)
+        val taskId = manager.schedule(
+            TaskRequest(
+                payload = TestPayload("exhaust"),
+                retryPolicy = TaskRetryPolicy.FixedInterval(retryInterval = 1.seconds, maxRetries = 2)
+            )
+        )
+
+        TaskExecutor.execute(taskId.value, database, registry, TestAppContext, config)
+        TaskExecutor.execute(taskId.value, database, registry, TestAppContext, config)
+
+        val restarted: BGTaskManager = createManager(database, registry)
+        val event = restarted.getTaskEvents(taskId).single()
+
+        assertEquals(TaskEventOutcome.Failure, event.outcome)
+        assertEquals(2, event.attempt)
+        assertTrue(event.message?.contains("Max retries exceeded") == true)
+        assertEquals(TaskStatus.Finished.Failed, restarted.getTaskStatus(taskId))
+        assertEquals(listOf(event), restarted.replayTerminalEvents(sinceEventId = 0L))
+    }
+
+    @Test
+    fun cancellingTwiceProducesASingleCancelledEvent() {
+        val database = createDatabase()
+        val registry = registry(TaskResult.Success)
+        val manager = createManager(database, registry)
+        val taskId = manager.schedule(TaskRequest(TestPayload("cancel-twice")))
+
+        manager.cancel(taskId)
+        manager.cancel(taskId)
+
+        val event = manager.getTaskEvents(taskId).single()
+
+        assertEquals(TaskEventOutcome.Cancelled, event.outcome)
+        assertEquals(TaskStatus.Finished.Cancelled, manager.getTaskStatus(taskId))
+    }
+
+    @Test
+    fun cancellingACompletedTaskKeepsTheSuccessOutcome() = runTest {
+        val database = createDatabase()
+        val registry = registry(TaskResult.Success)
+        val manager = createManager(database, registry)
+        val taskId = manager.schedule(TaskRequest(TestPayload("done")))
+
+        TaskExecutor.execute(taskId.value, database, registry, TestAppContext, config)
+        manager.cancel(taskId)
+
+        val event = manager.getTaskEvents(taskId).single()
+
+        assertEquals(TaskEventOutcome.Success, event.outcome)
+        assertEquals(TaskStatus.Finished.Completed, manager.getTaskStatus(taskId))
+    }
+
+    @Test
+    fun observeTaskEventsEmitsPersistedTerminalEvents() = runTest {
+        val database = createDatabase()
+        val registry = registry(TaskResult.Success)
+        val manager = createManager(database, registry)
+        val taskId = manager.schedule(TaskRequest(TestPayload("observe")))
+
+        TaskExecutor.execute(taskId.value, database, registry, TestAppContext, config)
+
+        val events = manager.observeTaskEvents(taskId).first()
+
+        assertEquals(TaskEventOutcome.Success, events.single().outcome)
+    }
+
+    @Test
+    fun legacyLogRowsAreNormalizedAndReplayableAfterMigration() {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY, schema = MeeseeksDatabase.Schema)
+        val database = MeeseeksDatabase(driver, taskLogEntityAdapter(json))
+        val registry = registry(TaskResult.Success)
+        val manager = createManager(database, registry)
+
+        val oneTimeId = manager.schedule(TaskRequest(TestPayload("legacy-one-time")))
+        val periodicId = manager.schedule(
+            TaskRequest(
+                payload = TestPayload("legacy-periodic"),
+                schedule = TaskSchedule.Periodic(interval = 5.seconds)
+            )
+        )
+
+        // Simulate a pre-migration database: log rows stored without JSON quotes
+        // and no taskId index yet.
+        driver.execute(null, "DROP INDEX idx_taskLogEntity_taskId", 0, null)
+        driver.execute(
+            null,
+            "INSERT INTO taskLogEntity (taskId, created, result, attempt, message) " +
+                "VALUES ('${oneTimeId.value}', 1, 'Success', 1, 'legacy one-time success')",
+            0,
+            null
+        )
+        driver.execute(
+            null,
+            "INSERT INTO taskLogEntity (taskId, created, result, attempt, message) " +
+                "VALUES ('${periodicId.value}', 2, 'Success', 1, 'legacy periodic success')",
+            0,
+            null
+        )
+
+        MeeseeksDatabase.Schema.migrate(driver, 3, 4)
+
+        val event = manager.replayTerminalEvents(sinceEventId = 0L).single()
+
+        assertEquals(oneTimeId, event.taskId)
+        assertEquals(TaskEventOutcome.Success, event.outcome)
+        assertTrue(manager.getTaskEvents(periodicId).isEmpty())
     }
 
     private fun createDatabase(): MeeseeksDatabase {

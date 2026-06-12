@@ -19,6 +19,12 @@ import kotlinx.coroutines.flow.Flow
  * Periodic tasks emit replayable terminal events only when they fail permanently
  * or are cancelled.
  *
+ * Events are immutable facts written when the outcome happens; replaying never
+ * reclassifies past events. Delivery is at-least-once: if the app persists its
+ * cursor after handling events, a crash in between re-delivers them, so
+ * handlers should be idempotent. A task cancelled while an attempt is already
+ * running can still finish that attempt and emit a second terminal event.
+ *
  * Retention follows Meeseeks task persistence. Events are retained while their
  * task and log rows are retained; Meeseeks does not currently prune task logs
  * automatically.
@@ -70,6 +76,10 @@ public interface TaskEventReplay {
 
 /**
  * Returns replayable terminal events already persisted for [taskId].
+ *
+ * @throws UnsupportedOperationException if this [BGTaskManager] implementation
+ * does not implement [TaskEventReplay]. Managers created by [Meeseeks.initialize]
+ * always support replay; custom test fakes may not.
  */
 public fun BGTaskManager.getTaskEvents(taskId: TaskId): List<TaskEvent> {
     return eventReplay().getTaskEvents(taskId)
@@ -77,6 +87,10 @@ public fun BGTaskManager.getTaskEvents(taskId: TaskId): List<TaskEvent> {
 
 /**
  * Observes persisted terminal event replay for [taskId].
+ *
+ * @throws UnsupportedOperationException if this [BGTaskManager] implementation
+ * does not implement [TaskEventReplay]. Managers created by [Meeseeks.initialize]
+ * always support replay; custom test fakes may not.
  */
 public fun BGTaskManager.observeTaskEvents(taskId: TaskId): Flow<List<TaskEvent>> {
     return eventReplay().observeTaskEvents(taskId)
@@ -84,6 +98,10 @@ public fun BGTaskManager.observeTaskEvents(taskId: TaskId): Flow<List<TaskEvent>
 
 /**
  * Replays all terminal task events with event ids greater than [sinceEventId].
+ *
+ * @throws UnsupportedOperationException if this [BGTaskManager] implementation
+ * does not implement [TaskEventReplay]. Managers created by [Meeseeks.initialize]
+ * always support replay; custom test fakes may not.
  */
 public fun BGTaskManager.replayTerminalEvents(sinceEventId: Long = 0L): List<TaskEvent> {
     return eventReplay().replayTerminalEvents(sinceEventId)

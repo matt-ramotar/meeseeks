@@ -1,0 +1,18 @@
+-- TaskResultAdapter historically wrote enum names both with and without JSON
+-- quotes. Typed queries bind the quoted form, so normalize every legacy
+-- unquoted row to the quoted encoding before any result-based filtering.
+UPDATE taskLogEntity SET result = '"Success"' WHERE result = 'Success';
+UPDATE taskLogEntity SET result = '"Retry"' WHERE result = 'Retry';
+UPDATE taskLogEntity SET result = '"PermanentFailure"' WHERE result = 'PermanentFailure';
+UPDATE taskLogEntity SET result = '"TransientFailure"' WHERE result = 'TransientFailure';
+UPDATE taskLogEntity SET result = '"SuccessAndScheduledNext"' WHERE result = 'SuccessAndScheduledNext';
+
+-- Periodic per-run successes were historically logged as Success. Terminal
+-- event replay treats Success as a terminal one-time outcome, so rewrite
+-- historical periodic successes to the non-terminal SuccessAndScheduledNext.
+UPDATE taskLogEntity
+SET result = '"SuccessAndScheduledNext"'
+WHERE result = '"Success"'
+  AND taskId IN (SELECT id FROM taskSpec WHERE schedule_type = 'PERIODIC');
+
+CREATE INDEX idx_taskLogEntity_taskId ON taskLogEntity(taskId);
