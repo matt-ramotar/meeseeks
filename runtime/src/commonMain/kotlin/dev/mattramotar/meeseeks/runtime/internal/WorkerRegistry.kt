@@ -5,6 +5,7 @@ import dev.mattramotar.meeseeks.runtime.PayloadCipher
 import dev.mattramotar.meeseeks.runtime.TaskPayload
 import dev.mattramotar.meeseeks.runtime.Worker
 import dev.mattramotar.meeseeks.runtime.WorkerFactory
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlin.reflect.KClass
@@ -22,10 +23,14 @@ internal class WorkerRegistry(
     private val registrationsByTypeId = registrations.values.associateBy { it.typeId }
 
     fun <T : TaskPayload> getFactory(payloadClass: KClass<T>): WorkerFactory<T> {
-        val registration = registrations[payloadClass]
+        val registration = getRegistration(payloadClass)
 
         @Suppress("UNCHECKED_CAST")
-        return registration?.factory as? WorkerFactory<T>
+        return registration.factory as WorkerFactory<T>
+    }
+
+    fun <T : TaskPayload> getRegistration(payloadClass: KClass<T>): WorkerRegistration {
+        return registrations[payloadClass]
             ?: throw IllegalArgumentException("No Worker registered for Payload type: ${payloadClass.simpleName}. Ensure it was added in BGTaskManagerBuilder.")
     }
 
@@ -52,6 +57,27 @@ internal class WorkerRegistry(
         val serializer = registration.serializer as KSerializer<TaskPayload>
         val decrypted = decryptPayload(data)
         return json.decodeFromString(serializer, decrypted)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun <T : Any> serializeCheckpoint(
+        serializer: KSerializer<T>,
+        value: T
+    ): SerializedPayload {
+        val data = json.encodeToString(serializer, value)
+        return SerializedPayload(checkpointTypeId(serializer), encryptPayload(data))
+    }
+
+    fun <T : Any> deserializeCheckpoint(
+        serializer: KSerializer<T>,
+        data: String
+    ): T {
+        return json.decodeFromString(serializer, decryptPayload(data))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun <T : Any> checkpointTypeId(serializer: KSerializer<T>): String {
+        return serializer.descriptor.serialName
     }
 
     internal fun getAllRegistrations(): Collection<WorkerRegistration> = registrations.values

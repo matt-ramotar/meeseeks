@@ -1,0 +1,12 @@
+CREATE TABLE taskCheckpointEntity (
+    task_id TEXT NOT NULL,
+    checkpoint_key TEXT NOT NULL,
+    payload_type_id TEXT NOT NULL,
+    worker_type_id TEXT NOT NULL,
+    checkpoint_type_id TEXT NOT NULL,
+    data TEXT NOT NULL,
+    created_at_ms INTEGER NOT NULL,
+    updated_at_ms INTEGER NOT NULL,
+    PRIMARY KEY (task_id, checkpoint_key),
+    FOREIGN KEY (task_id) REFERENCES taskSpec(id) ON DELETE CASCADE
+);
