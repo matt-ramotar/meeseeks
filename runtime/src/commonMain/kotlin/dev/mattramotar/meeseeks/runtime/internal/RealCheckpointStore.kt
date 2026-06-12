@@ -5,6 +5,8 @@ import dev.mattramotar.meeseeks.runtime.CheckpointIncompatibleException
 import dev.mattramotar.meeseeks.runtime.CheckpointStore
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
 import dev.mattramotar.meeseeks.runtime.db.TaskCheckpointEntity
+import dev.mattramotar.meeseeks.runtime.internal.coroutines.MeeseeksDispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 
 internal class RealCheckpointStore(
@@ -16,17 +18,17 @@ internal class RealCheckpointStore(
 ) : CheckpointStore {
 
     override suspend fun <T : Any> read(
-        key: String,
         serializer: KSerializer<T>,
-    ): T? {
+        key: String,
+    ): T? = withContext(MeeseeksDispatchers.IO) {
         val row = database.taskCheckpointQueries
             .selectCheckpoint(taskId, key)
-            .executeAsOneOrNull() ?: return null
+            .executeAsOneOrNull() ?: return@withContext null
 
         val expectedCheckpointTypeId = registry.checkpointTypeId(serializer)
         validateCompatibility(row, key, expectedCheckpointTypeId)
 
-        return try {
+        try {
             registry.deserializeCheckpoint(serializer, row.data_)
         } catch (error: Throwable) {
             throw CheckpointDecodeException(
@@ -37,53 +39,54 @@ internal class RealCheckpointStore(
     }
 
     override suspend fun <T : Any> write(
-        key: String,
         value: T,
         serializer: KSerializer<T>,
-        schemaVersion: Int,
+        key: String,
     ) {
-        require(schemaVersion > 0) { "schemaVersion must be positive." }
-
         val checkpoint = registry.serializeCheckpoint(serializer, value)
         val now = Timestamp.now()
-        database.transaction {
-            val existing = database.taskCheckpointQueries
-                .selectCheckpoint(taskId, key)
-                .executeAsOneOrNull()
+        withContext(MeeseeksDispatchers.IO) {
+            database.transaction {
+                val existing = database.taskCheckpointQueries
+                    .selectCheckpoint(taskId, key)
+                    .executeAsOneOrNull()
 
-            if (existing == null) {
-                database.taskCheckpointQueries.insertCheckpoint(
-                    task_id = taskId,
-                    checkpoint_key = key,
-                    payload_type_id = payloadTypeId,
-                    worker_type_id = workerTypeId,
-                    checkpoint_type_id = checkpoint.typeId,
-                    schema_version = schemaVersion.toLong(),
-                    data_ = checkpoint.data,
-                    created_at_ms = now,
-                    updated_at_ms = now,
-                )
-            } else {
-                database.taskCheckpointQueries.updateCheckpoint(
-                    payload_type_id = payloadTypeId,
-                    worker_type_id = workerTypeId,
-                    checkpoint_type_id = checkpoint.typeId,
-                    schema_version = schemaVersion.toLong(),
-                    data_ = checkpoint.data,
-                    updated_at_ms = now,
-                    task_id = taskId,
-                    checkpoint_key = key,
-                )
+                if (existing == null) {
+                    database.taskCheckpointQueries.insertCheckpoint(
+                        task_id = taskId,
+                        checkpoint_key = key,
+                        payload_type_id = payloadTypeId,
+                        worker_type_id = workerTypeId,
+                        checkpoint_type_id = checkpoint.typeId,
+                        data_ = checkpoint.data,
+                        created_at_ms = now,
+                        updated_at_ms = now,
+                    )
+                } else {
+                    database.taskCheckpointQueries.updateCheckpoint(
+                        payload_type_id = payloadTypeId,
+                        worker_type_id = workerTypeId,
+                        checkpoint_type_id = checkpoint.typeId,
+                        data_ = checkpoint.data,
+                        updated_at_ms = now,
+                        task_id = taskId,
+                        checkpoint_key = key,
+                    )
+                }
             }
         }
     }
 
     override suspend fun clear(key: String) {
-        database.taskCheckpointQueries.deleteCheckpoint(taskId, key)
+        withContext(MeeseeksDispatchers.IO) {
+            database.taskCheckpointQueries.deleteCheckpoint(taskId, key)
+        }
     }
 
     override suspend fun clearAll() {
-        database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
+        withContext(MeeseeksDispatchers.IO) {
+            database.taskCheckpointQueries.deleteAllCheckpointsForTask(taskId)
+        }
     }
 
     private fun validateCompatibility(

@@ -138,7 +138,7 @@ class CheckpointPersistenceJvmTest {
             insertTask(database, registry, taskId)
             val store = checkpointStore(database, registry, taskId)
 
-            store.write("cursor", Progress(1), Progress.serializer())
+            store.write(Progress(1), Progress.serializer(), "cursor")
 
             assertEquals(1L, checkpointCount(database, taskId))
 
@@ -158,16 +158,16 @@ class CheckpointPersistenceJvmTest {
         insertTask(database, registry, taskId)
         val store = checkpointStore(database, registry, taskId)
 
-        store.write("cursor", Progress(1), Progress.serializer())
-        store.write("cursor", Progress(2), Progress.serializer())
-        store.write("side", Progress(3), Progress.serializer())
+        store.write(Progress(1), Progress.serializer(), "cursor")
+        store.write(Progress(2), Progress.serializer(), "cursor")
+        store.write(Progress(3), Progress.serializer(), "side")
 
-        assertEquals(Progress(2), store.read("cursor", Progress.serializer()))
+        assertEquals(Progress(2), store.read(Progress.serializer(), "cursor"))
         assertEquals(2L, checkpointCount(database, taskId))
 
         store.clear("cursor")
 
-        assertNull(store.read("cursor", Progress.serializer()))
+        assertNull(store.read(Progress.serializer(), "cursor"))
         assertEquals(1L, checkpointCount(database, taskId))
 
         store.clearAll()
@@ -183,17 +183,16 @@ class CheckpointPersistenceJvmTest {
         insertTask(database, registry, taskId)
         val store = checkpointStore(database, registry, taskId)
 
-        store.write("cursor", Progress(1), Progress.serializer())
+        store.write(Progress(1), Progress.serializer(), "cursor")
 
         assertFailsWith<CheckpointIncompatibleException> {
-            store.read("cursor", OtherProgress.serializer())
+            store.read(OtherProgress.serializer(), "cursor")
         }
 
         database.taskCheckpointQueries.updateCheckpoint(
             payload_type_id = payloadTypeId(),
             worker_type_id = payloadTypeId(),
             checkpoint_type_id = registry.checkpointTypeId(Progress.serializer()),
-            schema_version = 1L,
             data_ = "not-json",
             updated_at_ms = 1L,
             task_id = taskId,
@@ -201,18 +200,14 @@ class CheckpointPersistenceJvmTest {
         )
 
         assertFailsWith<CheckpointDecodeException> {
-            store.read("cursor", Progress.serializer())
+            store.read(Progress.serializer(), "cursor")
         }
     }
 
     private class ResumableWorker(
         appContext: AppContext,
         private val observed: MutableList<Progress?>,
-    ) : Worker<ResumePayload>(appContext), CheckpointedWorker<ResumePayload> {
-
-        override suspend fun run(payload: ResumePayload, context: RuntimeContext): TaskResult {
-            error("Checkpointed workers must use the checkpoint-aware run method.")
-        }
+    ) : CheckpointedWorker<ResumePayload>(appContext) {
 
         override suspend fun run(
             payload: ResumePayload,
@@ -233,18 +228,14 @@ class CheckpointPersistenceJvmTest {
     private class ResultWorker(
         appContext: AppContext,
         private val result: TaskResult,
-    ) : Worker<ResumePayload>(appContext), CheckpointedWorker<ResumePayload> {
-
-        override suspend fun run(payload: ResumePayload, context: RuntimeContext): TaskResult {
-            error("Checkpointed workers must use the checkpoint-aware run method.")
-        }
+    ) : CheckpointedWorker<ResumePayload>(appContext) {
 
         override suspend fun run(
             payload: ResumePayload,
             context: RuntimeContext,
             checkpoints: CheckpointStore,
         ): TaskResult {
-            checkpoints.write(Progress(context.attemptCount), schemaVersion = 1)
+            checkpoints.write(Progress(context.attemptCount))
             return result
         }
     }
