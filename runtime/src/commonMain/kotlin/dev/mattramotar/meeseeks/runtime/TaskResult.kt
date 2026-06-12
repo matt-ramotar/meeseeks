@@ -36,6 +36,7 @@ public sealed class TaskResult {
         Retry,
         PermanentFailure,
         TransientFailure,
+        Cancelled,
         SuccessAndScheduledNext, // For native runner logs
     }
 }

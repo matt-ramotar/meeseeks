@@ -10,6 +10,8 @@ CREATE TABLE taskLogEntity (
     FOREIGN KEY (taskId) REFERENCES taskSpec(id)
 );
 
+CREATE INDEX idx_taskLogEntity_taskId ON taskLogEntity(taskId);
+
 insertLog:
 INSERT INTO taskLogEntity (taskId, created, result, attempt, message)
 VALUES (?, ?, ?, ?, ?);
@@ -17,3 +19,19 @@ VALUES (?, ?, ?, ?, ?);
 selectLogsForTask:
 SELECT * FROM taskLogEntity
 WHERE taskId = ?;
+
+-- Terminal outcomes are written as facts at log time: one-time success is
+-- logged as Success, periodic per-run success as SuccessAndScheduledNext,
+-- retry exhaustion as PermanentFailure, and cancellation as Cancelled. These
+-- queries therefore only need to filter on the logged result type.
+selectTerminalEventsForTask:
+SELECT * FROM taskLogEntity
+WHERE taskId = :taskId
+  AND result IN (:success, :permanentFailure, :cancelled)
+ORDER BY id ASC;
+
+selectTerminalEventsSince:
+SELECT * FROM taskLogEntity
+WHERE id > :sinceEventId
+  AND result IN (:success, :permanentFailure, :cancelled)
+ORDER BY id ASC;

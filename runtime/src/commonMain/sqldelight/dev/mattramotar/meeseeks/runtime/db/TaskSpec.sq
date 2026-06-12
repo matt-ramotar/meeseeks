@@ -127,6 +127,13 @@ UPDATE taskSpec
 SET state = 'CANCELLED', updated_at_ms = ?
 WHERE id = ?;
 
+-- Cancel only when the task has not already reached a terminal state, so a
+-- finished task keeps its outcome and no duplicate Cancelled event is logged.
+cancelTaskIfActive:
+UPDATE taskSpec
+SET state = 'CANCELLED', updated_at_ms = ?
+WHERE id = ? AND state NOT IN ('SUCCEEDED', 'FAILED', 'CANCELLED');
+
 updateState:
 UPDATE taskSpec
 SET state = ?, updated_at_ms = ?

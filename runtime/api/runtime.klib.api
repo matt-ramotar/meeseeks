@@ -41,6 +41,18 @@ final enum class dev.mattramotar.meeseeks.runtime.types/RetryErrorCategory : kot
     final fun values(): kotlin/Array<dev.mattramotar.meeseeks.runtime.types/RetryErrorCategory> // dev.mattramotar.meeseeks.runtime.types/RetryErrorCategory.values|values#static(){}[0]
 }
 
+final enum class dev.mattramotar.meeseeks.runtime/TaskEventOutcome : kotlin/Enum<dev.mattramotar.meeseeks.runtime/TaskEventOutcome> { // dev.mattramotar.meeseeks.runtime/TaskEventOutcome|null[0]
+    enum entry Cancelled // dev.mattramotar.meeseeks.runtime/TaskEventOutcome.Cancelled|null[0]
+    enum entry Failure // dev.mattramotar.meeseeks.runtime/TaskEventOutcome.Failure|null[0]
+    enum entry Success // dev.mattramotar.meeseeks.runtime/TaskEventOutcome.Success|null[0]
+
+    final val entries // dev.mattramotar.meeseeks.runtime/TaskEventOutcome.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<dev.mattramotar.meeseeks.runtime/TaskEventOutcome> // dev.mattramotar.meeseeks.runtime/TaskEventOutcome.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): dev.mattramotar.meeseeks.runtime/TaskEventOutcome // dev.mattramotar.meeseeks.runtime/TaskEventOutcome.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<dev.mattramotar.meeseeks.runtime/TaskEventOutcome> // dev.mattramotar.meeseeks.runtime/TaskEventOutcome.values|values#static(){}[0]
+}
+
 final enum class dev.mattramotar.meeseeks.runtime/TaskPriority : kotlin/Enum<dev.mattramotar.meeseeks.runtime/TaskPriority> { // dev.mattramotar.meeseeks.runtime/TaskPriority|null[0]
     enum entry HIGH // dev.mattramotar.meeseeks.runtime/TaskPriority.HIGH|null[0]
     enum entry LOW // dev.mattramotar.meeseeks.runtime/TaskPriority.LOW|null[0]
@@ -102,6 +114,12 @@ abstract interface dev.mattramotar.meeseeks.runtime/BGTaskManager { // dev.mattr
 abstract interface dev.mattramotar.meeseeks.runtime/PayloadCipher { // dev.mattramotar.meeseeks.runtime/PayloadCipher|null[0]
     abstract fun decrypt(kotlin/String): kotlin/String // dev.mattramotar.meeseeks.runtime/PayloadCipher.decrypt|decrypt(kotlin.String){}[0]
     abstract fun encrypt(kotlin/String): kotlin/String // dev.mattramotar.meeseeks.runtime/PayloadCipher.encrypt|encrypt(kotlin.String){}[0]
+}
+
+abstract interface dev.mattramotar.meeseeks.runtime/TaskEventReplay { // dev.mattramotar.meeseeks.runtime/TaskEventReplay|null[0]
+    abstract fun getTaskEvents(dev.mattramotar.meeseeks.runtime/TaskId): kotlin.collections/List<dev.mattramotar.meeseeks.runtime/TaskEvent> // dev.mattramotar.meeseeks.runtime/TaskEventReplay.getTaskEvents|getTaskEvents(dev.mattramotar.meeseeks.runtime.TaskId){}[0]
+    abstract fun observeTaskEvents(dev.mattramotar.meeseeks.runtime/TaskId): kotlinx.coroutines.flow/Flow<kotlin.collections/List<dev.mattramotar.meeseeks.runtime/TaskEvent>> // dev.mattramotar.meeseeks.runtime/TaskEventReplay.observeTaskEvents|observeTaskEvents(dev.mattramotar.meeseeks.runtime.TaskId){}[0]
+    abstract fun replayTerminalEvents(kotlin/Long = ...): kotlin.collections/List<dev.mattramotar.meeseeks.runtime/TaskEvent> // dev.mattramotar.meeseeks.runtime/TaskEventReplay.replayTerminalEvents|replayTerminalEvents(kotlin.Long){}[0]
 }
 
 abstract interface dev.mattramotar.meeseeks.runtime/TaskHandle { // dev.mattramotar.meeseeks.runtime/TaskHandle|null[0]
@@ -197,8 +215,12 @@ final class dev.mattramotar.meeseeks.runtime.db/TaskLogQueries : app.cash.sqldel
     constructor <init>(app.cash.sqldelight.db/SqlDriver, dev.mattramotar.meeseeks.runtime.db/TaskLogEntity.Adapter) // dev.mattramotar.meeseeks.runtime.db/TaskLogQueries.<init>|<init>(app.cash.sqldelight.db.SqlDriver;dev.mattramotar.meeseeks.runtime.db.TaskLogEntity.Adapter){}[0]
 
     final fun <#A1: kotlin/Any> selectLogsForTask(kotlin/String, kotlin/Function6<kotlin/Long, kotlin/String, kotlin/Long, dev.mattramotar.meeseeks.runtime/TaskResult.Type, kotlin/Long, kotlin/String?, #A1>): app.cash.sqldelight/Query<#A1> // dev.mattramotar.meeseeks.runtime.db/TaskLogQueries.selectLogsForTask|selectLogsForTask(kotlin.String;kotlin.Function6<kotlin.Long,kotlin.String,kotlin.Long,dev.mattramotar.meeseeks.runtime.TaskResult.Type,kotlin.Long,kotlin.String?,0:0>){0§<kotlin.Any>}[0]
+    final fun <#A1: kotlin/Any> selectTerminalEventsForTask(kotlin/String, dev.mattramotar.meeseeks.runtime/TaskResult.Type, dev.mattramotar.meeseeks.runtime/TaskResult.Type, dev.mattramotar.meeseeks.runtime/TaskResult.Type, kotlin/Function6<kotlin/Long, kotlin/String, kotlin/Long, dev.mattramotar.meeseeks.runtime/TaskResult.Type, kotlin/Long, kotlin/String?, #A1>): app.cash.sqldelight/Query<#A1> // dev.mattramotar.meeseeks.runtime.db/TaskLogQueries.selectTerminalEventsForTask|selectTerminalEventsForTask(kotlin.String;dev.mattramotar.meeseeks.runtime.TaskResult.Type;dev.mattramotar.meeseeks.runtime.TaskResult.Type;dev.mattramotar.meeseeks.runtime.TaskResult.Type;kotlin.Function6<kotlin.Long,kotlin.String,kotlin.Long,dev.mattramotar.meeseeks.runtime.TaskResult.Type,kotlin.Long,kotlin.String?,0:0>){0§<kotlin.Any>}[0]
+    final fun <#A1: kotlin/Any> selectTerminalEventsSince(kotlin/Long, dev.mattramotar.meeseeks.runtime/TaskResult.Type, dev.mattramotar.meeseeks.runtime/TaskResult.Type, dev.mattramotar.meeseeks.runtime/TaskResult.Type, kotlin/Function6<kotlin/Long, kotlin/String, kotlin/Long, dev.mattramotar.meeseeks.runtime/TaskResult.Type, kotlin/Long, kotlin/String?, #A1>): app.cash.sqldelight/Query<#A1> // dev.mattramotar.meeseeks.runtime.db/TaskLogQueries.selectTerminalEventsSince|selectTerminalEventsSince(kotlin.Long;dev.mattramotar.meeseeks.runtime.TaskResult.Type;dev.mattramotar.meeseeks.runtime.TaskResult.Type;dev.mattramotar.meeseeks.runtime.TaskResult.Type;kotlin.Function6<kotlin.Long,kotlin.String,kotlin.Long,dev.mattramotar.meeseeks.runtime.TaskResult.Type,kotlin.Long,kotlin.String?,0:0>){0§<kotlin.Any>}[0]
     final fun insertLog(kotlin/String, kotlin/Long, dev.mattramotar.meeseeks.runtime/TaskResult.Type, kotlin/Long, kotlin/String?) // dev.mattramotar.meeseeks.runtime.db/TaskLogQueries.insertLog|insertLog(kotlin.String;kotlin.Long;dev.mattramotar.meeseeks.runtime.TaskResult.Type;kotlin.Long;kotlin.String?){}[0]
     final fun selectLogsForTask(kotlin/String): app.cash.sqldelight/Query<dev.mattramotar.meeseeks.runtime.db/TaskLogEntity> // dev.mattramotar.meeseeks.runtime.db/TaskLogQueries.selectLogsForTask|selectLogsForTask(kotlin.String){}[0]
+    final fun selectTerminalEventsForTask(kotlin/String, dev.mattramotar.meeseeks.runtime/TaskResult.Type, dev.mattramotar.meeseeks.runtime/TaskResult.Type, dev.mattramotar.meeseeks.runtime/TaskResult.Type): app.cash.sqldelight/Query<dev.mattramotar.meeseeks.runtime.db/TaskLogEntity> // dev.mattramotar.meeseeks.runtime.db/TaskLogQueries.selectTerminalEventsForTask|selectTerminalEventsForTask(kotlin.String;dev.mattramotar.meeseeks.runtime.TaskResult.Type;dev.mattramotar.meeseeks.runtime.TaskResult.Type;dev.mattramotar.meeseeks.runtime.TaskResult.Type){}[0]
+    final fun selectTerminalEventsSince(kotlin/Long, dev.mattramotar.meeseeks.runtime/TaskResult.Type, dev.mattramotar.meeseeks.runtime/TaskResult.Type, dev.mattramotar.meeseeks.runtime/TaskResult.Type): app.cash.sqldelight/Query<dev.mattramotar.meeseeks.runtime.db/TaskLogEntity> // dev.mattramotar.meeseeks.runtime.db/TaskLogQueries.selectTerminalEventsSince|selectTerminalEventsSince(kotlin.Long;dev.mattramotar.meeseeks.runtime.TaskResult.Type;dev.mattramotar.meeseeks.runtime.TaskResult.Type;dev.mattramotar.meeseeks.runtime.TaskResult.Type){}[0]
 }
 
 final class dev.mattramotar.meeseeks.runtime.db/TaskSpec { // dev.mattramotar.meeseeks.runtime.db/TaskSpec|null[0]
@@ -290,6 +312,7 @@ final class dev.mattramotar.meeseeks.runtime.db/TaskSpecQueries : app.cash.sqlde
     final fun atomicallyClaimAndStartTask(kotlin/Long, kotlin/String) // dev.mattramotar.meeseeks.runtime.db/TaskSpecQueries.atomicallyClaimAndStartTask|atomicallyClaimAndStartTask(kotlin.Long;kotlin.String){}[0]
     final fun atomicallyClaimAndStartTaskWithLimit(kotlin/Long, kotlin/String, kotlin/Long) // dev.mattramotar.meeseeks.runtime.db/TaskSpecQueries.atomicallyClaimAndStartTaskWithLimit|atomicallyClaimAndStartTaskWithLimit(kotlin.Long;kotlin.String;kotlin.Long){}[0]
     final fun cancelTask(kotlin/Long, kotlin/String) // dev.mattramotar.meeseeks.runtime.db/TaskSpecQueries.cancelTask|cancelTask(kotlin.Long;kotlin.String){}[0]
+    final fun cancelTaskIfActive(kotlin/Long, kotlin/String) // dev.mattramotar.meeseeks.runtime.db/TaskSpecQueries.cancelTaskIfActive|cancelTaskIfActive(kotlin.Long;kotlin.String){}[0]
     final fun insertTask(kotlin/String, kotlin/String, kotlin/Long, kotlin/Long, kotlin/String?, kotlin/String, kotlin/String, kotlin/Long, kotlin/Boolean, kotlin/Boolean, kotlin/Boolean, kotlin/Long, kotlin/String, kotlin/Long, kotlin/Long, kotlin/Long, kotlin/String, kotlin/Long, kotlin/Long, kotlin/Double?, kotlin/Double) // dev.mattramotar.meeseeks.runtime.db/TaskSpecQueries.insertTask|insertTask(kotlin.String;kotlin.String;kotlin.Long;kotlin.Long;kotlin.String?;kotlin.String;kotlin.String;kotlin.Long;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Long;kotlin.String;kotlin.Long;kotlin.Long;kotlin.Long;kotlin.String;kotlin.Long;kotlin.Long;kotlin.Double?;kotlin.Double){}[0]
     final fun resetRunningTasksToEnqueued(kotlin/Long) // dev.mattramotar.meeseeks.runtime.db/TaskSpecQueries.resetRunningTasksToEnqueued|resetRunningTasksToEnqueued(kotlin.Long){}[0]
     final fun selectAllActive(): app.cash.sqldelight/Query<dev.mattramotar.meeseeks.runtime.db/TaskSpec> // dev.mattramotar.meeseeks.runtime.db/TaskSpecQueries.selectAllActive|selectAllActive(){}[0]
@@ -866,6 +889,34 @@ final class dev.mattramotar.meeseeks.runtime/ScheduledTask { // dev.mattramotar.
     final fun toString(): kotlin/String // dev.mattramotar.meeseeks.runtime/ScheduledTask.toString|toString(){}[0]
 }
 
+final class dev.mattramotar.meeseeks.runtime/TaskEvent { // dev.mattramotar.meeseeks.runtime/TaskEvent|null[0]
+    constructor <init>(kotlin/Long, dev.mattramotar.meeseeks.runtime/TaskId, dev.mattramotar.meeseeks.runtime/TaskEventOutcome, kotlin/Long, kotlin/Int, kotlin/String?) // dev.mattramotar.meeseeks.runtime/TaskEvent.<init>|<init>(kotlin.Long;dev.mattramotar.meeseeks.runtime.TaskId;dev.mattramotar.meeseeks.runtime.TaskEventOutcome;kotlin.Long;kotlin.Int;kotlin.String?){}[0]
+
+    final val attempt // dev.mattramotar.meeseeks.runtime/TaskEvent.attempt|{}attempt[0]
+        final fun <get-attempt>(): kotlin/Int // dev.mattramotar.meeseeks.runtime/TaskEvent.attempt.<get-attempt>|<get-attempt>(){}[0]
+    final val createdAt // dev.mattramotar.meeseeks.runtime/TaskEvent.createdAt|{}createdAt[0]
+        final fun <get-createdAt>(): kotlin/Long // dev.mattramotar.meeseeks.runtime/TaskEvent.createdAt.<get-createdAt>|<get-createdAt>(){}[0]
+    final val id // dev.mattramotar.meeseeks.runtime/TaskEvent.id|{}id[0]
+        final fun <get-id>(): kotlin/Long // dev.mattramotar.meeseeks.runtime/TaskEvent.id.<get-id>|<get-id>(){}[0]
+    final val message // dev.mattramotar.meeseeks.runtime/TaskEvent.message|{}message[0]
+        final fun <get-message>(): kotlin/String? // dev.mattramotar.meeseeks.runtime/TaskEvent.message.<get-message>|<get-message>(){}[0]
+    final val outcome // dev.mattramotar.meeseeks.runtime/TaskEvent.outcome|{}outcome[0]
+        final fun <get-outcome>(): dev.mattramotar.meeseeks.runtime/TaskEventOutcome // dev.mattramotar.meeseeks.runtime/TaskEvent.outcome.<get-outcome>|<get-outcome>(){}[0]
+    final val taskId // dev.mattramotar.meeseeks.runtime/TaskEvent.taskId|{}taskId[0]
+        final fun <get-taskId>(): dev.mattramotar.meeseeks.runtime/TaskId // dev.mattramotar.meeseeks.runtime/TaskEvent.taskId.<get-taskId>|<get-taskId>(){}[0]
+
+    final fun component1(): kotlin/Long // dev.mattramotar.meeseeks.runtime/TaskEvent.component1|component1(){}[0]
+    final fun component2(): dev.mattramotar.meeseeks.runtime/TaskId // dev.mattramotar.meeseeks.runtime/TaskEvent.component2|component2(){}[0]
+    final fun component3(): dev.mattramotar.meeseeks.runtime/TaskEventOutcome // dev.mattramotar.meeseeks.runtime/TaskEvent.component3|component3(){}[0]
+    final fun component4(): kotlin/Long // dev.mattramotar.meeseeks.runtime/TaskEvent.component4|component4(){}[0]
+    final fun component5(): kotlin/Int // dev.mattramotar.meeseeks.runtime/TaskEvent.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // dev.mattramotar.meeseeks.runtime/TaskEvent.component6|component6(){}[0]
+    final fun copy(kotlin/Long = ..., dev.mattramotar.meeseeks.runtime/TaskId = ..., dev.mattramotar.meeseeks.runtime/TaskEventOutcome = ..., kotlin/Long = ..., kotlin/Int = ..., kotlin/String? = ...): dev.mattramotar.meeseeks.runtime/TaskEvent // dev.mattramotar.meeseeks.runtime/TaskEvent.copy|copy(kotlin.Long;dev.mattramotar.meeseeks.runtime.TaskId;dev.mattramotar.meeseeks.runtime.TaskEventOutcome;kotlin.Long;kotlin.Int;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.mattramotar.meeseeks.runtime/TaskEvent.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.mattramotar.meeseeks.runtime/TaskEvent.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.mattramotar.meeseeks.runtime/TaskEvent.toString|toString(){}[0]
+}
+
 final class dev.mattramotar.meeseeks.runtime/TaskPreconditions { // dev.mattramotar.meeseeks.runtime/TaskPreconditions|null[0]
     constructor <init>(kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...) // dev.mattramotar.meeseeks.runtime/TaskPreconditions.<init>|<init>(kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
 
@@ -1227,6 +1278,7 @@ sealed class dev.mattramotar.meeseeks.runtime.types/Value { // dev.mattramotar.m
 
 sealed class dev.mattramotar.meeseeks.runtime/TaskResult { // dev.mattramotar.meeseeks.runtime/TaskResult|null[0]
     final enum class Type : kotlin/Enum<dev.mattramotar.meeseeks.runtime/TaskResult.Type> { // dev.mattramotar.meeseeks.runtime/TaskResult.Type|null[0]
+        enum entry Cancelled // dev.mattramotar.meeseeks.runtime/TaskResult.Type.Cancelled|null[0]
         enum entry PermanentFailure // dev.mattramotar.meeseeks.runtime/TaskResult.Type.PermanentFailure|null[0]
         enum entry Retry // dev.mattramotar.meeseeks.runtime/TaskResult.Type.Retry|null[0]
         enum entry Success // dev.mattramotar.meeseeks.runtime/TaskResult.Type.Success|null[0]
@@ -1502,6 +1554,9 @@ final object dev.mattramotar.meeseeks.runtime/Meeseeks { // dev.mattramotar.mees
     final fun initialize(dev.mattramotar.meeseeks.runtime/AppContext, kotlin/Function1<dev.mattramotar.meeseeks.runtime/ConfigurationScope, kotlin/Unit> = ...): dev.mattramotar.meeseeks.runtime/BGTaskManager // dev.mattramotar.meeseeks.runtime/Meeseeks.initialize|initialize(dev.mattramotar.meeseeks.runtime.AppContext;kotlin.Function1<dev.mattramotar.meeseeks.runtime.ConfigurationScope,kotlin.Unit>){}[0]
 }
 
+final fun (dev.mattramotar.meeseeks.runtime/BGTaskManager).dev.mattramotar.meeseeks.runtime/getTaskEvents(dev.mattramotar.meeseeks.runtime/TaskId): kotlin.collections/List<dev.mattramotar.meeseeks.runtime/TaskEvent> // dev.mattramotar.meeseeks.runtime/getTaskEvents|getTaskEvents@dev.mattramotar.meeseeks.runtime.BGTaskManager(dev.mattramotar.meeseeks.runtime.TaskId){}[0]
+final fun (dev.mattramotar.meeseeks.runtime/BGTaskManager).dev.mattramotar.meeseeks.runtime/observeTaskEvents(dev.mattramotar.meeseeks.runtime/TaskId): kotlinx.coroutines.flow/Flow<kotlin.collections/List<dev.mattramotar.meeseeks.runtime/TaskEvent>> // dev.mattramotar.meeseeks.runtime/observeTaskEvents|observeTaskEvents@dev.mattramotar.meeseeks.runtime.BGTaskManager(dev.mattramotar.meeseeks.runtime.TaskId){}[0]
+final fun (dev.mattramotar.meeseeks.runtime/BGTaskManager).dev.mattramotar.meeseeks.runtime/replayTerminalEvents(kotlin/Long = ...): kotlin.collections/List<dev.mattramotar.meeseeks.runtime/TaskEvent> // dev.mattramotar.meeseeks.runtime/replayTerminalEvents|replayTerminalEvents@dev.mattramotar.meeseeks.runtime.BGTaskManager(kotlin.Long){}[0]
 final fun dev.mattramotar.meeseeks.runtime/schedule(dev.mattramotar.meeseeks.runtime/BGTaskManager, dev.mattramotar.meeseeks.runtime/TaskRequest): dev.mattramotar.meeseeks.runtime/TaskHandle // dev.mattramotar.meeseeks.runtime/schedule|schedule(dev.mattramotar.meeseeks.runtime.BGTaskManager;dev.mattramotar.meeseeks.runtime.TaskRequest){}[0]
 final inline fun <#A: reified dev.mattramotar.meeseeks.runtime/TaskPayload> (dev.mattramotar.meeseeks.runtime/BGTaskManager).dev.mattramotar.meeseeks.runtime/oneTime(#A, kotlin.time/Duration = ..., noinline kotlin/Function1<dev.mattramotar.meeseeks.runtime.dsl/OneTimeTaskRequestConfigurationScope<#A>, kotlin/Unit> = ...): dev.mattramotar.meeseeks.runtime/TaskHandle // dev.mattramotar.meeseeks.runtime/oneTime|oneTime@dev.mattramotar.meeseeks.runtime.BGTaskManager(0:0;kotlin.time.Duration;kotlin.Function1<dev.mattramotar.meeseeks.runtime.dsl.OneTimeTaskRequestConfigurationScope<0:0>,kotlin.Unit>){0§<dev.mattramotar.meeseeks.runtime.TaskPayload>}[0]
 final inline fun <#A: reified dev.mattramotar.meeseeks.runtime/TaskPayload> (dev.mattramotar.meeseeks.runtime/BGTaskManager).dev.mattramotar.meeseeks.runtime/periodic(#A, kotlin.time/Duration, kotlin.time/Duration = ..., kotlin.time/Duration = ..., noinline kotlin/Function1<dev.mattramotar.meeseeks.runtime.dsl/PeriodicTaskRequestConfigurationScope<#A>, kotlin/Unit> = ...): dev.mattramotar.meeseeks.runtime/TaskHandle // dev.mattramotar.meeseeks.runtime/periodic|periodic@dev.mattramotar.meeseeks.runtime.BGTaskManager(0:0;kotlin.time.Duration;kotlin.time.Duration;kotlin.time.Duration;kotlin.Function1<dev.mattramotar.meeseeks.runtime.dsl.PeriodicTaskRequestConfigurationScope<0:0>,kotlin.Unit>){0§<dev.mattramotar.meeseeks.runtime.TaskPayload>}[0]

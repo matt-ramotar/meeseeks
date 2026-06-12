@@ -99,6 +99,54 @@ public final class dev/mattramotar/meeseeks/runtime/ScheduledTask {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/mattramotar/meeseeks/runtime/TaskEvent {
+	public synthetic fun <init> (JLjava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskEventOutcome;JILjava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2-c54K5Xc ()Ljava/lang/String;
+	public final fun component3 ()Ldev/mattramotar/meeseeks/runtime/TaskEventOutcome;
+	public final fun component4 ()J
+	public final fun component5 ()I
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy-s-WH4rQ (JLjava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskEventOutcome;JILjava/lang/String;)Ldev/mattramotar/meeseeks/runtime/TaskEvent;
+	public static synthetic fun copy-s-WH4rQ$default (Ldev/mattramotar/meeseeks/runtime/TaskEvent;JLjava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskEventOutcome;JILjava/lang/String;ILjava/lang/Object;)Ldev/mattramotar/meeseeks/runtime/TaskEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttempt ()I
+	public final fun getCreatedAt ()J
+	public final fun getId ()J
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getOutcome ()Ldev/mattramotar/meeseeks/runtime/TaskEventOutcome;
+	public final fun getTaskId-c54K5Xc ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskEventKt {
+	public static final fun getTaskEvents-cubY39s (Ldev/mattramotar/meeseeks/runtime/BGTaskManager;Ljava/lang/String;)Ljava/util/List;
+	public static final fun observeTaskEvents-cubY39s (Ldev/mattramotar/meeseeks/runtime/BGTaskManager;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun replayTerminalEvents (Ldev/mattramotar/meeseeks/runtime/BGTaskManager;J)Ljava/util/List;
+	public static synthetic fun replayTerminalEvents$default (Ldev/mattramotar/meeseeks/runtime/BGTaskManager;JILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskEventOutcome : java/lang/Enum {
+	public static final field Cancelled Ldev/mattramotar/meeseeks/runtime/TaskEventOutcome;
+	public static final field Failure Ldev/mattramotar/meeseeks/runtime/TaskEventOutcome;
+	public static final field Success Ldev/mattramotar/meeseeks/runtime/TaskEventOutcome;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/mattramotar/meeseeks/runtime/TaskEventOutcome;
+	public static fun values ()[Ldev/mattramotar/meeseeks/runtime/TaskEventOutcome;
+}
+
+public abstract interface class dev/mattramotar/meeseeks/runtime/TaskEventReplay {
+	public abstract fun getTaskEvents-yx_VQho (Ljava/lang/String;)Ljava/util/List;
+	public abstract fun observeTaskEvents-yx_VQho (Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun replayTerminalEvents (J)Ljava/util/List;
+	public static synthetic fun replayTerminalEvents$default (Ldev/mattramotar/meeseeks/runtime/TaskEventReplay;JILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class dev/mattramotar/meeseeks/runtime/TaskEventReplay$DefaultImpls {
+	public static synthetic fun replayTerminalEvents$default (Ldev/mattramotar/meeseeks/runtime/TaskEventReplay;JILjava/lang/Object;)Ljava/util/List;
+}
+
 public abstract interface class dev/mattramotar/meeseeks/runtime/TaskHandle {
 	public abstract fun await (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun cancel ()V
@@ -246,6 +294,7 @@ public final class dev/mattramotar/meeseeks/runtime/TaskResult$Success : dev/mat
 }
 
 public final class dev/mattramotar/meeseeks/runtime/TaskResult$Type : java/lang/Enum {
+	public static final field Cancelled Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
 	public static final field PermanentFailure Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
 	public static final field Retry Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
 	public static final field Success Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;
@@ -525,6 +574,10 @@ public final class dev/mattramotar/meeseeks/runtime/db/TaskLogQueries : app/cash
 	public final fun insertLog (Ljava/lang/String;JLdev/mattramotar/meeseeks/runtime/TaskResult$Type;JLjava/lang/String;)V
 	public final fun selectLogsForTask (Ljava/lang/String;)Lapp/cash/sqldelight/Query;
 	public final fun selectLogsForTask (Ljava/lang/String;Lkotlin/jvm/functions/Function6;)Lapp/cash/sqldelight/Query;
+	public final fun selectTerminalEventsForTask (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;)Lapp/cash/sqldelight/Query;
+	public final fun selectTerminalEventsForTask (Ljava/lang/String;Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;Lkotlin/jvm/functions/Function6;)Lapp/cash/sqldelight/Query;
+	public final fun selectTerminalEventsSince (JLdev/mattramotar/meeseeks/runtime/TaskResult$Type;Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;)Lapp/cash/sqldelight/Query;
+	public final fun selectTerminalEventsSince (JLdev/mattramotar/meeseeks/runtime/TaskResult$Type;Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;Ldev/mattramotar/meeseeks/runtime/TaskResult$Type;Lkotlin/jvm/functions/Function6;)Lapp/cash/sqldelight/Query;
 }
 
 public final class dev/mattramotar/meeseeks/runtime/db/TaskSpec {
@@ -585,6 +638,7 @@ public final class dev/mattramotar/meeseeks/runtime/db/TaskSpecQueries : app/cas
 	public final fun atomicallyClaimAndStartTask (JLjava/lang/String;)V
 	public final fun atomicallyClaimAndStartTaskWithLimit (JLjava/lang/String;J)V
 	public final fun cancelTask (JLjava/lang/String;)V
+	public final fun cancelTaskIfActive (JLjava/lang/String;)V
 	public final fun insertTask (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZZJLjava/lang/String;JJJLjava/lang/String;JJLjava/lang/Double;D)V
 	public final fun resetRunningTasksToEnqueued (J)V
 	public final fun selectAllActive ()Lapp/cash/sqldelight/Query;

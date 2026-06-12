@@ -4,6 +4,7 @@ import dev.mattramotar.meeseeks.runtime.TaskRequest
 import dev.mattramotar.meeseeks.runtime.TaskSchedule
 import dev.mattramotar.meeseeks.runtime.internal.WorkRequestFactory.Companion.JOB_GROUP
 import org.quartz.JobKey
+import org.quartz.ObjectAlreadyExistsException
 import org.quartz.Scheduler
 import org.quartz.impl.matchers.GroupMatcher
 
@@ -28,12 +29,20 @@ internal actual class TaskScheduler(
                 if (jobAlreadyExists) {
                     scheduler.deleteJob(jobKey)
                 }
-                scheduler.scheduleJob(jobDetail, triggers.toSet(), false)
+                // replace = true keeps the store atomic when another path
+                // stores the same unique work between deleteJob and this call.
+                scheduler.scheduleJob(jobDetail, triggers.toSet(), true)
             }
 
             ExistingWorkPolicy.KEEP -> {
                 if (!jobAlreadyExists) {
-                    scheduler.scheduleJob(jobDetail, triggers.toSet(), false)
+                    try {
+                        scheduler.scheduleJob(jobDetail, triggers.toSet(), false)
+                    } catch (_: ObjectAlreadyExistsException) {
+                        // Another path (e.g. the startup rescheduler) stored the
+                        // same unique work between checkExists and scheduleJob.
+                        // KEEP semantics: the existing job wins.
+                    }
                 }
             }
         }
