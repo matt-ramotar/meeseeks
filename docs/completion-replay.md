@@ -4,6 +4,8 @@ Meeseeks task status observation is live. `observeStatus(taskId)` reports update
 
 Terminal event replay is durable. `replayTerminalEvents(sinceEventId)` and `getTaskEvents(taskId)` read persisted task log rows, so startup code can recover completions that happened while no UI observer was active.
 
+Replay events are immutable facts recorded when the outcome happens; later schedule changes never reclassify past events.
+
 ## Startup replay pattern
 
 Store the highest event id that your app has already handled. On startup, initialize Meeseeks, replay newer terminal events, update UI or local app state, then persist the newest event id.
@@ -31,6 +33,8 @@ fun replayMissedCompletions(
 }
 ```
 
+Delivery is at-least-once. If the app dies after `render` but before `saveLastHandledEventId` persists the new cursor, the same events are delivered again on the next replay, so render handlers must be idempotent.
+
 Use task-scoped replay when a screen knows the task it cares about:
 
 ```kotlin
@@ -52,6 +56,8 @@ Replay events use `TaskEventOutcome`:
 - `Cancelled`: the task was explicitly cancelled.
 
 Periodic successful runs are not terminal. They schedule the next activation and are not returned by terminal replay. A periodic task is replayed only when it reaches `Failure` or `Cancelled`.
+
+Cancelling a task that already finished is a no-op: the task keeps its original outcome and no `Cancelled` event is recorded. One edge case is worth knowing: cancelling a task while an attempt is already running cannot stop that attempt, so the attempt can still finish and record a second terminal event after the `Cancelled` one.
 
 ## Live observation versus durable replay
 
