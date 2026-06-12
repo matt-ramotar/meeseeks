@@ -89,6 +89,7 @@ missedEvents.forEach { event ->
 - JS guide: `docs/platforms/js.md`
 - Completion replay: `docs/completion-replay.md`
 - Worker checkpoint API contract: `docs/checkpoint-api-contract.md`
+- Worker checkpoint verification: `docs/checkpoint-verification.md`
 - Capability matrix: `docs/capabilities.md`
 - Troubleshooting: `docs/troubleshooting.md`
 - Migration notes: `docs/migration-0x-to-1x.md`

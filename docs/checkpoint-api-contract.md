@@ -4,6 +4,8 @@ This is the public contract for worker-controlled checkpoints. It defines app-le
 
 Meeseeks does not restore coroutine stacks, function locals, open sockets, file handles, transactions, or arbitrary in-memory objects. Workers must make side effects idempotent and explicitly write checkpoints at safe boundaries.
 
+Verification details and production guidance live in `docs/checkpoint-verification.md`.
+
 ## Public API shape
 
 `RuntimeContext` is a public data class in the 1.x API surface. Adding constructor properties would change generated `copy`/`componentN` members and is not 1.x-compatible. Checkpoint support should therefore be additive through a new worker base class and store type.
@@ -202,6 +204,6 @@ Avoid in 1.x:
 - Adding constructor parameters to `RuntimeContext`.
 - Adding abstract methods to `Worker` or `BGTaskManager`.
 - Changing `Worker.run(payload, context)` semantics for existing workers.
-- Exposing raw SQLDelight checkpoint rows as the public API.
+- Treating generated SQLDelight checkpoint rows as supported public API. App code should use `CheckpointStore`; generated `runtime.db` types remain outside the stable API packages listed in the README.
 
 If a future 2.0 release wants checkpoint access directly on `RuntimeContext`, it can redesign the context constructor and generated data-class members at a major-version boundary.
