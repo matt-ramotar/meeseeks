@@ -4,12 +4,12 @@ import dev.mattramotar.meeseeks.runtime.AppContext
 import dev.mattramotar.meeseeks.runtime.BGTaskManager
 import dev.mattramotar.meeseeks.runtime.BGTaskManagerConfig
 import dev.mattramotar.meeseeks.runtime.db.MeeseeksDatabase
+import dev.mattramotar.meeseeks.runtime.internal.db.QuartzConfigLoader
 import dev.mattramotar.meeseeks.runtime.internal.db.QuartzDatabaseInitializer
 import dev.mattramotar.meeseeks.runtime.internal.db.QuartzProps
 import kotlinx.serialization.json.Json
 import org.quartz.impl.StdSchedulerFactory
 import java.nio.file.Paths
-import java.util.*
 
 internal actual class BGTaskManagerFactory {
     actual fun create(
@@ -19,12 +19,7 @@ internal actual class BGTaskManagerFactory {
         json: Json,
         config: BGTaskManagerConfig
     ): BGTaskManager {
-        val props = Properties().apply {
-            val inStream = checkNotNull(
-                javaClass.classLoader.getResourceAsStream("quartz.properties")
-            ) { "quartz.properties not found on classpath" }
-            inStream.use { load(it) }
-        }
+        val props = QuartzConfigLoader.load()
 
         val jdbcUrl = normalizeSqliteUrl(QuartzProps.jdbcUrlFromQuartzProps(props))
 
