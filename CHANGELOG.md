@@ -6,10 +6,19 @@ This project follows semantic versioning.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-17
+
 ### Fixed
 
-- JVM: `Meeseeks.initialize` threw a deterministic `NullPointerException` in `BGTaskManagerFactory.create`. The Quartz config lookup resolved `javaClass.classLoader` against the `Properties().apply { }` receiver — `java.util.Properties` is bootstrap-loaded, so its classloader is `null`. The lookup now resolves against the factory's own classloader and the thread context classloader (issue #80).
-- JVM: the default `quartz.properties` never shipped in the runtime jar — it lived in `src/main/resources`, which is not a Kotlin Multiplatform source set. The defaults are now packaged under `dev/mattramotar/meeseeks/runtime/internal/quartz/quartz.properties`, so `Meeseeks.initialize` completes on a stock classpath. A host application can still override the defaults by placing `quartz.properties` at the root of its classpath (issue #80).
+- JVM: `Meeseeks.initialize` threw a deterministic `NullPointerException` in `BGTaskManagerFactory.create`. The Quartz config lookup resolved `javaClass.classLoader` against the `Properties().apply { }` receiver — `java.util.Properties` is bootstrap-loaded, so its classloader is `null`. The lookup now resolves against the factory's own classloader and the thread context classloader (issue #80, #81).
+- JVM: the default `quartz.properties` never shipped in the runtime jar — it lived in `src/main/resources`, which is not a Kotlin Multiplatform source set. The defaults are now packaged under `dev/mattramotar/meeseeks/runtime/internal/quartz/quartz.properties`, so `Meeseeks.initialize` completes on a stock classpath. A host application can still override the defaults by placing `quartz.properties` at the root of its classpath (issue #80, #81).
+- `cancel()`/`cancelAll()` now win over in-flight task attempts: `cancelAll()` cancels `RUNNING` tasks (not only `ENQUEUED`), and `TaskExecutor` discards the attempt's outcome if a cancellation landed mid-run — no Success-after-Cancelled events, no resurrection after restart, and no retry or periodic re-enqueue of a cancelled task (#79).
+
+### Migration notes
+
+- 1.1.0 documented that cancelling mid-flight could still log a second terminal event. That race is closed: a mid-attempt cancellation is now the sole terminal outcome.
+
+## [1.1.0] - 2026-06-11
 
 ### Added
 
